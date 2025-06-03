@@ -9,7 +9,6 @@ import base64
 from io import BytesIO
 import calendar
 from pathlib import Path
-import os
 
 # --- Set page configuration first (must be the first Streamlit command) ---
 st.set_page_config(
@@ -558,94 +557,106 @@ with tab1:
         # --- Weekly Active Sales for Top Performers ---
         st.subheader("Weekly Active Sales for Top Performers")
         if 'ENROLLED_DATE' in df_filtered.columns and 'AGENT' in df_filtered.columns:
-            # Filter for active contracts only
-            active_df_weekly = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE'].copy()
-            
-            # Create a week identifier
-            active_df_weekly['WEEK_START_DATE'] = active_df_weekly['ENROLLED_DATE'].apply(
-                lambda x: x.date() - timedelta(days=x.weekday())
-            )
-            
-            # Group by week start date and agent
-            weekly_agent_performance = active_df_weekly.groupby([
-                'WEEK_START_DATE', 'AGENT'
-            ]).size().reset_index(name='Active_Contracts')
-            
-            # Create a user-friendly week string
-            weekly_agent_performance['WEEK_DISPLAY'] = weekly_agent_performance['WEEK_START_DATE'].apply(
-                lambda x: f"{x.strftime('%Y-%m-%d')} to {(x + timedelta(days=6)).strftime('%Y-%m-%d')}"
-            )
-            
-            # Sort by week start date in descending order
-            weekly_agent_performance = weekly_agent_performance.sort_values('WEEK_START_DATE', ascending=False)
-            
-            # Get all unique display weeks for the dropdown
-            all_weeks_display = weekly_agent_performance['WEEK_DISPLAY'].unique()
-            
-            if len(all_weeks_display) > 0:
-                # Allow user to select a week
-                selected_week_display = st.selectbox("Select Week:", all_weeks_display)
+            try:
+                # Filter for active contracts only
+                active_df_weekly = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE'].copy()
                 
-                # Extract the week start date from the selected display string
-                selected_week_start_str = selected_week_display.split(" to ")[0]
-                selected_week_start = datetime.strptime(selected_week_start_str, '%Y-%m-%d').date()
+                # Create a week identifier
+                active_df_weekly['WEEK_START_DATE'] = active_df_weekly['ENROLLED_DATE'].apply(
+                    lambda x: x.date() - timedelta(days=x.weekday())
+                )
                 
-                # Filter data for the selected week
-                selected_week_data = weekly_agent_performance[
-                    weekly_agent_performance['WEEK_START_DATE'] == selected_week_start
-                ]
+                # Group by week start date and agent
+                weekly_agent_performance = active_df_weekly.groupby([
+                    'WEEK_START_DATE', 'AGENT'
+                ]).size().reset_index(name='Active_Contracts')
                 
-                # Sort by Active_Contracts for the selected week
-                selected_week_data = selected_week_data.sort_values(by='Active_Contracts', ascending=False)
+                # Create a user-friendly week string
+                weekly_agent_performance['WEEK_DISPLAY'] = weekly_agent_performance['WEEK_START_DATE'].apply(
+                    lambda x: f"{x.strftime('%Y-%m-%d')} to {(x + timedelta(days=6)).strftime('%Y-%m-%d')}"
+                )
                 
-                # Display top performers for the selected week
-                top_agents_selected_week = selected_week_data.head(10)
+                # Sort by week start date in descending order
+                weekly_agent_performance = weekly_agent_performance.sort_values('WEEK_START_DATE', ascending=False)
                 
-                if not top_agents_selected_week.empty:
-                    fig = px.bar(
-                        top_agents_selected_week,
-                        x='AGENT',
-                        y='Active_Contracts',
-                        title=f"Top 10 Active Contracts for {selected_week_display}",
-                        labels={'AGENT': 'Agent', 'Active_Contracts': 'Active Contracts'},
-                        color='Active_Contracts',
-                        color_continuous_scale=px.colors.sequential.Greens
-                    )
-                    fig.update_layout(xaxis_title="Agent", yaxis_title="Active Contracts")
-                    st.plotly_chart(fig, use_container_width=True)
+                # Get all unique display weeks for the dropdown
+                all_weeks_display = weekly_agent_performance['WEEK_DISPLAY'].unique()
+                
+                if len(all_weeks_display) > 0:
+                    # Allow user to select a week
+                    selected_week_display = st.selectbox("Select Week:", all_weeks_display)
+                    
+                    # Extract the week start date from the selected display string
+                    selected_week_start_str = selected_week_display.split(" to ")[0]
+                    selected_week_start = datetime.strptime(selected_week_start_str, '%Y-%m-%d').date()
+                    
+                    # Filter data for the selected week
+                    selected_week_data = weekly_agent_performance[
+                        weekly_agent_performance['WEEK_START_DATE'] == selected_week_start
+                    ]
+                    
+                    # Sort by Active_Contracts for the selected week
+                    selected_week_data = selected_week_data.sort_values(by='Active_Contracts', ascending=False)
+                    
+                    # Display top performers for the selected week
+                    top_agents_selected_week = selected_week_data.head(10)
+                    
+                    if not top_agents_selected_week.empty:
+                        fig = px.bar(
+                            top_agents_selected_week,
+                            x='AGENT',
+                            y='Active_Contracts',
+                            title=f"Top 10 Active Contracts for {selected_week_display}",
+                            labels={'AGENT': 'Agent', 'Active_Contracts': 'Active Contracts'},
+                            color='Active_Contracts',
+                            color_continuous_scale=px.colors.sequential.Greens
+                        )
+                        fig.update_layout(xaxis_title="Agent", yaxis_title="Active Contracts")
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.info(f"No active contracts for top performers in the week of {selected_week_display}.")
                 else:
-                    st.info(f"No active contracts for top performers in the week of {selected_week_display}.")
-            else:
-                st.info("No weekly active sales data available.")
+                    st.info("No weekly active sales data available.")
+            except Exception as e:
+                st.error(f"Error in weekly active sales analysis: {e}")
+                st.info("Could not generate weekly active sales data.")
         else:
             st.warning("Enrollment date or Agent data not available for weekly sales analysis.")
         
     with col2:
         st.subheader("Enrollment Timeline")
         if 'ENROLLED_DATE' in df_filtered.columns:
-            timeline_df = df_filtered.set_index('ENROLLED_DATE').resample('D').size().reset_index(name='Count')
-            fig = px.line(
-                timeline_df, 
-                x='ENROLLED_DATE', 
-                y='Count', 
-                title="Daily Contract Enrollment",
-                labels={'ENROLLED_DATE': 'Date', 'Count': 'Contracts'}
-            )
-            fig.update_xaxes(rangeslider_visible=True)
-            st.plotly_chart(fig, use_container_width=True)
+            try:
+                timeline_df = df_filtered.set_index('ENROLLED_DATE').resample('D').size().reset_index(name='Count')
+                fig = px.line(
+                    timeline_df, 
+                    x='ENROLLED_DATE', 
+                    y='Count', 
+                    title="Daily Contract Enrollment",
+                    labels={'ENROLLED_DATE': 'Date', 'Count': 'Contracts'}
+                )
+                fig.update_xaxes(rangeslider_visible=True)
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.error(f"Error generating enrollment timeline: {e}")
+                st.info("Could not generate enrollment timeline.")
             
             st.subheader("Status by Source")
             if 'SOURCE_SHEET' in df_filtered.columns:
-                source_status = df_filtered.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
-                fig = px.bar(
-                    source_status.reset_index(),
-                    x='SOURCE_SHEET',
-                    y=source_status.columns,
-                    title="Contract Status by Source",
-                    labels={'value': 'Count', 'variable': 'Status'},
-                    barmode='stack'
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                try:
+                    source_status = df_filtered.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
+                    fig = px.bar(
+                        source_status.reset_index(),
+                        x='SOURCE_SHEET',
+                        y=source_status.columns,
+                        title="Contract Status by Source",
+                        labels={'value': 'Count', 'variable': 'Status'},
+                        barmode='stack'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error generating source status chart: {e}")
+                    st.info("Could not generate source status chart.")
             else:
                 st.warning("Source data not available")
 
@@ -654,426 +665,311 @@ with tab2:
     st.subheader("Monthly Performance Trends")
     
     if 'ENROLLED_DATE' in df_filtered.columns:
-        # Create monthly data with status breakdown
-        monthly_data = df_filtered.groupby(['MONTH_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
-        
-        # Ensure all status columns exist
-        for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
-            if status not in monthly_data.columns:
-                monthly_data[status] = 0
-        
-        # Calculate total contracts and success rate
-        monthly_data['Total'] = monthly_data['ACTIVE'] + monthly_data['NSF'] + monthly_data['CANCELLED'] + monthly_data['OTHER']
-        monthly_data['Success_Rate'] = (monthly_data['ACTIVE'] / monthly_data['Total']) * 100
-        
-        # Sort by month-year
-        monthly_data['Sort_Key'] = pd.to_datetime(monthly_data['MONTH_YEAR'] + '-01')
-        monthly_data = monthly_data.sort_values('Sort_Key')
-        
-        fig = px.line(
-            monthly_data,
-            x='MONTH_YEAR',
-            y='Success_Rate',
-            title="Monthly Success Rate Trend",
-            labels={'MONTH_YEAR': 'Month', 'Success_Rate': 'Success Rate (%)'},
-            markers=True
-        )
-        st.plotly_chart(fig, use_container_width=True)
-             
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Contract Status Over Time")
-            fig = px.area(
-                monthly_data,
-                x='MONTH_YEAR',
-                y=['ACTIVE', 'NSF', 'CANCELLED', 'OTHER'],
-                title="Contract Status Distribution Over Time",
-                labels={'value': 'Contract Count', 'variable': 'Status'}
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.subheader("Weekly Performance")
-            # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
-            # --- Performance Trends Tab ---
-with tab2:
-    st.subheader("Monthly Performance Trends")
-    
-    if 'ENROLLED_DATE' in df_filtered.columns:
-        # Create monthly data with status breakdown
-        monthly_data = df_filtered.groupby(['MONTH_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
-        
-        # Ensure all status columns exist
-        for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
-            if status not in monthly_data.columns:
-                monthly_data[status] = 0
-        
-        # Calculate total contracts and success rate
-        monthly_data['Total'] = monthly_data['ACTIVE'] + monthly_data['NSF'] + monthly_data['CANCELLED'] + monthly_data['OTHER']
-        monthly_data['Success_Rate'] = (monthly_data['ACTIVE'] / monthly_data['Total']) * 100
-        
-        # Sort by month-year
-        monthly_data['Sort_Key'] = pd.to_datetime(monthly_data['MONTH_YEAR'] + '-01')
-        monthly_data = monthly_data.sort_values('Sort_Key')
-        
-        fig = px.line(
-            monthly_data,
-            x='MONTH_YEAR',
-            y='Success_Rate',
-            title="Monthly Success Rate Trend",
-            labels={'MONTH_YEAR': 'Month', 'Success_Rate': 'Success Rate (%)'},
-            markers=True
-        )
-        st.plotly_chart(fig, use_container_width=True)
-             
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Contract Status Over Time")
-            fig = px.area(
-                monthly_data,
-                x='MONTH_YEAR',
-                y=['ACTIVE', 'NSF', 'CANCELLED', 'OTHER'],
-                title="Contract Status Distribution Over Time",
-                labels={'value': 'Contract Count', 'variable': 'Status'}
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.subheader("Weekly Performance")
-            try:
-                # Use a simpler approach for weekly data
-                weekly_df = df_filtered.copy()
-                weekly_df['Week'] = weekly_df['ENROLLED_DATE'].dt.strftime('%Y-W%U')
-                weekly_counts = weekly_df.groupby(['Week', 'CATEGORY']).size().reset_index(name='Count')
-                
-                # Create a pivot table
-                weekly_pivot = weekly_counts.pivot(index='Week', columns='CATEGORY', values='Count').fillna(0)
-                
-                # Ensure all status columns exist
-                for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
-                    if status not in weekly_pivot.columns:
-                        weekly_pivot[status] = 0
-                        
-                # Calculate success rate
-                weekly_pivot['Total'] = weekly_pivot.sum(axis=1)
-                weekly_pivot['Success_Rate'] = (weekly_pivot['ACTIVE'] / weekly_pivot['Total'] * 100)
-                
-                # Create the chart
-                fig = px.line(
-                    weekly_pivot.reset_index(),
-                    x='Week',
-                    y='Success_Rate',
-                    title="Weekly Success Rate",
-                    labels={'Week': 'Week', 'Success_Rate': 'Success Rate (%)'}
-                )
-                fig.update_layout(xaxis_tickangle=-45)
-                st.plotly_chart(fig, use_container_width=True)
-            except Exception as e:
-                st.error(f"Error generating weekly chart: {e}")
-                st.info("Weekly performance data not available."), weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
-
-with col2:
-            st.subheader("Weekly Performance")
-            # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
-            weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
+        try:
+            # Create monthly data with status breakdown
+            monthly_data = df_filtered.groupby(['MONTH_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
             
             # Ensure all status columns exist
             for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
-                if status not in weekly_data.columns:
-                    weekly_data[status] = 0
+                if status not in monthly_data.columns:
+                    monthly_data[status] = 0
             
-            # Calculate total and success rate
-            weekly_data['Total'] = weekly_data['ACTIVE'] + weekly_data['NSF'] + weekly_data['CANCELLED'] + weekly_data['OTHER']
-            weekly_data['Success_Rate'] = (weekly_data['ACTIVE'] / weekly_data['Total']) * 100
-                        
+            # Calculate total contracts and success rate
+            monthly_data['Total'] = monthly_data['ACTIVE'] + monthly_data['NSF'] + monthly_data['CANCELLED'] + monthly_data['OTHER']
+            monthly_data['Success_Rate'] = (monthly_data['ACTIVE'] / monthly_data['Total']) * 100
+            
+            # Sort by month-year
+            monthly_data['Sort_Key'] = pd.to_datetime(monthly_data['MONTH_YEAR'] + '-01')
+            monthly_data = monthly_data.sort_values('Sort_Key')
+            
             fig = px.line(
-                weekly_data,
-                x='WEEK_YEAR',
+                monthly_data,
+                x='MONTH_YEAR',
                 y='Success_Rate',
-                title="Weekly Success Rate",
-                labels={'WEEK_YEAR': 'Week', 'Success_Rate': 'Success Rate (%)'},
+                title="Monthly Success Rate Trend",
+                labels={'MONTH_YEAR': 'Month', 'Success_Rate': 'Success Rate (%)'},
                 markers=True
             )
-            fig.update_layout(xaxis_tickangle=-45)
             st.plotly_chart(fig, use_container_width=True)
+                 
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader("Contract Status Over Time")
+                try:
+                    fig = px.area(
+                        monthly_data,
+                        x='MONTH_YEAR',
+                        y=['ACTIVE', 'NSF', 'CANCELLED', 'OTHER'],
+                        title="Contract Status Distribution Over Time",
+                        labels={'value': 'Contract Count', 'variable': 'Status'}
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error generating status over time chart: {e}")
+                    st.info("Could not generate status over time chart.")
+            
+            with col2:
+                st.subheader("Weekly Performance")
+                try:
+                    # Use a simpler approach for weekly data
+                    weekly_df = df_filtered.copy()
+                    weekly_df['Week'] = weekly_df['ENROLLED_DATE'].dt.strftime('%Y-W%U')
+                    weekly_counts = weekly_df.groupby(['Week', 'CATEGORY']).size().reset_index(name='Count')
+                    
+                    # Create a pivot table
+                    weekly_pivot = weekly_counts.pivot(index='Week', columns='CATEGORY', values='Count').fillna(0)
+                    
+                    # Ensure all status columns exist
+                    for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
+                        if status not in weekly_pivot.columns:
+                            weekly_pivot[status] = 0
+                            
+                    # Calculate success rate
+                    weekly_pivot['Total'] = weekly_pivot.sum(axis=1)
+                    weekly_pivot['Success_Rate'] = (weekly_pivot['ACTIVE'] / weekly_pivot['Total'] * 100)
+                    
+                    # Create the chart
+                    fig = px.line(
+                        weekly_pivot.reset_index(),
+                        x='Week',
+                        y='Success_Rate',
+                        title="Weekly Success Rate",
+                        labels={'Week': 'Week', 'Success_Rate': 'Success Rate (%)'},
+                        markers=True
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error generating weekly performance chart: {e}")
+                    st.info("Weekly performance data not available.")
+        except Exception as e:
+            st.error(f"Error in performance trends analysis: {e}")
+            st.info("Could not generate performance trends.")
+    else:
+        st.warning("Enrollment date data not available for performance trends analysis.")
 
 # --- Agent Analytics Tab ---
 with tab3:
     st.subheader("Agent Performance Analytics")
-    import base64
-import streamlit as st
-from pathlib import Path
-
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-def set_png_as_page_bg(png_file):
-    try:
-        bin_str = get_base64_of_bin_file(png_file)
-        page_bg_img = f'''
-        <style>
-        .stApp {{
-            background-image: url("data:image/png;base64,{bin_str}");
-            background-size: cover;
-            background-attachment: fixed;
-        }}
-        </style>
-        '''
-        st.markdown(page_bg_img, unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Error setting background: {e}")
-        # Fallback to a gradient
-        st.markdown("""
-        <style>
-        .stApp {
-            background: linear-gradient(to bottom right, #121212, #2D3436);
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-# Try to set background image
-try:
-    set_png_as_page_bg('assets/pepe-background.png')
-except:
-    # Fallback if image not found
-    st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(to bottom right, #121212, #2D3436);
-    }
-    </style>with col2:
-    st.subheader("Weekly Performance")
-    try:
-        # Use a simpler approach for weekly data
-        if 'ENROLLED_DATE' in df_filtered.columns:
-            # Group by week and get counts
-            weekly_df = df_filtered.copy()
-            weekly_df['Week'] = weekly_df['ENROLLED_DATE'].dt.strftime('%Y-W%U')
-            weekly_counts = weekly_df.groupby(['Week', 'CATEGORY']).size().reset_index(name='Count')
-            
-            # Create a pivot table
-            weekly_pivot = weekly_counts.pivot(index='Week', columns='CATEGORY', values='Count').fillna(0)
-            
-            # Ensure all status columns exist
-            for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
-                if status not in weekly_pivot.columns:
-                    weekly_pivot[status] = 0
-                    
-            # Calculate success rate
-            weekly_pivot['Total'] = weekly_pivot.sum(axis=1)
-            weekly_pivot['Success_Rate'] = (weekly_pivot['ACTIVE'] / weekly_pivot['Total'] * 100)
-            
-            # Create the chart
-            fig = px.line(
-                weekly_pivot.reset_index(),
-                x='Week',
-                y='Success_Rate',
-                title="Weekly Success Rate",
-                labels={'Week': 'Week', 'Success_Rate': 'Success Rate (%)'}
-            )
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No date information available for weekly analysis.")
-    except Exception as e:
-        st.error(f"Error: {e}")
-        st.info("Weekly performance data not available.")
-    """, unsafe_allow_html=True)
+    
     if 'AGENT' not in df_filtered.columns:
         st.warning("No 'AGENT' column found in dataset.")
     else:
-        agents = df_filtered['AGENT'].dropna().unique()
-        selected_agent = st.selectbox("Select agent:", sorted(agents))
-        
-        agent_df = df_filtered[df_filtered['AGENT'] == selected_agent]
-        agent_active = agent_df[agent_df['CATEGORY'] == 'ACTIVE']
-        agent_nsf = agent_df[agent_df['CATEGORY'] == 'NSF']
-        agent_cancelled = agent_df[agent_df['CATEGORY'] == 'CANCELLED']
-        
-        col1, col2, col3, col4, col5 = st.columns(5)
-        col1.metric("Total Contracts", len(agent_df))
-        col2.metric("Active", len(agent_active))
-        col3.metric("NSF", len(agent_nsf))
-        col4.metric("Cancelled", len(agent_cancelled))
-        col5.metric("Success Rate", f"{(len(agent_active)/len(agent_df)*100):.1f}%" if len(agent_df) > 0 else "N/A")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Agent's Status Distribution")
-            status_counts = agent_df['CATEGORY'].value_counts()
-            fig = px.pie(
-                status_counts, 
-                values=status_counts.values, 
-                names=status_counts.index,
-                hole=0.4,
-                title=f"Status Distribution for {selected_agent}"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.subheader("Performance Timeline")
-            if 'ENROLLED_DATE' in agent_df.columns:
-                agent_timeline = agent_df.set_index('ENROLLED_DATE').resample('W').size().reset_index(name='Contracts')
-                fig = px.line(
-                    agent_timeline,
-                    x='ENROLLED_DATE',
-                    y='Contracts',
-                    title="Weekly Contract Volume",
-                    labels={'ENROLLED_DATE': 'Date', 'Contracts': 'Contracts'},
-                    markers=True
+        try:
+            agents = df_filtered['AGENT'].dropna().unique()
+            selected_agent = st.selectbox("Select agent:", sorted(agents))
+            
+            agent_df = df_filtered[df_filtered['AGENT'] == selected_agent]
+            agent_active = agent_df[agent_df['CATEGORY'] == 'ACTIVE']
+            agent_nsf = agent_df[agent_df['CATEGORY'] == 'NSF']
+            agent_cancelled = agent_df[agent_df['CATEGORY'] == 'CANCELLED']
+            
+            col1, col2, col3, col4, col5 = st.columns(5)
+            col1.metric("Total Contracts", len(agent_df))
+            col2.metric("Active", len(agent_active))
+            col3.metric("NSF", len(agent_nsf))
+            col4.metric("Cancelled", len(agent_cancelled))
+            col5.metric("Success Rate", f"{(len(agent_active)/len(agent_df)*100):.1f}%" if len(agent_df) > 0 else "N/A")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader("Agent's Status Distribution")
+                status_counts = agent_df['CATEGORY'].value_counts()
+                fig = px.pie(
+                    status_counts, 
+                    values=status_counts.values, 
+                    names=status_counts.index,
+                    hole=0.4,
+                    title=f"Status Distribution for {selected_agent}"
                 )
                 st.plotly_chart(fig, use_container_width=True)
-        
-        # Generate and download report
-        st.subheader("Contract Details")
-        st.dataframe(agent_df.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
-        
-        # Excel report
-        excel_bytes = generate_agent_report_excel(agent_df, selected_agent)
-        st.download_button(
-            label="📊 Download Agent Report (Excel)",
-            data=excel_bytes,
-            file_name=f"{selected_agent}_performance_report.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            
+            with col2:
+                st.subheader("Performance Timeline")
+                if 'ENROLLED_DATE' in agent_df.columns:
+                    try:
+                        agent_timeline = agent_df.set_index('ENROLLED_DATE').resample('W').size().reset_index(name='Contracts')
+                        fig = px.line(
+                            agent_timeline,
+                            x='ENROLLED_DATE',
+                            y='Contracts',
+                            title="Weekly Contract Volume",
+                            labels={'ENROLLED_DATE': 'Date', 'Contracts': 'Contracts'},
+                            markers=True
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    except Exception as e:
+                        st.error(f"Error generating agent timeline: {e}")
+                        st.info("Could not generate agent timeline.")
+            
+            # Generate and download report
+            st.subheader("Contract Details")
+            st.dataframe(agent_df.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+            
+            # Excel report
+            try:
+                excel_bytes = generate_agent_report_excel(agent_df, selected_agent)
+                st.download_button(
+                    label="📊 Download Agent Report (Excel)",
+                    data=excel_bytes,
+                    file_name=f"{selected_agent}_performance_report.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            except Exception as e:
+                st.error(f"Error generating Excel report: {e}")
+                st.info("Could not generate Excel report.")
+        except Exception as e:
+            st.error(f"Error in agent analytics: {e}")
+            st.info("Could not load agent analytics.")
 
 # --- Data Explorer Tab ---
 with tab4:
     st.subheader("Data Exploration")
     
-    # Column selection
-    default_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY', 'SOURCE_SHEET']
-    available_cols = [col for col in df_filtered.columns if col in default_cols] or df_filtered.columns.tolist()
-    selected_cols = st.multiselect("Select columns:", df_filtered.columns.tolist(), default=available_cols)
-    
-    if selected_cols:
-        # Filter options
-        st.subheader("Additional Filters")
+    try:
+        # Column selection
+        default_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY', 'SOURCE_SHEET']
+        available_cols = [col for col in df_filtered.columns if col in default_cols] or df_filtered.columns.tolist()
+        selected_cols = st.multiselect("Select columns:", df_filtered.columns.tolist(), default=available_cols)
         
-        # Agent filter for data explorer
-        if 'AGENT' in selected_cols:
-            agent_filter = st.multiselect(
-                "Filter by Agent:", 
-                options=["All"] + sorted(df_filtered['AGENT'].unique().tolist()),
-                default=["All"]
-            )
+        if selected_cols:
+            # Filter options
+            st.subheader("Additional Filters")
             
-            if "All" not in agent_filter:
-                df_explorer = df_filtered[df_filtered['AGENT'].isin(agent_filter)]
+            # Agent filter for data explorer
+            if 'AGENT' in selected_cols:
+                agent_filter = st.multiselect(
+                    "Filter by Agent:", 
+                    options=["All"] + sorted(df_filtered['AGENT'].unique().tolist()),
+                    default=["All"]
+                )
+                
+                if "All" not in agent_filter:
+                    df_explorer = df_filtered[df_filtered['AGENT'].isin(agent_filter)]
+                else:
+                    df_explorer = df_filtered
             else:
                 df_explorer = df_filtered
-        else:
-            df_explorer = df_filtered
-        
-        # Display data with conditional formatting
-        st.subheader("Filtered Data")
-        
-        # Create a styled dataframe with conditional formatting for status
-        def highlight_status(val):
-            if val == 'ACTIVE':
-                return 'background-color: rgba(76, 175, 80, 0.2)'
-            elif val == 'NSF':
-                return 'background-color: rgba(255, 165, 0, 0.2)'
-            elif val == 'CANCELLED':
-                return 'background-color: rgba(255, 99, 71, 0.2)'
-            return ''
-        
-        # Apply styling if CATEGORY column is selected
-        if 'CATEGORY' in selected_cols:
-            styled_df = df_explorer[selected_cols].style.applymap(
-                highlight_status, subset=['CATEGORY']
-            )
-            st.dataframe(styled_df, use_container_width=True)
-        else:
+            
+            # Display data with conditional formatting
+            st.subheader("Filtered Data")
+            
+            # Display dataframe without styling (more compatible)
             st.dataframe(df_explorer[selected_cols], use_container_width=True)
-        
-        # Export options
-        st.subheader("Export Data")
-        export_format = st.radio("Select format:", ["CSV", "Excel"])
-        filename = f"pepe_sales_data_{start}_{end}"
-        
-        if export_format == "CSV":
-            csv = df_explorer[selected_cols].to_csv(index=False).encode()
-            st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
+            
+            # Export options
+            st.subheader("Export Data")
+            export_format = st.radio("Select format:", ["CSV", "Excel"])
+            filename = f"pepe_sales_data_{start}_{end}"
+            
+            if export_format == "CSV":
+                csv = df_explorer[selected_cols].to_csv(index=False).encode()
+                st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
+            else:
+                excel_buffer = BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                    df_explorer[selected_cols].to_excel(writer, index=False)
+                excel_buffer.seek(0)
+                st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
+                                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         else:
-            excel_buffer = BytesIO()
-            with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-                df_explorer[selected_cols].to_excel(writer, index=False)
-            excel_buffer.seek(0)
-            st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
-                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    else:
-        st.warning("Please select at least one column to display")
+            st.warning("Please select at least one column to display")
+    except Exception as e:
+        st.error(f"Error in data explorer: {e}")
+        st.info("Could not load data explorer.")
 
 # --- Risk Analysis Tab ---
 with tab5:
     st.subheader("Risk Analysis")
     
-    # Filter for problematic contracts
-    flagged = df_filtered[df_filtered['CATEGORY'].isin(["NSF", "CANCELLED", "OTHER"])]
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Cancellation Reasons")
-        if 'STATUS' in flagged.columns:
-            # Get top 10 status reasons
-            status_counts = flagged['STATUS'].value_counts().head(10).reset_index()
-            status_counts.columns = ['Status', 'Count']
-            fig = px.bar(
-                status_counts, 
-                x='Status', 
-                y='Count',
-                title="Top Cancellation Reasons",
-                color='Count',
-                color_continuous_scale='OrRd'
-            )
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("Agents with Most Issues")
-        if 'AGENT' in flagged.columns:
-            agent_issues = flagged.groupby('AGENT').size().reset_index(name='Issue_Count')
-            agent_issues = agent_issues.sort_values('Issue_Count', ascending=False).head(10)
-            fig = px.bar(
-                agent_issues,
-                x='AGENT',
-                y='Issue_Count',
-                title="Top Agents by Issue Count",
-                color='Issue_Count',
-                color_continuous_scale='OrRd'
-            )
-            fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
-    
-    # Risk analysis by time
-    st.subheader("Risk Trends Over Time")
-    if 'ENROLLED_DATE' in flagged.columns:
-        # Monthly risk trend
-        monthly_risk = flagged.set_index('ENROLLED_DATE').resample('M').size().reset_index(name='Issues')
-        monthly_risk['Month'] = monthly_risk['ENROLLED_DATE'].dt.strftime('%Y-%m')
+    try:
+        # Filter for problematic contracts
+        flagged = df_filtered[df_filtered['CATEGORY'].isin(["NSF", "CANCELLED", "OTHER"])]
         
-        fig = px.line(
-            monthly_risk,
-            x='Month',
-            y='Issues',
-            title="Monthly Issue Volume",
-            markers=True
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    
-    st.subheader("Problem Contracts")
-    st.dataframe(flagged.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
-    
-    # Export flagged data
-    csv_flagged = flagged.to_csv(index=False).encode()
-    st.download_button("📤 Download Risk Data", csv_flagged, file_name="risk_contracts.csv", mime="text/csv")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Cancellation Reasons")
+            if 'STATUS' in flagged.columns and not flagged.empty:
+                try:
+                    # Get top 10 status reasons
+                    status_counts = flagged['STATUS'].value_counts().head(10).reset_index()
+                    status_counts.columns = ['Status', 'Count']
+                    fig = px.bar(
+                        status_counts, 
+                        x='Status', 
+                        y='Count',
+                        title="Top Cancellation Reasons",
+                        color='Count',
+                        color_continuous_scale='OrRd'
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error generating cancellation reasons chart: {e}")
+                    st.info("Could not generate cancellation reasons chart.")
+            else:
+                st.info("No cancellation data available.")
+        
+        with col2:
+            st.subheader("Agents with Most Issues")
+            if 'AGENT' in flagged.columns and not flagged.empty:
+                try:
+                    agent_issues = flagged.groupby('AGENT').size().reset_index(name='Issue_Count')
+                    agent_issues = agent_issues.sort_values('Issue_Count', ascending=False).head(10)
+                    fig = px.bar(
+                        agent_issues,
+                        x='AGENT',
+                        y='Issue_Count',
+                        title="Top Agents by Issue Count",
+                        color='Issue_Count',
+                        color_continuous_scale='OrRd'
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error generating agents with issues chart: {e}")
+                    st.info("Could not generate agents with issues chart.")
+            else:
+                st.info("No agent issue data available.")
+        
+        # Risk analysis by time
+        st.subheader("Risk Trends Over Time")
+        if 'ENROLLED_DATE' in flagged.columns and not flagged.empty:
+            try:
+                # Monthly risk trend - using 'ME' instead of 'M' to avoid deprecation warning
+                monthly_risk = flagged.set_index('ENROLLED_DATE').resample('ME').size().reset_index(name='Issues')
+                monthly_risk['Month'] = monthly_risk['ENROLLED_DATE'].dt.strftime('%Y-%m')
+                
+                fig = px.line(
+                    monthly_risk,
+                    x='Month',
+                    y='Issues',
+                    title="Monthly Issue Volume",
+                    markers=True
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.error(f"Error generating risk trends chart: {e}")
+                st.info("Could not generate risk trends chart.")
+        else:
+            st.info("No time-based risk data available.")
+        
+        st.subheader("Problem Contracts")
+        if not flagged.empty:
+            st.dataframe(flagged.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+            
+            # Export flagged data
+            csv_flagged = flagged.to_csv(index=False).encode()
+            st.download_button("📤 Download Risk Data", csv_flagged, file_name="risk_contracts.csv", mime="text/csv")
+        else:
+            st.info("No problem contracts found in the selected data.")
+    except Exception as e:
+        st.error(f"Error in risk analysis: {e}")
+        st.info("Could not load risk analysis.")
 
 # --- Footer ---
 st.markdown("---")
-st.caption(f"© 2025 Pepe's Power Solutions | Dashboard v2.3 | Data updated {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+st.caption(f"© 2025 Pepe's Power Solutions | Dashboard v2.5 | Data updated {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
 # --- Notifications ---
 st.toast("Dashboard loaded successfully!", icon="🐸")
