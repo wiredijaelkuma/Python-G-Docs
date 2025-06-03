@@ -695,7 +695,8 @@ with tab2:
         with col2:
             st.subheader("Weekly Performance")
             # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
-            weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_
+            weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
+
 with col2:
             st.subheader("Weekly Performance")
             # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
@@ -767,7 +768,43 @@ except:
     .stApp {
         background: linear-gradient(to bottom right, #121212, #2D3436);
     }
-    </style>
+    </style>with col2:
+    st.subheader("Weekly Performance")
+    try:
+        # Use a simpler approach for weekly data
+        if 'ENROLLED_DATE' in df_filtered.columns:
+            # Group by week and get counts
+            weekly_df = df_filtered.copy()
+            weekly_df['Week'] = weekly_df['ENROLLED_DATE'].dt.strftime('%Y-W%U')
+            weekly_counts = weekly_df.groupby(['Week', 'CATEGORY']).size().reset_index(name='Count')
+            
+            # Create a pivot table
+            weekly_pivot = weekly_counts.pivot(index='Week', columns='CATEGORY', values='Count').fillna(0)
+            
+            # Ensure all status columns exist
+            for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
+                if status not in weekly_pivot.columns:
+                    weekly_pivot[status] = 0
+                    
+            # Calculate success rate
+            weekly_pivot['Total'] = weekly_pivot.sum(axis=1)
+            weekly_pivot['Success_Rate'] = (weekly_pivot['ACTIVE'] / weekly_pivot['Total'] * 100)
+            
+            # Create the chart
+            fig = px.line(
+                weekly_pivot.reset_index(),
+                x='Week',
+                y='Success_Rate',
+                title="Weekly Success Rate",
+                labels={'Week': 'Week', 'Success_Rate': 'Success Rate (%)'}
+            )
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No date information available for weekly analysis.")
+    except Exception as e:
+        st.error(f"Error: {e}")
+        st.info("Weekly performance data not available.")
     """, unsafe_allow_html=True)
     if 'AGENT' not in df_filtered.columns:
         st.warning("No 'AGENT' column found in dataset.")
