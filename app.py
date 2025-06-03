@@ -26,7 +26,7 @@ BANNER_IMAGE = ASSETS_DIR / "pepe-sunset-banner.png"
 LOGO_IMAGE = ASSETS_DIR / "pepe-rocket.png"
 
 # --- Helper Functions ---
-@st.cache_data
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def load_image_base64(path):
     """Load image and convert to base64 with error handling"""
     try:
@@ -36,7 +36,7 @@ def load_image_base64(path):
         st.warning(f"Image not found: {path}. Error: {e}")
         return None
 
-@st.cache_data
+@st.cache_data(ttl=900)  # Cache for 15 minutes
 def load_data():
     """Load and preprocess data with robust error handling"""
     try:
@@ -233,6 +233,11 @@ with st.sidebar:
     except:
         st.title("🚀 Pepe's Power")
     
+    # Add refresh data button
+    if st.button("🔄 Refresh Data"):
+        st.cache_data.clear()
+        st.experimental_rerun()
+    
     # Data source section - only show this if no data is loaded yet
     if 'df' not in st.session_state:
         st.header("Data Source")
@@ -396,6 +401,11 @@ if df.empty:
 # Store data in session state
 st.session_state['df'] = df
 
+# --- Debug Information ---
+# Uncomment for debugging
+# st.write("Data date range:", df['ENROLLED_DATE'].min(), "to", df['ENROLLED_DATE'].max())
+# st.write("Today's date:", datetime.now().date())
+
 # --- Sidebar Controls ---
 with st.sidebar:
     st.title("Dashboard Controls")
@@ -404,7 +414,8 @@ with st.sidebar:
     st.subheader("Date Range")
     today = datetime.now().date()
     min_date = df['ENROLLED_DATE'].min().date() if 'ENROLLED_DATE' in df.columns else date(2024, 10, 1)
-    max_date = df['ENROLLED_DATE'].max().date() if 'ENROLLED_DATE' in df.columns else today
+    # Always allow selection up to today regardless of data
+    max_date = max(df['ENROLLED_DATE'].max().date() if 'ENROLLED_DATE' in df.columns else date(2024, 10, 1), today)
     start = st.date_input("Start Date", max_date - timedelta(days=30), min_value=min_date, max_value=max_date)
     end = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date)
     
@@ -681,7 +692,6 @@ with tab2:
             # Sort by month-year
             monthly_data['Sort_Key'] = pd.to_datetime(monthly_data['MONTH_YEAR'] + '-01')
             monthly_data = monthly_data.sort_values('Sort_Key')
-            
             fig = px.line(
                 monthly_data,
                 x='MONTH_YEAR',
@@ -973,3 +983,15 @@ st.caption(f"© 2025 Pepe's Power Solutions | Dashboard v2.5 | Data updated {dat
 
 # --- Notifications ---
 st.toast("Dashboard loaded successfully!", icon="🐸")
+
+# --- Debug Mode ---
+debug_mode = st.sidebar.checkbox("Show Debug Info", False)
+if debug_mode:
+    st.sidebar.subheader("Debug Information")
+    st.sidebar.write("App Version: 2.5.1")
+    st.sidebar.write("Current Time:", datetime.now())
+    if 'ENROLLED_DATE' in df.columns:
+        st.sidebar.write("Data Date Range:", df['ENROLLED_DATE'].min().date(), "to", df['ENROLLED_DATE'].max().date())
+    st.sidebar.write("Total Records:", len(df))
+    st.sidebar.write("Filtered Records:", len(df_filtered))
+
