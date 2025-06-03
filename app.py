@@ -764,7 +764,12 @@ except:
     # Fallback if image not found
     st.markdown("""
     <style>
-    .stApp {
+    .stApp {# Near the beginning of your data processing
+if 'ENROLLED_DATE' in df.columns and 'WEEK_YEAR' not in df.columns:
+    # Create WEEK_YEAR column
+    df['WEEK'] = df['ENROLLED_DATE'].dt.isocalendar().week
+    df['YEAR'] = df['ENROLLED_DATE'].dt.isocalendar().year
+    df['WEEK_YEAR'] = df['YEAR'].astype(str) + '-W' + df['WEEK'].astype(str).str.zfill(2)
         background: linear-gradient(to bottom right, #121212, #2D3436);
     }
     </style>
