@@ -9,24 +9,15 @@ import base64
 from io import BytesIO
 import calendar
 
-# --- Constants ---
-# For Streamlit Cloud compatibility, we'll use relative paths
-BACKGROUND_IMAGE = "pepe-background.png"  # Put these files in the same directory as app.py
-BANNER_IMAGE = "pepe-sunset-banner.png"
-LOGO_IMAGE = "pepe-rocket.png"
+# --- Set page configuration first (must be the first Streamlit command) ---
+st.set_page_config(
+    layout="wide", 
+    page_title="Pepe's Power Dashboard", 
+    page_icon="🐸",
+    initial_sidebar_state="expanded"
+)
 
 # --- Helper Functions ---
-@st.cache_data
-def load_image_base64(path):
-    """Load image and convert to base64 with error handling"""
-    try:
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except Exception as e:
-        st.warning(f"Image not found: {path}")
-        return None
-
-@st.cache_data
 def load_data():
     """Load and preprocess data with robust error handling"""
     try:
@@ -214,14 +205,6 @@ def get_week_date_range(week_date):
     end_of_week = start_of_week + timedelta(days=6)
     return start_of_week, end_of_week
 
-# --- UI Configuration ---
-st.set_page_config(
-    layout="wide", 
-    page_title="Pepe's Power Dashboard", 
-    page_icon="🐸",
-    initial_sidebar_state="expanded"
-)
-
 # --- File Uploader in Sidebar for Data Source ---
 with st.sidebar:
     st.title("🐸 Pepe's Power")
@@ -234,82 +217,65 @@ with st.sidebar:
             st.session_state['uploaded_file'] = uploaded_file
             st.success("✅ File uploaded successfully!")
 
-# --- Load Assets ---
-bg_img_base64 = load_image_base64(BACKGROUND_IMAGE)
-banner_img_base64 = load_image_base64(BANNER_IMAGE)
-logo_img_base64 = load_image_base64(LOGO_IMAGE)
-
 # --- Custom CSS ---
-st.markdown(f"""
+st.markdown("""
 <style>
-    div.stApp {{
-        background: url("data:image/png;base64,{bg_img_base64 if bg_img_base64 else ''}") center center fixed;
-        background-size: cover;
-    }}
-    .main-container {{
+    .main-container {
         background-color: rgba(0, 0, 0, 0.85) !important;
         padding: 2rem;
         border-radius: 15px;
         box-shadow: 0 8px 30px rgba(0,0,0,0.8);
         color: #f1f1f1;
         margin-bottom: 2rem;
-    }}
-    .banner-container {{
+    }
+    .banner-container {
         position: sticky;
         top: 0;
         z-index: 1000;
         margin-bottom: 1.5rem;
         border-bottom: 2px solid #4CAF50;
-    }}
-    .metric-card {{
+    }
+    .metric-card {
         background-color: rgba(40, 40, 40, 0.7);
         border-radius: 10px;
         padding: 15px;
         text-align: center;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         transition: transform 0.3s;
-    }}
-    .metric-card:hover {{
+    }
+    .metric-card:hover {
         transform: translateY(-5px);
         background-color: rgba(50, 50, 50, 0.8);
-    }}
-    .metric-title {{
+    }
+    .metric-title {
         font-size: 1rem;
         color: #a5d6a7;
         margin-bottom: 5px;
-    }}
-    .metric-value {{
+    }
+    .metric-value {
         font-size: 1.8rem;
         font-weight: bold;
         color: #4CAF50;
-    }}
-    .stTabs [data-baseweb="tab-list"] {{
+    }
+    .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
-    }}
-    .stTabs [data-baseweb="tab"] {{
+    }
+    .stTabs [data-baseweb="tab"] {
         padding: 10px 20px;
         border-radius: 8px !important;
         background-color: rgba(30, 30, 30, 0.7) !important;
         transition: all 0.3s;
-    }}
-    .stTabs [aria-selected="true"] {{
+    }
+    .stTabs [aria-selected="true"] {
         background-color: #4CAF50 !important;
         color: white !important;
-    }}
-    footer {{visibility: hidden;}}
-    .highlight-active {{ background-color: rgba(76, 175, 80, 0.2) !important; }}
-    .highlight-nsf {{ background-color: rgba(255, 165, 0, 0.2) !important; }}
-    .highlight-cancelled {{ background-color: rgba(255, 99, 71, 0.2) !important; }}
+    }
+    footer {visibility: hidden;}
+    .highlight-active { background-color: rgba(76, 175, 80, 0.2) !important; }
+    .highlight-nsf { background-color: rgba(255, 165, 0, 0.2) !important; }
+    .highlight-cancelled { background-color: rgba(255, 99, 71, 0.2) !important; }
 </style>
 """, unsafe_allow_html=True)
-
-# --- Banner ---
-if banner_img_base64:
-    st.markdown(f"""
-    <div class="banner-container">
-        <img src="data:image/png;base64,{banner_img_base64}" style="width:100%; border-radius:0 0 10px 10px;"/>
-    </div>
-    """, unsafe_allow_html=True)
 
 # --- Data Loading ---
 with st.spinner("🔍 Loading data..."):
@@ -328,8 +294,8 @@ st.session_state['df'] = df
 
 # --- Sidebar Controls ---
 with st.sidebar:
-    st.image(LOGO_IMAGE, width=200)
-    st.title("Dashboard Controls")
+    # Use text instead of image to avoid file not found errors
+    st.title("🚀 Dashboard Controls")
     
     # Date Range Selector
     st.subheader("Date Range")
@@ -581,35 +547,252 @@ with tab1:
 
 # --- Performance Trends Tab ---
 with tab2:
-    # Rest of your code for tab2...
-    # I'll include just the structure to save space
     st.subheader("Monthly Performance Trends")
-    # ... (your existing code for tab2)
+    
+    if 'ENROLLED_DATE' in df_filtered.columns:
+        # Create monthly data with status breakdown
+        monthly_data = df_filtered.groupby(['MONTH_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
+        
+        # Ensure all status columns exist
+        for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
+            if status not in monthly_data.columns:
+                monthly_data[status] = 0
+        
+        # Calculate total contracts and success rate
+        monthly_data['Total'] = monthly_data['ACTIVE'] + monthly_data['NSF'] + monthly_data['CANCELLED'] + monthly_data['OTHER']
+        monthly_data['Success_Rate'] = (monthly_data['ACTIVE'] / monthly_data['Total']) * 100
+        
+        # Sort by month-year
+        monthly_data['Sort_Key'] = pd.to_datetime(monthly_data['MONTH_YEAR'] + '-01')
+        monthly_data = monthly_data.sort_values('Sort_Key')
+        
+        fig = px.line(
+            monthly_data,
+            x='MONTH_YEAR',
+            y='Success_Rate',
+            title="Monthly Success Rate Trend",
+            labels={'MONTH_YEAR': 'Month', 'Success_Rate': 'Success Rate (%)'},
+            markers=True
+        )
+        st.plotly_chart(fig, use_container_width=True)
+             
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Contract Status Over Time")
+            fig = px.area(
+                monthly_data,
+                x='MONTH_YEAR',
+                y=['ACTIVE', 'NSF', 'CANCELLED', 'OTHER'],
+                title="Contract Status Distribution Over Time",
+                labels={'value': 'Contract Count', 'variable': 'Status'}
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.subheader("Weekly Performance")
+            # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
+            weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
+            
+            # Ensure all status columns exist
+            for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
+                if status not in weekly_data.columns:
+                    weekly_data[status] = 0
+            
+            # Calculate total and success rate
+            weekly_data['Total'] = weekly_data['ACTIVE'] + weekly_data['NSF'] + weekly_data['CANCELLED'] + weekly_data['OTHER']
+            weekly_data['Success_Rate'] = (weekly_data['ACTIVE'] / weekly_data['Total']) * 100
+                        
+            fig = px.line(
+                weekly_data,
+                x='WEEK_YEAR',
+                y='Success_Rate',
+                title="Weekly Success Rate",
+                labels={'WEEK_YEAR': 'Week', 'Success_Rate': 'Success Rate (%)'},
+                markers=True
+            )
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
 
 # --- Agent Analytics Tab ---
 with tab3:
-    # Rest of your code for tab3...
-    # I'll include just the structure to save space
     st.subheader("Agent Performance Analytics")
-    # ... (your existing code for tab3)
+    
+    if 'AGENT' not in df_filtered.columns:
+        st.warning("No 'AGENT' column found in dataset.")
+    else:
+        agents = df_filtered['AGENT'].dropna().unique()
+        selected_agent = st.selectbox("Select agent:", sorted(agents))
+        
+        agent_df = df_filtered[df_filtered['AGENT'] == selected_agent]
+        agent_active = agent_df[agent_df['CATEGORY'] == 'ACTIVE']
+        agent_nsf = agent_df[agent_df['CATEGORY'] == 'NSF']
+        agent_cancelled = agent_df[agent_df['CATEGORY'] == 'CANCELLED']
+        
+        col1, col2, col3, col4, col5 = st.columns(5)
+        col1.metric("Total Contracts", len(agent_df))
+        col2.metric("Active", len(agent_active))
+        col3.metric("NSF", len(agent_nsf))
+        col4.metric("Cancelled", len(agent_cancelled))
+        col5.metric("Success Rate", f"{(len(agent_active)/len(agent_df)*100):.1f}%" if len(agent_df) > 0 else "N/A")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Agent's Status Distribution")
+            status_counts = agent_df['CATEGORY'].value_counts()
+            fig = px.pie(
+                status_counts, 
+                values=status_counts.values, 
+                names=status_counts.index,
+                hole=0.4,
+                title=f"Status Distribution for {selected_agent}"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.subheader("Performance Timeline")
+            if 'ENROLLED_DATE' in agent_df.columns:
+                agent_timeline = agent_df.set_index('ENROLLED_DATE').resample('W').size().reset_index(name='Contracts')
+                fig = px.line(
+                    agent_timeline,
+                    x='ENROLLED_DATE',
+                    y='Contracts',
+                    title="Weekly Contract Volume",
+                    labels={'ENROLLED_DATE': 'Date', 'Contracts': 'Contracts'},
+                    markers=True
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        
+        # Generate and download report
+        st.subheader("Contract Details")
+        st.dataframe(agent_df.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+        
+        # Excel report instead of PDF (more compatible with Streamlit Cloud)
+        excel_bytes = generate_agent_report_excel(agent_df, selected_agent)
+        st.download_button(
+            label="📊 Download Agent Report (Excel)",
+            data=excel_bytes,
+            file_name=f"{selected_agent}_performance_report.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
 # --- Data Explorer Tab ---
 with tab4:
-    # Rest of your code for tab4...
-    # I'll include just the structure to save space
     st.subheader("Data Exploration")
-    # ... (your existing code for tab4)
+    
+        # Column selection
+    default_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY', 'SOURCE_SHEET']
+    available_cols = [col for col in df_filtered.columns if col in default_cols] or df_filtered.columns.tolist()
+    selected_cols = st.multiselect("Select columns:", df_filtered.columns.tolist(), default=available_cols)
+    
+    if selected_cols:
+        # Filter options
+        st.subheader("Additional Filters")
+        
+        # Agent filter for data explorer
+        if 'AGENT' in selected_cols:
+            agent_filter = st.multiselect(
+                "Filter by Agent:", 
+                options=["All"] + sorted(df_filtered['AGENT'].unique().tolist()),
+                default=["All"]
+            )
+            
+            if "All" not in agent_filter:
+                df_explorer = df_filtered[df_filtered['AGENT'].isin(agent_filter)]
+            else:
+                df_explorer = df_filtered
+        else:
+            df_explorer = df_filtered
+        
+        # Display data
+        st.subheader("Filtered Data")
+        st.dataframe(df_explorer[selected_cols].sort_values('ENROLLED_DATE' if 'ENROLLED_DATE' in selected_cols else 'CUSTOMER_ID', ascending=False), 
+                    use_container_width=True)
+        
+        # Export options
+        st.subheader("Export Data")
+        export_format = st.radio("Select format:", ["CSV", "Excel"])
+        filename = f"pepe_sales_data_{start}_{end}"
+        
+        if export_format == "CSV":
+            csv = df_explorer[selected_cols].to_csv(index=False).encode()
+            st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
+        else:
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                df_explorer[selected_cols].to_excel(writer, index=False)
+            excel_buffer.seek(0)
+            st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
+                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    else:
+        st.warning("Please select at least one column to display")
 
 # --- Risk Analysis Tab ---
 with tab5:
-    # Rest of your code for tab5...
-    # I'll include just the structure to save space
     st.subheader("Risk Analysis")
-    # ... (your existing code for tab5)
+    
+    # Filter for problematic contracts
+    flagged = df_filtered[df_filtered['CATEGORY'].isin(["NSF", "CANCELLED", "OTHER"])]
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Cancellation Reasons")
+        if 'STATUS' in flagged.columns:
+            # Get top 10 status reasons
+            status_counts = flagged['STATUS'].value_counts().head(10).reset_index()
+            status_counts.columns = ['Status', 'Count']
+            fig = px.bar(
+                status_counts, 
+                x='Status', 
+                y='Count',
+                title="Top Cancellation Reasons",
+                color='Count',
+                color_continuous_scale='OrRd'
+            )
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        st.subheader("Agents with Most Issues")
+        if 'AGENT' in flagged.columns:
+            agent_issues = flagged.groupby('AGENT').size().reset_index(name='Issue_Count')
+            agent_issues = agent_issues.sort_values('Issue_Count', ascending=False).head(10)
+            fig = px.bar(
+                agent_issues,
+                x='AGENT',
+                y='Issue_Count',
+                title="Top Agents by Issue Count",
+                color='Issue_Count',
+                color_continuous_scale='OrRd'
+            )
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Risk analysis by time
+    st.subheader("Risk Trends Over Time")
+    if 'ENROLLED_DATE' in flagged.columns:
+        # Monthly risk trend
+        monthly_risk = flagged.set_index('ENROLLED_DATE').resample('M').size().reset_index(name='Issues')
+        monthly_risk['Month'] = monthly_risk['ENROLLED_DATE'].dt.strftime('%Y-%m')
+        
+        fig = px.line(
+            monthly_risk,
+            x='Month',
+            y='Issues',
+            title="Monthly Issue Volume",
+            markers=True
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    st.subheader("Problem Contracts")
+    st.dataframe(flagged.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+    
+    # Export flagged data
+    csv_flagged = flagged.to_csv(index=False).encode()
+    st.download_button("📤 Download Risk Data", csv_flagged, file_name="risk_contracts.csv", mime="text/csv")
 
 # --- Footer ---
 st.markdown("---")
-st.caption(f"© 2025 Pepe's Power Solutions | Dashboard v2.2 | Data updated {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+st.caption(f"© 2025 Pepe's Power Solutions | Dashboard v2.3 | Data updated {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
 # --- Notifications ---
 st.toast("Dashboard loaded successfully!", icon="🐸")
