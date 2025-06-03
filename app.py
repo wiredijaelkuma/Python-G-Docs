@@ -695,7 +695,82 @@ with tab2:
         with col2:
             st.subheader("Weekly Performance")
             # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
-            weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
+            # --- Performance Trends Tab ---
+with tab2:
+    st.subheader("Monthly Performance Trends")
+    
+    if 'ENROLLED_DATE' in df_filtered.columns:
+        # Create monthly data with status breakdown
+        monthly_data = df_filtered.groupby(['MONTH_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
+        
+        # Ensure all status columns exist
+        for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
+            if status not in monthly_data.columns:
+                monthly_data[status] = 0
+        
+        # Calculate total contracts and success rate
+        monthly_data['Total'] = monthly_data['ACTIVE'] + monthly_data['NSF'] + monthly_data['CANCELLED'] + monthly_data['OTHER']
+        monthly_data['Success_Rate'] = (monthly_data['ACTIVE'] / monthly_data['Total']) * 100
+        
+        # Sort by month-year
+        monthly_data['Sort_Key'] = pd.to_datetime(monthly_data['MONTH_YEAR'] + '-01')
+        monthly_data = monthly_data.sort_values('Sort_Key')
+        
+        fig = px.line(
+            monthly_data,
+            x='MONTH_YEAR',
+            y='Success_Rate',
+            title="Monthly Success Rate Trend",
+            labels={'MONTH_YEAR': 'Month', 'Success_Rate': 'Success Rate (%)'},
+            markers=True
+        )
+        st.plotly_chart(fig, use_container_width=True)
+             
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Contract Status Over Time")
+            fig = px.area(
+                monthly_data,
+                x='MONTH_YEAR',
+                y=['ACTIVE', 'NSF', 'CANCELLED', 'OTHER'],
+                title="Contract Status Distribution Over Time",
+                labels={'value': 'Contract Count', 'variable': 'Status'}
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.subheader("Weekly Performance")
+            try:
+                # Use a simpler approach for weekly data
+                weekly_df = df_filtered.copy()
+                weekly_df['Week'] = weekly_df['ENROLLED_DATE'].dt.strftime('%Y-W%U')
+                weekly_counts = weekly_df.groupby(['Week', 'CATEGORY']).size().reset_index(name='Count')
+                
+                # Create a pivot table
+                weekly_pivot = weekly_counts.pivot(index='Week', columns='CATEGORY', values='Count').fillna(0)
+                
+                # Ensure all status columns exist
+                for status in ['ACTIVE', 'NSF', 'CANCELLED', 'OTHER']:
+                    if status not in weekly_pivot.columns:
+                        weekly_pivot[status] = 0
+                        
+                # Calculate success rate
+                weekly_pivot['Total'] = weekly_pivot.sum(axis=1)
+                weekly_pivot['Success_Rate'] = (weekly_pivot['ACTIVE'] / weekly_pivot['Total'] * 100)
+                
+                # Create the chart
+                fig = px.line(
+                    weekly_pivot.reset_index(),
+                    x='Week',
+                    y='Success_Rate',
+                    title="Weekly Success Rate",
+                    labels={'Week': 'Week', 'Success_Rate': 'Success Rate (%)'}
+                )
+                fig.update_layout(xaxis_tickangle=-45)
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.error(f"Error generating weekly chart: {e}")
+                st.info("Weekly performance data not available."), weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
 
 with col2:
             st.subheader("Weekly Performance")
