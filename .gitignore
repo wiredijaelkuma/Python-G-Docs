@@ -4,5 +4,6 @@ credentials.json
 # Python script
 sheet_analyzer.py
 
+GIT_GUD.code-workspace
 
 .env
