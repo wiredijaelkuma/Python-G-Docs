@@ -724,7 +724,51 @@ with col2:
 # --- Agent Analytics Tab ---
 with tab3:
     st.subheader("Agent Performance Analytics")
-    
+    import base64
+import streamlit as st
+from pathlib import Path
+
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def set_png_as_page_bg(png_file):
+    try:
+        bin_str = get_base64_of_bin_file(png_file)
+        page_bg_img = f'''
+        <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{bin_str}");
+            background-size: cover;
+            background-attachment: fixed;
+        }}
+        </style>
+        '''
+        st.markdown(page_bg_img, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Error setting background: {e}")
+        # Fallback to a gradient
+        st.markdown("""
+        <style>
+        .stApp {
+            background: linear-gradient(to bottom right, #121212, #2D3436);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+# Try to set background image
+try:
+    set_png_as_page_bg('assets/pepe-background.png')
+except:
+    # Fallback if image not found
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(to bottom right, #121212, #2D3436);
+    }
+    </style>
+    """, unsafe_allow_html=True)
     if 'AGENT' not in df_filtered.columns:
         st.warning("No 'AGENT' column found in dataset.")
     else:
