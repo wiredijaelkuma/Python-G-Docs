@@ -8,6 +8,8 @@ from datetime import datetime, date, timedelta
 import base64
 from io import BytesIO
 import calendar
+from pathlib import Path
+import os
 
 # --- Set page configuration first (must be the first Streamlit command) ---
 st.set_page_config(
@@ -17,7 +19,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- Constants ---
+# Define asset paths correctly for Streamlit Cloud
+ASSETS_DIR = Path("assets")
+BACKGROUND_IMAGE = ASSETS_DIR / "pepe-background.png"
+BANNER_IMAGE = ASSETS_DIR / "pepe-sunset-banner.png"
+LOGO_IMAGE = ASSETS_DIR / "pepe-rocket.png"
+
 # --- Helper Functions ---
+@st.cache_data
+def load_image_base64(path):
+    """Load image and convert to base64 with error handling"""
+    try:
+        with open(path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except Exception as e:
+        st.warning(f"Image not found: {path}. Error: {e}")
+        return None
+
+@st.cache_data
 def load_data():
     """Load and preprocess data with robust error handling"""
     try:
@@ -49,19 +69,19 @@ def load_data():
             nsf_terms = ["NSF", "ENROLLED / NSF PROBLEM"]
             cancelled_terms = ["CANCELLED", "DROPPED", "PENDING CANCELLATION", "SUMMONS: PUSH OUT", "NEEDS ROL"]
             
-            df['CATEGORY'] = np.select(
-                [
-                    df['STATUS'].str.contains('|'.join(active_terms), case=False, regex=True),
-                    df['STATUS'].str.contains('|'.join(nsf_terms), case=False, regex=True),
-                    df['STATUS'].str.contains('|'.join(cancelled_terms), case=False, regex=True)
-                ],
-                ['ACTIVE', 'NSF', 'CANCELLED'],
-                default='OTHER'
-            )
+            # Use vectorized operations for better performance
+            df['CATEGORY'] = 'OTHER'  # default value
+            mask_active = df['STATUS'].str.contains('|'.join(active_terms), case=False, regex=True, na=False)
+            mask_nsf = df['STATUS'].str.contains('|'.join(nsf_terms), case=False, regex=True, na=False)
+            mask_cancelled = df['STATUS'].str.contains('|'.join(cancelled_terms), case=False, regex=True, na=False)
+            
+            df.loc[mask_active, 'CATEGORY'] = 'ACTIVE'
+            df.loc[mask_nsf, 'CATEGORY'] = 'NSF'
+            df.loc[mask_cancelled, 'CATEGORY'] = 'CANCELLED'
         
         # Add derived columns for analysis
         if 'ENROLLED_DATE' in df.columns:
-            df['MONTH_YEAR'] = df['ENROLLED_DATE'].dt.to_period('M').astype(str)
+            df['MONTH_YEAR'] = df['ENROLLED_DATE'].dt.strftime('%Y-%m')
             df['WEEK'] = df['ENROLLED_DATE'].dt.isocalendar().week
             df['YEAR'] = df['ENROLLED_DATE'].dt.isocalendar().year
             df['WEEK_YEAR'] = df['YEAR'].astype(str) + '-W' + df['WEEK'].astype(str).str.zfill(2)
@@ -144,6 +164,7 @@ def generate_agent_report_excel(agent_df, agent_name):
     buffer.seek(0)
     return buffer
 
+@st.cache_data
 def create_status_gauge(active, nsf, cancelled, total):
     """Create gauge chart for status distribution"""
     fig = go.Figure()
@@ -207,7 +228,11 @@ def get_week_date_range(week_date):
 
 # --- File Uploader in Sidebar for Data Source ---
 with st.sidebar:
-    st.title("🐸 Pepe's Power")
+    # Try to display the logo image with fallback
+    try:
+        st.image(str(LOGO_IMAGE), width=200)
+    except:
+        st.title("🚀 Pepe's Power")
     
     # Data source section - only show this if no data is loaded yet
     if 'df' not in st.session_state:
@@ -217,65 +242,145 @@ with st.sidebar:
             st.session_state['uploaded_file'] = uploaded_file
             st.success("✅ File uploaded successfully!")
 
+# --- Load Assets ---
+bg_img_base64 = load_image_base64(BACKGROUND_IMAGE)
+banner_img_base64 = load_image_base64(BANNER_IMAGE)
+
 # --- Custom CSS ---
-st.markdown("""
-<style>
-    .main-container {
-        background-color: rgba(0, 0, 0, 0.85) !important;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.8);
-        color: #f1f1f1;
-        margin-bottom: 2rem;
-    }
-    .banner-container {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        margin-bottom: 1.5rem;
-        border-bottom: 2px solid #4CAF50;
-    }
-    .metric-card {
-        background-color: rgba(40, 40, 40, 0.7);
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        transition: transform 0.3s;
-    }
-    .metric-card:hover {
-        transform: translateY(-5px);
-        background-color: rgba(50, 50, 50, 0.8);
-    }
-    .metric-title {
-        font-size: 1rem;
-        color: #a5d6a7;
-        margin-bottom: 5px;
-    }
-    .metric-value {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #4CAF50;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        padding: 10px 20px;
-        border-radius: 8px !important;
-        background-color: rgba(30, 30, 30, 0.7) !important;
-        transition: all 0.3s;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #4CAF50 !important;
-        color: white !important;
-    }
-    footer {visibility: hidden;}
-    .highlight-active { background-color: rgba(76, 175, 80, 0.2) !important; }
-    .highlight-nsf { background-color: rgba(255, 165, 0, 0.2) !important; }
-    .highlight-cancelled { background-color: rgba(255, 99, 71, 0.2) !important; }
-</style>
-""", unsafe_allow_html=True)
+if bg_img_base64:
+    st.markdown(f"""
+    <style>
+        div.stApp {{
+            background: url("data:image/png;base64,{bg_img_base64}") center center fixed;
+            background-size: cover;
+        }}
+        .main-container {{
+            background-color: rgba(0, 0, 0, 0.85) !important;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+            color: #f1f1f1;
+            margin-bottom: 2rem;
+        }}
+        .banner-container {{
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #4CAF50;
+        }}
+        .metric-card {{
+            background-color: rgba(40, 40, 40, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }}
+        .metric-card:hover {{
+            transform: translateY(-5px);
+            background-color: rgba(50, 50, 50, 0.8);
+        }}
+        .metric-title {{
+            font-size: 1rem;
+            color: #a5d6a7;
+            margin-bottom: 5px;
+        }}
+        .metric-value {{
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }}
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 10px;
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            padding: 10px 20px;
+            border-radius: 8px !important;
+            background-color: rgba(30, 30, 30, 0.7) !important;
+            transition: all 0.3s;
+        }}
+        .stTabs [aria-selected="true"] {{
+            background-color: #4CAF50 !important;
+            color: white !important;
+        }}
+        footer {{visibility: hidden;}}
+        .highlight-active {{ background-color: rgba(76, 175, 80, 0.2) !important; }}
+        .highlight-nsf {{ background-color: rgba(255, 165, 0, 0.2) !important; }}
+        .highlight-cancelled {{ background-color: rgba(255, 99, 71, 0.2) !important; }}
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    # Fallback CSS without background image
+    st.markdown("""
+    <style>
+        div.stApp {
+            background-color: #121212;
+        }
+        .main-container {
+            background-color: rgba(0, 0, 0, 0.85) !important;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+            color: #f1f1f1;
+            margin-bottom: 2rem;
+        }
+        .banner-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #4CAF50;
+        }
+        .metric-card {
+            background-color: rgba(40, 40, 40, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            background-color: rgba(50, 50, 50, 0.8);
+        }
+        .metric-title {
+            font-size: 1rem;
+            color: #a5d6a7;
+            margin-bottom: 5px;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 10px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            padding: 10px 20px;
+            border-radius: 8px !important;
+            background-color: rgba(30, 30, 30, 0.7) !important;
+            transition: all 0.3s;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #4CAF50 !important;
+            color: white !important;
+        }
+        footer {visibility: hidden;}
+        .highlight-active { background-color: rgba(76, 175, 80, 0.2) !important; }
+        .highlight-nsf { background-color: rgba(255, 165, 0, 0.2) !important; }
+        .highlight-cancelled { background-color: rgba(255, 99, 71, 0.2) !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- Banner ---
+if banner_img_base64:
+    st.markdown(f"""
+    <div class="banner-container">
+        <img src="data:image/png;base64,{banner_img_base64}" style="width:100%; border-radius:0 0 10px 10px;"/>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- Data Loading ---
 with st.spinner("🔍 Loading data..."):
@@ -294,8 +399,7 @@ st.session_state['df'] = df
 
 # --- Sidebar Controls ---
 with st.sidebar:
-    # Use text instead of image to avoid file not found errors
-    st.title("🚀 Dashboard Controls")
+    st.title("Dashboard Controls")
     
     # Date Range Selector
     st.subheader("Date Range")
@@ -591,6 +695,10 @@ with tab2:
         with col2:
             st.subheader("Weekly Performance")
             # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
+            weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_
+with col2:
+            st.subheader("Weekly Performance")
+            # Use WEEK_YEAR instead of just WEEK to avoid confusion between years
             weekly_data = df_filtered.groupby(['WEEK_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
             
             # Ensure all status columns exist
@@ -666,7 +774,7 @@ with tab3:
         st.subheader("Contract Details")
         st.dataframe(agent_df.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
         
-        # Excel report instead of PDF (more compatible with Streamlit Cloud)
+        # Excel report
         excel_bytes = generate_agent_report_excel(agent_df, selected_agent)
         st.download_button(
             label="📊 Download Agent Report (Excel)",
@@ -679,7 +787,7 @@ with tab3:
 with tab4:
     st.subheader("Data Exploration")
     
-        # Column selection
+    # Column selection
     default_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY', 'SOURCE_SHEET']
     available_cols = [col for col in df_filtered.columns if col in default_cols] or df_filtered.columns.tolist()
     selected_cols = st.multiselect("Select columns:", df_filtered.columns.tolist(), default=available_cols)
@@ -703,10 +811,27 @@ with tab4:
         else:
             df_explorer = df_filtered
         
-        # Display data
+        # Display data with conditional formatting
         st.subheader("Filtered Data")
-        st.dataframe(df_explorer[selected_cols].sort_values('ENROLLED_DATE' if 'ENROLLED_DATE' in selected_cols else 'CUSTOMER_ID', ascending=False), 
-                    use_container_width=True)
+        
+        # Create a styled dataframe with conditional formatting for status
+        def highlight_status(val):
+            if val == 'ACTIVE':
+                return 'background-color: rgba(76, 175, 80, 0.2)'
+            elif val == 'NSF':
+                return 'background-color: rgba(255, 165, 0, 0.2)'
+            elif val == 'CANCELLED':
+                return 'background-color: rgba(255, 99, 71, 0.2)'
+            return ''
+        
+        # Apply styling if CATEGORY column is selected
+        if 'CATEGORY' in selected_cols:
+            styled_df = df_explorer[selected_cols].style.applymap(
+                highlight_status, subset=['CATEGORY']
+            )
+            st.dataframe(styled_df, use_container_width=True)
+        else:
+            st.dataframe(df_explorer[selected_cols], use_container_width=True)
         
         # Export options
         st.subheader("Export Data")
