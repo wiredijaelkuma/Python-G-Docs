@@ -1,4 +1,4 @@
-# PEPE'S POWER SALES DASHBOARD - DATA-DRIVEN VERSION
+# PEPE'S POWER SALES DASHBOARD - OPTIMIZED VERSION
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -123,7 +123,7 @@ def generate_agent_report_excel(agent_df, agent_name):
         # Add formats
         header_format = workbook.add_format({
             'bold': True,
-            'bg_color': '#4CAF50',
+            'bg_color': '#2C3E50',
             'color': 'white',
             'border': 1
         })
@@ -174,7 +174,7 @@ def create_status_gauge(active, nsf, cancelled, total):
             value=active,
             title={'text': "Active Contracts"},
             domain={'x': [0, 0.3], 'y': [0.6, 1]},
-            gauge={'axis': {'range': [0, total]}, 'bar': {'color': "green"}}
+            gauge={'axis': {'range': [0, total]}, 'bar': {'color': "#3498db"}}
         ))
         
         fig.add_trace(go.Indicator(
@@ -182,7 +182,7 @@ def create_status_gauge(active, nsf, cancelled, total):
             value=nsf,
             title={'text': "NSF Cases"},
             domain={'x': [0.35, 0.65], 'y': [0.6, 1]},
-            gauge={'axis': {'range': [0, total]}, 'bar': {'color': "orange"}}
+            gauge={'axis': {'range': [0, total]}, 'bar': {'color': "#f39c12"}}
         ))
         
         fig.add_trace(go.Indicator(
@@ -190,7 +190,7 @@ def create_status_gauge(active, nsf, cancelled, total):
             value=cancelled,
             title={'text': "Cancelled Contracts"},
             domain={'x': [0.7, 1], 'y': [0.6, 1]},
-            gauge={'axis': {'range': [0, total]}, 'bar': {'color': "red"}}
+            gauge={'axis': {'range': [0, total]}, 'bar': {'color': "#e74c3c"}}
         ))
     
     fig.update_layout(
@@ -225,11 +225,160 @@ def get_week_date_range(week_date):
     end_of_week = start_of_week + timedelta(days=6)
     return start_of_week, end_of_week
 
+# --- Custom CSS ---
+st.markdown("""
+<style>
+    /* Modern color scheme */
+    :root {
+        --primary: #2C3E50;
+        --secondary: #3498db;
+        --accent: #1abc9c;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --light: #ecf0f1;
+        --dark: #2c3e50;
+        --background: rgba(23, 32, 42, 0.95);
+    }
+    
+    /* Main containers */
+    div.stApp {
+        background-color: #121212;
+    }
+    .main-container {
+        background-color: var(--background) !important;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        color: #ecf0f1;
+        margin-bottom: 1.5rem;
+    }
+    .banner-container {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid var(--accent);
+    }
+    
+    /* Metrics styling */
+    .metric-card {
+        background-color: rgba(44, 62, 80, 0.7);
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    .metric-title {
+        font-size: 0.9rem;
+        color: #bdc3c7;
+        margin-bottom: 4px;
+    }
+    .metric-value {
+        font-size: 1.6rem;
+        font-weight: bold;
+        color: var(--secondary);
+    }
+    
+    /* Tab styling - BIGGER TABS */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 12px;
+        padding: 0 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 12px 24px !important;
+        border-radius: 10px !important;
+        background-color: rgba(44, 62, 80, 0.7) !important;
+        transition: all 0.2s;
+        font-size: 16px !important;
+        font-weight: 500;
+        height: auto !important;
+        border: none !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: var(--accent) !important;
+        color: var(--dark) !important;
+        font-weight: 600;
+    }
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {
+        background-color: rgba(52, 73, 94, 0.9) !important;
+        color: white !important;
+    }
+    .stTabs [data-baseweb="tab-list"] button {
+        min-width: 120px;
+    }
+    
+    /* Data tables styling */
+    div.stDataFrame {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .dataframe thead tr th {
+        background-color: var(--dark) !important;
+        color: white !important;
+        padding: 12px 8px !important;
+        font-weight: 600 !important;
+    }
+    .dataframe tbody tr:nth-child(even) {
+        background-color: rgba(236, 240, 241, 0.05);
+    }
+    
+    /* Status highlights */
+    .highlight-active { background-color: rgba(26, 188, 156, 0.2) !important; }
+    .highlight-nsf { background-color: rgba(243, 156, 18, 0.2) !important; }
+    .highlight-cancelled { background-color: rgba(231, 76, 60, 0.2) !important; }
+    
+    /* Sidebar styling */
+    .css-1d391kg, .css-1cypcdb {
+        background-color: rgba(23, 32, 42, 0.97) !important;
+    }
+    
+    /* Buttons */
+    .stButton button {
+        background-color: var(--accent) !important;
+        color: var(--dark) !important;
+        border: none !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        padding: 8px 16px !important;
+        transition: all 0.2s;
+    }
+    .stButton button:hover {
+        background-color: #16a085 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    /* Footer */
+    footer {visibility: hidden;}
+    .footer-custom {
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 0.8rem;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(127, 140, 141, 0.2);
+    }
+    
+    /* Plotly charts */
+    .js-plotly-plot {
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        background-color: rgba(44, 62, 80, 0.3);
+        padding: 8px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # --- File Uploader in Sidebar for Data Source ---
 with st.sidebar:
     # Try to display the logo image with fallback
     try:
-        st.image(str(LOGO_IMAGE), width=200)
+        st.image(str(LOGO_IMAGE), width=180)
     except:
         st.title("🚀 Pepe's Power")
     
@@ -250,7 +399,7 @@ with st.sidebar:
 bg_img_base64 = load_image_base64(BACKGROUND_IMAGE)
 banner_img_base64 = load_image_base64(BANNER_IMAGE)
 
-# --- Custom CSS ---
+# --- Apply background if image exists ---
 if bg_img_base64:
     st.markdown(f"""
     <style>
@@ -258,123 +407,6 @@ if bg_img_base64:
             background: url("data:image/png;base64,{bg_img_base64}") center center fixed;
             background-size: cover;
         }}
-        .main-container {{
-            background-color: rgba(0, 0, 0, 0.85) !important;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
-            color: #f1f1f1;
-            margin-bottom: 2rem;
-        }}
-        .banner-container {{
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #4CAF50;
-        }}
-        .metric-card {{
-            background-color: rgba(40, 40, 40, 0.7);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            transition: transform 0.3s;
-        }}
-        .metric-card:hover {{
-            transform: translateY(-5px);
-            background-color: rgba(50, 50, 50, 0.8);
-        }}
-        .metric-title {{
-            font-size: 1rem;
-            color: #a5d6a7;
-            margin-bottom: 5px;
-        }}
-        .metric-value {{
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #4CAF50;
-        }}
-        .stTabs [data-baseweb="tab-list"] {{
-            gap: 10px;
-        }}
-        .stTabs [data-baseweb="tab"] {{
-            padding: 10px 20px;
-            border-radius: 8px !important;
-            background-color: rgba(30, 30, 30, 0.7) !important;
-            transition: all 0.3s;
-        }}
-        .stTabs [aria-selected="true"] {{
-            background-color: #4CAF50 !important;
-            color: white !important;
-        }}
-        footer {{visibility: hidden;}}
-        .highlight-active {{ background-color: rgba(76, 175, 80, 0.2) !important; }}
-        .highlight-nsf {{ background-color: rgba(255, 165, 0, 0.2) !important; }}
-        .highlight-cancelled {{ background-color: rgba(255, 99, 71, 0.2) !important; }}
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    # Fallback CSS without background image
-    st.markdown("""
-    <style>
-        div.stApp {
-            background-color: #121212;
-        }
-        .main-container {
-            background-color: rgba(0, 0, 0, 0.85) !important;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
-            color: #f1f1f1;
-            margin-bottom: 2rem;
-        }
-        .banner-container {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #4CAF50;
-        }
-        .metric-card {
-            background-color: rgba(40, 40, 40, 0.7);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            transition: transform 0.3s;
-        }
-        .metric-card:hover {
-            transform: translateY(-5px);
-            background-color: rgba(50, 50, 50, 0.8);
-        }
-        .metric-title {
-            font-size: 1rem;
-            color: #a5d6a7;
-            margin-bottom: 5px;
-        }
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 10px;
-        }
-        .stTabs [data-baseweb="tab"] {
-            padding: 10px 20px;
-            border-radius: 8px !important;
-            background-color: rgba(30, 30, 30, 0.7) !important;
-            transition: all 0.3s;
-        }
-        .stTabs [aria-selected="true"] {
-            background-color: #4CAF50 !important;
-            color: white !important;
-        }
-        footer {visibility: hidden;}
-        .highlight-active { background-color: rgba(76, 175, 80, 0.2) !important; }
-        .highlight-nsf { background-color: rgba(255, 165, 0, 0.2) !important; }
-        .highlight-cancelled { background-color: rgba(255, 99, 71, 0.2) !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -400,11 +432,6 @@ if df.empty:
 
 # Store data in session state
 st.session_state['df'] = df
-
-# --- Debug Information ---
-# Uncomment for debugging
-# st.write("Data date range:", df['ENROLLED_DATE'].min(), "to", df['ENROLLED_DATE'].max())
-# st.write("Today's date:", datetime.now().date())
 
 # --- Sidebar Controls ---
 with st.sidebar:
@@ -501,7 +528,7 @@ with col2:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">Active Contracts</div>
-        <div class="metric-value">{format_large_number(active_contracts)}</div>
+        <div class="metric-value" style="color: #3498db;">{format_large_number(active_contracts)}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -509,7 +536,7 @@ with col3:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">NSF Cases</div>
-        <div class="metric-value">{format_large_number(nsf_cases)}</div>
+        <div class="metric-value" style="color: #f39c12;">{format_large_number(nsf_cases)}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -517,7 +544,7 @@ with col4:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">Cancelled</div>
-        <div class="metric-value">{format_large_number(cancelled_contracts)}</div>
+        <div class="metric-value" style="color: #e74c3c;">{format_large_number(cancelled_contracts)}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -525,15 +552,15 @@ with col5:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-title">Success Rate</div>
-        <div class="metric-value">{success_rate:.1f}%</div>
+        <div class="metric-value" style="color: #1abc9c;">{success_rate:.1f}%</div>
     </div>
     """, unsafe_allow_html=True)
 
 # --- Tab Interface ---
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Overview", 
-    "📈 Performance Trends", 
-    "🧑 Agent Analytics", 
+    "📈 Performance", 
+    "🧑 Agents", 
     "🔍 Data Explorer", 
     "🚨 Risk Analysis"
 ])
@@ -561,7 +588,13 @@ with tab1:
                 y=['Active', 'Total'],
                 title="Top Agents by Contract Volume",
                 labels={'value': 'Contract Count', 'variable': 'Status'},
-                barmode='group'
+                barmode='group',
+                color_discrete_map={'Active': '#3498db', 'Total': '#2c3e50'}
+            )
+            fig.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font_color='#ecf0f1'
             )
             st.plotly_chart(fig, use_container_width=True)
             
@@ -620,9 +653,15 @@ with tab1:
                             title=f"Top 10 Active Contracts for {selected_week_display}",
                             labels={'AGENT': 'Agent', 'Active_Contracts': 'Active Contracts'},
                             color='Active_Contracts',
-                            color_continuous_scale=px.colors.sequential.Greens
+                            color_continuous_scale=px.colors.sequential.Blues
                         )
-                        fig.update_layout(xaxis_title="Agent", yaxis_title="Active Contracts")
+                        fig.update_layout(
+                            xaxis_title="Agent", 
+                            yaxis_title="Active Contracts",
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            font_color='#ecf0f1'
+                        )
                         st.plotly_chart(fig, use_container_width=True)
                     else:
                         st.info(f"No active contracts for top performers in the week of {selected_week_display}.")
@@ -646,7 +685,13 @@ with tab1:
                     title="Daily Contract Enrollment",
                     labels={'ENROLLED_DATE': 'Date', 'Count': 'Contracts'}
                 )
-                fig.update_xaxes(rangeslider_visible=True)
+                fig.update_traces(line=dict(color='#3498db', width=2))
+                fig.update_layout(
+                    xaxis_rangeslider_visible=True,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color='#ecf0f1'
+                )
                 st.plotly_chart(fig, use_container_width=True)
             except Exception as e:
                 st.error(f"Error generating enrollment timeline: {e}")
@@ -662,7 +707,18 @@ with tab1:
                         y=source_status.columns,
                         title="Contract Status by Source",
                         labels={'value': 'Count', 'variable': 'Status'},
-                        barmode='stack'
+                        barmode='stack',
+                        color_discrete_map={
+                            'ACTIVE': '#3498db',
+                            'NSF': '#f39c12',
+                            'CANCELLED': '#e74c3c',
+                            'OTHER': '#95a5a6'
+                        }
+                    )
+                    fig.update_layout(
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font_color='#ecf0f1'
                     )
                     st.plotly_chart(fig, use_container_width=True)
                 except Exception as e:
@@ -700,6 +756,16 @@ with tab2:
                 labels={'MONTH_YEAR': 'Month', 'Success_Rate': 'Success Rate (%)'},
                 markers=True
             )
+            fig.update_traces(
+                line=dict(color='#1abc9c', width=3),
+                marker=dict(size=8, color='#16a085')
+            )
+            fig.update_layout(
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font_color='#ecf0f1',
+                yaxis=dict(gridcolor='rgba(236, 240, 241, 0.15)')
+            )
             st.plotly_chart(fig, use_container_width=True)
                  
             col1, col2 = st.columns(2)
@@ -711,7 +777,19 @@ with tab2:
                         x='MONTH_YEAR',
                         y=['ACTIVE', 'NSF', 'CANCELLED', 'OTHER'],
                         title="Contract Status Distribution Over Time",
-                        labels={'value': 'Contract Count', 'variable': 'Status'}
+                        labels={'value': 'Contract Count', 'variable': 'Status'},
+                        color_discrete_map={
+                            'ACTIVE': '#3498db',
+                            'NSF': '#f39c12',
+                            'CANCELLED': '#e74c3c',
+                            'OTHER': '#95a5a6'
+                        }
+                    )
+                    fig.update_layout(
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font_color='#ecf0f1',
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
                     )
                     st.plotly_chart(fig, use_container_width=True)
                 except Exception as e:
@@ -747,7 +825,17 @@ with tab2:
                         labels={'Week': 'Week', 'Success_Rate': 'Success Rate (%)'},
                         markers=True
                     )
-                    fig.update_layout(xaxis_tickangle=-45)
+                    fig.update_traces(
+                        line=dict(color='#1abc9c', width=3),
+                        marker=dict(size=8, color='#16a085')
+                    )
+                    fig.update_layout(
+                        xaxis_tickangle=-45,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font_color='#ecf0f1',
+                        yaxis=dict(gridcolor='rgba(236, 240, 241, 0.15)')
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 except Exception as e:
                     st.error(f"Error generating weekly performance chart: {e}")
@@ -767,19 +855,57 @@ with tab3:
     else:
         try:
             agents = df_filtered['AGENT'].dropna().unique()
-            selected_agent = st.selectbox("Select agent:", sorted(agents))
+            
+            # Create a more visually appealing agent selector
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                selected_agent = st.selectbox("Select agent:", sorted(agents))
+            with col2:
+                st.markdown("""
+                <div style="background-color: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; 
+                padding: 10px; border-radius: 0 5px 5px 0; margin-top: 32px;">
+                    Select an agent to view their detailed performance metrics
+                </div>
+                """, unsafe_allow_html=True)
             
             agent_df = df_filtered[df_filtered['AGENT'] == selected_agent]
             agent_active = agent_df[agent_df['CATEGORY'] == 'ACTIVE']
             agent_nsf = agent_df[agent_df['CATEGORY'] == 'NSF']
             agent_cancelled = agent_df[agent_df['CATEGORY'] == 'CANCELLED']
             
-            col1, col2, col3, col4, col5 = st.columns(5)
-            col1.metric("Total Contracts", len(agent_df))
-            col2.metric("Active", len(agent_active))
-            col3.metric("NSF", len(agent_nsf))
-            col4.metric("Cancelled", len(agent_cancelled))
-            col5.metric("Success Rate", f"{(len(agent_active)/len(agent_df)*100):.1f}%" if len(agent_df) > 0 else "N/A")
+            # Calculate success rate safely
+            success_rate = (len(agent_active)/len(agent_df)*100) if len(agent_df) > 0 else 0
+            
+            # Create more visually appealing metrics
+            st.markdown(f"""
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+                <div style="flex: 1; min-width: 150px; background-color: rgba(44, 62, 80, 0.7); 
+                     border-radius: 8px; padding: 15px; text-align: center;">
+                    <div style="font-size: 0.9rem; color: #bdc3c7;">Total Contracts</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #3498db;">{len(agent_df)}</div>
+                </div>
+                <div style="flex: 1; min-width: 150px; background-color: rgba(44, 62, 80, 0.7); 
+                     border-radius: 8px; padding: 15px; text-align: center;">
+                    <div style="font-size: 0.9rem; color: #bdc3c7;">Active</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #3498db;">{len(agent_active)}</div>
+                </div>
+                <div style="flex: 1; min-width: 150px; background-color: rgba(44, 62, 80, 0.7); 
+                     border-radius: 8px; padding: 15px; text-align: center;">
+                    <div style="font-size: 0.9rem; color: #bdc3c7;">NSF</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #f39c12;">{len(agent_nsf)}</div>
+                </div>
+                <div style="flex: 1; min-width: 150px; background-color: rgba(44, 62, 80, 0.7); 
+                     border-radius: 8px; padding: 15px; text-align: center;">
+                    <div style="font-size: 0.9rem; color: #bdc3c7;">Cancelled</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #e74c3c;">{len(agent_cancelled)}</div>
+                </div>
+                <div style="flex: 1; min-width: 150px; background-color: rgba(44, 62, 80, 0.7); 
+                     border-radius: 8px; padding: 15px; text-align: center;">
+                    <div style="font-size: 0.9rem; color: #bdc3c7;">Success Rate</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #1abc9c;">{success_rate:.1f}%</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
             with col1:
@@ -790,7 +916,19 @@ with tab3:
                     values=status_counts.values, 
                     names=status_counts.index,
                     hole=0.4,
-                    title=f"Status Distribution for {selected_agent}"
+                    title=f"Status Distribution for {selected_agent}",
+                    color=status_counts.index,
+                    color_discrete_map={
+                        'ACTIVE': '#3498db',
+                        'NSF': '#f39c12',
+                        'CANCELLED': '#e74c3c',
+                        'OTHER': '#95a5a6'
+                    }
+                )
+                fig.update_layout(
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color='#ecf0f1'
                 )
                 st.plotly_chart(fig, use_container_width=True)
             
@@ -807,6 +945,16 @@ with tab3:
                             labels={'ENROLLED_DATE': 'Date', 'Contracts': 'Contracts'},
                             markers=True
                         )
+                        fig.update_traces(
+                            line=dict(color='#3498db', width=3),
+                            marker=dict(size=8, color='#2980b9')
+                        )
+                        fig.update_layout(
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            font_color='#ecf0f1',
+                            yaxis=dict(gridcolor='rgba(236, 240, 241, 0.15)')
+                        )
                         st.plotly_chart(fig, use_container_width=True)
                     except Exception as e:
                         st.error(f"Error generating agent timeline: {e}")
@@ -814,17 +962,34 @@ with tab3:
             
             # Generate and download report
             st.subheader("Contract Details")
-            st.dataframe(agent_df.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
             
-            # Excel report
+            # Add a search box for filtering contracts
+            search_term = st.text_input("Search contracts:", "")
+            if search_term:
+                filtered_agent_df = agent_df[agent_df.astype(str).apply(lambda row: row.str.contains(search_term, case=False).any(), axis=1)]
+            else:
+                filtered_agent_df = agent_df
+                
+            st.dataframe(filtered_agent_df.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+            
+            # Excel report with improved styling
             try:
                 excel_bytes = generate_agent_report_excel(agent_df, selected_agent)
-                st.download_button(
-                    label="📊 Download Agent Report (Excel)",
-                    data=excel_bytes,
-                    file_name=f"{selected_agent}_performance_report.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    st.download_button(
+                        label="📊 Download Report",
+                        data=excel_bytes,
+                        file_name=f"{selected_agent}_performance_report.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                with col2:
+                    st.markdown("""
+                    <div style="background-color: rgba(26, 188, 156, 0.1); border-left: 4px solid #1abc9c; 
+                    padding: 10px; border-radius: 0 5px 5px 0; margin-top: 4px;">
+                        Download a comprehensive Excel report with all metrics and contract details
+                    </div>
+                    """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Error generating Excel report: {e}")
                 st.info("Could not generate Excel report.")
@@ -837,51 +1002,109 @@ with tab4:
     st.subheader("Data Exploration")
     
     try:
-        # Column selection
+        # Column selection with improved UI
         default_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY', 'SOURCE_SHEET']
         available_cols = [col for col in df_filtered.columns if col in default_cols] or df_filtered.columns.tolist()
-        selected_cols = st.multiselect("Select columns:", df_filtered.columns.tolist(), default=available_cols)
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            selected_cols = st.multiselect("Select columns to display:", df_filtered.columns.tolist(), default=available_cols)
+        with col2:
+            st.markdown("""
+            <div style="background-color: rgba(52, 152, 219, 0.1); border-left: 4px solid #3498db; 
+            padding: 10px; border-radius: 0 5px 5px 0; margin-top: 32px;">
+                Choose columns to view
+            </div>
+            """, unsafe_allow_html=True)
         
         if selected_cols:
             # Filter options
             st.subheader("Additional Filters")
             
+            col1, col2 = st.columns(2)
             # Agent filter for data explorer
             if 'AGENT' in selected_cols:
-                agent_filter = st.multiselect(
-                    "Filter by Agent:", 
-                    options=["All"] + sorted(df_filtered['AGENT'].unique().tolist()),
-                    default=["All"]
-                )
-                
-                if "All" not in agent_filter:
-                    df_explorer = df_filtered[df_filtered['AGENT'].isin(agent_filter)]
-                else:
-                    df_explorer = df_filtered
-            else:
-                df_explorer = df_filtered
+                with col1:
+                    agent_filter = st.multiselect(
+                        "Filter by Agent:", 
+                        options=["All"] + sorted(df_filtered['AGENT'].unique().tolist()),
+                        default=["All"]
+                    )
             
-            # Display data with conditional formatting
-            st.subheader("Filtered Data")
+            # Status filter for data explorer
+            if 'CATEGORY' in selected_cols:
+                with col2:
+                    status_filter_explorer = st.multiselect(
+                        "Filter by Status:",
+                        options=["All"] + sorted(df_filtered['CATEGORY'].unique().tolist()),
+                        default=["All"]
+                    )
             
-            # Display dataframe without styling (more compatible)
+            # Apply filters
+            df_explorer = df_filtered.copy()
+            
+            # Apply agent filter
+            if 'AGENT' in selected_cols and "All" not in agent_filter:
+                df_explorer = df_explorer[df_explorer['AGENT'].isin(agent_filter)]
+            
+            # Apply status filter
+            if 'CATEGORY' in selected_cols and "All" not in status_filter_explorer:
+                df_explorer = df_explorer[df_explorer['CATEGORY'].isin(status_filter_explorer)]
+            
+            # Add search functionality
+            search_query = st.text_input("Search in data (searches across all columns):", "")
+            if search_query:
+                df_explorer = df_explorer[df_explorer.astype(str).apply(
+                    lambda row: row.str.contains(search_query, case=False).any(), axis=1)]
+            
+            # Display data with record count
+            st.subheader(f"Filtered Data ({len(df_explorer)} records)")
+            
+            # Display dataframe
             st.dataframe(df_explorer[selected_cols], use_container_width=True)
             
-            # Export options
+            # Export options with improved UI
             st.subheader("Export Data")
-            export_format = st.radio("Select format:", ["CSV", "Excel"])
-            filename = f"pepe_sales_data_{start}_{end}"
+            col1, col2, col3 = st.columns([1, 1, 2])
             
-            if export_format == "CSV":
-                csv = df_explorer[selected_cols].to_csv(index=False).encode()
-                st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
-            else:
-                excel_buffer = BytesIO()
-                with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-                    df_explorer[selected_cols].to_excel(writer, index=False)
-                excel_buffer.seek(0)
-                st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
-                                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            with col1:
+                export_format = st.radio("Select format:", ["CSV", "Excel"])
+            
+            with col2:
+                filename = st.text_input("Filename:", f"pepe_sales_data_{start.strftime('%Y%m%d')}_{end.strftime('%Y%m%d')}")
+            
+            with col3:
+                if export_format == "CSV":
+                    csv = df_explorer[selected_cols].to_csv(index=False).encode()
+                    st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
+                else:
+                    excel_buffer = BytesIO()
+                    with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                        df_explorer[selected_cols].to_excel(writer, index=False)
+                        
+                        # Format the Excel file
+                        workbook = writer.book
+                        worksheet = writer.sheets['Sheet1']
+                        
+                        # Format headers
+                        header_format = workbook.add_format({
+                            'bold': True,
+                            'bg_color': '#2C3E50',
+                            'color': 'white',
+                            'border': 1
+                        })
+                        
+                        for col_num, value in enumerate(df_explorer[selected_cols].columns.values):
+                            worksheet.write(0, col_num, value, header_format)
+                        
+                        # Auto-fit columns
+                        for i, col in enumerate(df_explorer[selected_cols].columns):
+                            column_len = max(df_explorer[col].astype(str).str.len().max(), len(col)) + 2
+                            worksheet.set_column(i, i, column_len)
+                    
+                    excel_buffer.seek(0)
+                    st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
+                                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         else:
             st.warning("Please select at least one column to display")
     except Exception as e:
@@ -895,6 +1118,25 @@ with tab5:
     try:
         # Filter for problematic contracts
         flagged = df_filtered[df_filtered['CATEGORY'].isin(["NSF", "CANCELLED", "OTHER"])]
+        
+        # Add risk summary metrics
+        total_risk = len(flagged)
+        risk_percentage = (total_risk / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
+        
+        st.markdown(f"""
+        <div style="background-color: rgba(231, 76, 60, 0.1); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 0.9rem; color: #e74c3c;">Total Risk Contracts</div>
+                    <div style="font-size: 1.8rem; font-weight: bold;">{total_risk}</div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 0.9rem; color: #e74c3c;">Risk Percentage</div>
+                    <div style="font-size: 1.8rem; font-weight: bold;">{risk_percentage:.1f}%</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         with col1:
@@ -910,9 +1152,14 @@ with tab5:
                         y='Count',
                         title="Top Cancellation Reasons",
                         color='Count',
-                        color_continuous_scale='OrRd'
+                        color_continuous_scale='Reds'
                     )
-                    fig.update_layout(xaxis_tickangle=-45)
+                    fig.update_layout(
+                        xaxis_tickangle=-45,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font_color='#ecf0f1'
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 except Exception as e:
                     st.error(f"Error generating cancellation reasons chart: {e}")
@@ -932,9 +1179,14 @@ with tab5:
                         y='Issue_Count',
                         title="Top Agents by Issue Count",
                         color='Issue_Count',
-                        color_continuous_scale='OrRd'
+                        color_continuous_scale='Reds'
                     )
-                    fig.update_layout(xaxis_tickangle=-45)
+                    fig.update_layout(
+                        xaxis_tickangle=-45,
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font_color='#ecf0f1'
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                 except Exception as e:
                     st.error(f"Error generating agents with issues chart: {e}")
@@ -957,6 +1209,16 @@ with tab5:
                     title="Monthly Issue Volume",
                     markers=True
                 )
+                fig.update_traces(
+                    line=dict(color='#e74c3c', width=3),
+                    marker=dict(size=8, color='#c0392b')
+                )
+                fig.update_layout(
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color='#ecf0f1',
+                    yaxis=dict(gridcolor='rgba(236, 240, 241, 0.15)')
+                )
                 st.plotly_chart(fig, use_container_width=True)
             except Exception as e:
                 st.error(f"Error generating risk trends chart: {e}")
@@ -964,13 +1226,31 @@ with tab5:
         else:
             st.info("No time-based risk data available.")
         
+        # Problem contracts with search functionality
         st.subheader("Problem Contracts")
         if not flagged.empty:
-            st.dataframe(flagged.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+            # Add search functionality
+            search_risk = st.text_input("Search problem contracts:", "")
+            if search_risk:
+                filtered_flagged = flagged[flagged.astype(str).apply(
+                    lambda row: row.str.contains(search_risk, case=False).any(), axis=1)]
+            else:
+                filtered_flagged = flagged
             
-            # Export flagged data
-            csv_flagged = flagged.to_csv(index=False).encode()
-            st.download_button("📤 Download Risk Data", csv_flagged, file_name="risk_contracts.csv", mime="text/csv")
+            st.dataframe(filtered_flagged.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+            
+            # Export flagged data with better UI
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                csv_flagged = filtered_flagged.to_csv(index=False).encode()
+                st.download_button("📤 Download Risk Data", csv_flagged, file_name="risk_contracts.csv", mime="text/csv")
+            with col2:
+                st.markdown("""
+                <div style="background-color: rgba(231, 76, 60, 0.1); border-left: 4px solid #e74c3c; 
+                padding: 10px; border-radius: 0 5px 5px 0; margin-top: 4px;">
+                    Download the risk data for offline analysis or follow-up actions
+                </div>
+                """, unsafe_allow_html=True)
         else:
             st.info("No problem contracts found in the selected data.")
     except Exception as e:
@@ -978,8 +1258,11 @@ with tab5:
         st.info("Could not load risk analysis.")
 
 # --- Footer ---
-st.markdown("---")
-st.caption(f"© 2025 Pepe's Power Solutions | Dashboard v2.5 | Data updated {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+st.markdown("""
+<div class="footer-custom">
+    © 2025 Pepe's Power Solutions | Dashboard v2.5 | Data updated {0}
+</div>
+""".format(datetime.now().strftime('%Y-%m-%d %H:%M')), unsafe_allow_html=True)
 
 # --- Notifications ---
 st.toast("Dashboard loaded successfully!", icon="🐸")
@@ -994,4 +1277,3 @@ if debug_mode:
         st.sidebar.write("Data Date Range:", df['ENROLLED_DATE'].min().date(), "to", df['ENROLLED_DATE'].max().date())
     st.sidebar.write("Total Records:", len(df))
     st.sidebar.write("Filtered Records:", len(df_filtered))
-
