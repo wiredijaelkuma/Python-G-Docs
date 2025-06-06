@@ -1,4 +1,4 @@
-# PEPE'S POWER SALES DASHBOARD - REDESIGNED VERSION
+# PEPE'S POWER SALES DASHBOARD - SIMPLIFIED VERSION
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -37,7 +37,7 @@ COLORS = {
     'danger': '#FF6347',       # Tomato
     'light': '#F0F8FF',        # Alice blue
     'dark': '#483D8B',         # Dark slate blue
-    'background': '#FFFFFF',   # White
+    'background': '#F8F9FA',   # Light gray background
     'text': '#2E2E2E',         # Near black
     'light_purple': '#E6E6FA', # Lavender
     'med_purple': '#B39DDB',   # Medium purple
@@ -295,54 +295,12 @@ st.markdown(f"""
     div.stApp {{
         background-color: var(--light);
     }}
-    .main-container {{
-        background-color: var(--background);
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(138, 127, 186, 0.3);
-        color: var(--text);
-        margin-bottom: 1.5rem;
-    }}
-    .banner-container {{
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        margin-bottom: 1rem;
-        border-bottom: 3px solid var(--accent);
-    }}
-    
-    /* Metrics styling */
-    .metric-card {{
-        background-color: var(--light-purple);
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 4px 12px rgba(138, 127, 186, 0.2);
-        transition: transform 0.2s, box-shadow 0.2s;
-        border-left: 5px solid var(--primary);
-    }}
-    .metric-card:hover {{
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(138, 127, 186, 0.3);
-    }}
-    .metric-title {{
-        font-size: 1.1rem;
-        color: var(--dark);
-        margin-bottom: 8px;
-        font-weight: 600;
-    }}
-    .metric-value {{
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--secondary);
-    }}
     
     /* Tab styling - BIGGER TABS */
     .stTabs {{
         background-color: var(--light-purple);
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0 4px 12px rgba(138, 127, 186, 0.2);
         margin-bottom: 2rem;
     }}
     .stTabs [data-baseweb="tab-list"] {{
@@ -375,33 +333,61 @@ st.markdown(f"""
         color: white !important;
     }}
     
-    /* Data tables styling */
-    div.stDataFrame {{
-        border-radius: 12px;
-        overflow: hidden;
-        border: 2px solid var(--med-purple);
-    }}
-    .dataframe thead tr th {{
-        background-color: var(--primary) !important;
-        color: white !important;
-        padding: 14px 10px !important;
-        font-weight: 600 !important;
-    }}
-    .dataframe tbody tr:nth-child(even) {{
+    /* Metrics styling */
+    .metric-card {{
         background-color: var(--light-purple);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(138, 127, 186, 0.2);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-left: 5px solid var(--primary);
+        margin-bottom: 20px;
     }}
-    .dataframe {{
-        font-size: 16px !important;
+    .metric-title {{
+        font-size: 1.1rem;
+        color: var(--dark);
+        margin-bottom: 8px;
+        font-weight: 600;
+    }}
+    .metric-value {{
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--secondary);
     }}
     
-    /* Status highlights */
-    .highlight-active {{ background-color: rgba(102, 205, 170, 0.3) !important; }}
-    .highlight-nsf {{ background-color: rgba(255, 215, 0, 0.3) !important; }}
-    .highlight-cancelled {{ background-color: rgba(255, 99, 71, 0.3) !important; }}
+    /* Chart styling */
+    .chart-box {{
+        background-color: var(--background);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid var(--light-purple);
+        box-shadow: 0 2px 6px rgba(138, 127, 186, 0.1);
+    }}
     
-    /* Sidebar styling */
-    .css-1d391kg, .css-1cypcdb {{
-        background-color: var(--light-purple) !important;
+    /* Dropdown/selectbox styling */
+    .stSelectbox [data-baseweb="select"] {{
+        border-radius: 10px !important;
+        height: 50px !important;
+        font-size: 18px !important;
+        border: 2px solid var(--primary) !important;
+    }}
+    .stMultiSelect [data-baseweb="select"] {{
+        border-radius: 10px !important;
+        min-height: 50px !important;
+        font-size: 18px !important;
+        border: 2px solid var(--primary) !important;
+    }}
+    
+    /* Section headers */
+    .section-header {{
+        color: var(--dark);
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid var(--accent);
     }}
     
     /* Buttons */
@@ -419,67 +405,6 @@ st.markdown(f"""
         background-color: var(--secondary) !important;
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(138, 127, 186, 0.4);
-    }}
-    
-    /* Dropdown/selectbox styling */
-    .stSelectbox [data-baseweb="select"] {{
-        border-radius: 10px !important;
-        height: 50px !important;
-        font-size: 18px !important;
-        border: 2px solid var(--primary) !important;
-    }}
-    .stMultiSelect [data-baseweb="select"] {{
-        border-radius: 10px !important;
-        min-height: 50px !important;
-        font-size: 18px !important;
-        border: 2px solid var(--primary) !important;
-    }}
-    
-    /* Chart containers */
-    .chart-container {{
-        background-color: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(138, 127, 186, 0.2);
-        margin-bottom: 30px;
-        border: 1px solid var(--med-purple);
-    }}
-    
-    /* Footer */
-    footer {{visibility: hidden;}}
-    .footer-custom {{
-        text-align: center;
-        color: var(--dark);
-        font-size: 0.9rem;
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(138, 127, 186, 0.3);
-    }}
-    
-    /* Section headers */
-    .section-header {{
-        color: var(--dark);
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 3px solid var(--accent);
-    }}
-    
-    /* Text inputs */
-    .stTextInput input {{
-        border-radius: 10px !important;
-        height: 50px !important;
-        font-size: 18px !important;
-        border: 2px solid var(--primary) !important;
-    }}
-    
-    /* Date inputs */
-    .stDateInput input {{
-        border-radius: 10px !important;
-        height: 50px !important;
-        font-size: 18px !important;
-        border: 2px solid var(--primary) !important;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -512,7 +437,7 @@ banner_img_base64 = load_image_base64(BANNER_IMAGE)
 # --- Banner ---
 if banner_img_base64:
     st.markdown(f"""
-    <div class="banner-container">
+    <div style="margin-bottom: 20px;">
         <img src="data:image/png;base64,{banner_img_base64}" style="width:100%; border-radius:0 0 15px 15px;"/>
     </div>
     """, unsafe_allow_html=True)
@@ -588,7 +513,7 @@ if 'SOURCE_SHEET' in df_filtered.columns and not all_sources:
 # --- Dashboard Header ---
 st.markdown(f"""
 <div class="section-header">Pepe's Power Sales Dashboard</div>
-<div class="main-container">
+<div style="background-color: {COLORS['light_purple']}; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
         <div>
             <b>Date Range:</b> {start.strftime('%b %d, %Y')} - {end.strftime('%b %d, %Y')}<br>
@@ -668,12 +593,11 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 # --- Overview Tab ---
 with tab1:
-    # Add a container for the gauge chart
-    st.markdown("""
-    <div class="chart-container">
+    st.markdown(f"""
+    <div class="chart-box">
+    <h3>Contract Status Distribution</h3>
     """, unsafe_allow_html=True)
     
-    st.subheader("Contract Status Distribution")
     fig = create_status_gauge(active_contracts, nsf_cases, cancelled_contracts, total_contracts)
     st.plotly_chart(fig, use_container_width=True)
     
@@ -682,11 +606,11 @@ with tab1:
     """, unsafe_allow_html=True)
     
     # Weekly Active Sales for Top Performers - moved to top as requested
-    st.markdown("""
-    <div class="chart-container">
+    st.markdown(f"""
+    <div class="chart-box">
+    <h3>Weekly Active Sales for Top Performers</h3>
     """, unsafe_allow_html=True)
     
-    st.subheader("Weekly Active Sales for Top Performers")
     if 'ENROLLED_DATE' in df_filtered.columns and 'AGENT' in df_filtered.columns:
         try:
             # Filter for active contracts only
@@ -706,7 +630,8 @@ with tab1:
             weekly_agent_performance['WEEK_DISPLAY'] = weekly_agent_performance['WEEK_START_DATE'].apply(
                 lambda x: f"{x.strftime('%Y-%m-%d')} to {(x + timedelta(days=6)).strftime('%Y-%m-%d')}"
             )
-                        # Sort by week start date in descending order
+            
+            # Sort by week start date in descending order
             weekly_agent_performance = weekly_agent_performance.sort_values('WEEK_START_DATE', ascending=False)
             
             # Get all unique display weeks for the dropdown
@@ -745,16 +670,15 @@ with tab1:
                         height=450,  # Increase height
                         xaxis_title="Agent", 
                         yaxis_title="Active Contracts",
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
+                        plot_bgcolor=COLORS['background'],
+                        paper_bgcolor=COLORS['background'],
                         font_color=COLORS['text'],
                         xaxis_tickangle=-45,  # Angle the x-axis labels
                         margin=dict(t=50, b=100),  # Add more bottom margin for labels
-                        coloraxis_colorbar=dict(
-                            title="Active Contracts",
+                        coloraxis=dict(colorbar=dict(
+                            title="Contracts",
                             tickfont=dict(color=COLORS['text']),
-                            titlefont=dict(color=COLORS['text'])
-                        )
+                        ))
                     )
                     fig.update_traces(marker_line_color=COLORS['primary'],
                                       marker_line_width=1.5)
@@ -777,11 +701,11 @@ with tab1:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("""
-        <div class="chart-container">
+        st.markdown(f"""
+        <div class="chart-box">
+        <h3>Top Performing Agents</h3>
         """, unsafe_allow_html=True)
         
-        st.subheader("Top Performing Agents")
         if 'AGENT' in df_filtered.columns:
             agent_stats = df_filtered.groupby('AGENT').agg(
                 Total=('CUSTOMER_ID', 'count'),
@@ -803,8 +727,8 @@ with tab1:
             )
             fig.update_layout(
                 height=400,  # Increase height
-                plot_bgcolor='white',
-                paper_bgcolor='white',
+                plot_bgcolor=COLORS['background'],
+                paper_bgcolor=COLORS['background'],
                 font_color=COLORS['text'],
                 margin=dict(t=50, b=100),  # Add more bottom margin for labels
                 xaxis_tickangle=-45,  # Angle the x-axis labels
@@ -814,7 +738,7 @@ with tab1:
                     y=1.02,
                     xanchor="right",
                     x=1,
-                    bgcolor='rgba(255, 255, 255, 0.8)',
+                    bgcolor=COLORS['background'],
                     bordercolor=COLORS['primary'],
                     borderwidth=1
                 )
@@ -828,11 +752,11 @@ with tab1:
         """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown("""
-        <div class="chart-container">
+        st.markdown(f"""
+        <div class="chart-box">
+        <h3>Enrollment Timeline</h3>
         """, unsafe_allow_html=True)
         
-        st.subheader("Enrollment Timeline")
         if 'ENROLLED_DATE' in df_filtered.columns:
             try:
                 timeline_df = df_filtered.set_index('ENROLLED_DATE').resample('D').size().reset_index(name='Count')
@@ -850,8 +774,8 @@ with tab1:
                 fig.update_layout(
                     height=400,  # Increase height
                     xaxis_rangeslider_visible=True,
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
+                    plot_bgcolor=COLORS['background'],
+                    paper_bgcolor=COLORS['background'],
                     font_color=COLORS['text'],
                     margin=dict(t=50, b=50),  # Add more margin
                     yaxis=dict(gridcolor='rgba(138, 127, 186, 0.2)')
@@ -866,11 +790,11 @@ with tab1:
         """, unsafe_allow_html=True)
     
     # Full width chart for Status by Source
-    st.markdown("""
-    <div class="chart-container">
+    st.markdown(f"""
+    <div class="chart-box">
+    <h3>Status by Source</h3>
     """, unsafe_allow_html=True)
     
-    st.subheader("Status by Source")
     if 'SOURCE_SHEET' in df_filtered.columns:
         try:
             source_status = df_filtered.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
@@ -890,8 +814,8 @@ with tab1:
             )
             fig.update_layout(
                 height=450,  # Increase height
-                plot_bgcolor='white',
-                paper_bgcolor='white',
+                plot_bgcolor=COLORS['background'],
+                paper_bgcolor=COLORS['background'],
                 font_color=COLORS['text'],
                 xaxis_tickangle=-45,  # Angle the x-axis labels
                 margin=dict(t=50, b=100),  # Add more bottom margin for labels
@@ -901,7 +825,7 @@ with tab1:
                     y=1.02,
                     xanchor="right",
                     x=1,
-                    bgcolor='rgba(255, 255, 255, 0.8)',
+                    bgcolor=COLORS['background'],
                     bordercolor=COLORS['primary'],
                     borderwidth=1
                 )
@@ -921,11 +845,10 @@ with tab1:
 
 # --- Performance Trends Tab ---
 with tab2:
-    st.markdown("""
-    <div class="chart-container">
+    st.markdown(f"""
+    <div class="chart-box">
+    <h3>Monthly Performance Trends</h3>
     """, unsafe_allow_html=True)
-    
-    st.subheader("Monthly Performance Trends")
     
     if 'ENROLLED_DATE' in df_filtered.columns:
         try:
@@ -958,8 +881,8 @@ with tab2:
             )
             fig.update_layout(
                 height=400,
-                plot_bgcolor='white',
-                paper_bgcolor='white',
+                plot_bgcolor=COLORS['background'],
+                paper_bgcolor=COLORS['background'],
                 font_color=COLORS['text'],
                 yaxis=dict(gridcolor='rgba(138, 127, 186, 0.2)'),
                 xaxis_tickangle=-45
@@ -972,11 +895,11 @@ with tab2:
                  
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown("""
-                <div class="chart-container">
+                st.markdown(f"""
+                <div class="chart-box">
+                <h3>Contract Status Over Time</h3>
                 """, unsafe_allow_html=True)
                 
-                st.subheader("Contract Status Over Time")
                 try:
                     fig = px.area(
                         monthly_data,
@@ -993,8 +916,8 @@ with tab2:
                     )
                     fig.update_layout(
                         height=450,
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
+                        plot_bgcolor=COLORS['background'],
+                        paper_bgcolor=COLORS['background'],
                         font_color=COLORS['text'],
                         legend=dict(
                             orientation="h",
@@ -1002,7 +925,7 @@ with tab2:
                             y=1.02,
                             xanchor="right",
                             x=1,
-                            bgcolor='rgba(255, 255, 255, 0.8)',
+                            bgcolor=COLORS['background'],
                             bordercolor=COLORS['primary'],
                             borderwidth=1
                         ),
@@ -1018,11 +941,11 @@ with tab2:
                 """, unsafe_allow_html=True)
             
             with col2:
-                st.markdown("""
-                <div class="chart-container">
+                st.markdown(f"""
+                <div class="chart-box">
+                <h3>Weekly Performance</h3>
                 """, unsafe_allow_html=True)
                 
-                st.subheader("Weekly Performance")
                 try:
                     # Use a simpler approach for weekly data
                     weekly_df = df_filtered.copy()
@@ -1057,8 +980,8 @@ with tab2:
                     fig.update_layout(
                         height=450,
                         xaxis_tickangle=-45,
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
+                        plot_bgcolor=COLORS['background'],
+                        paper_bgcolor=COLORS['background'],
                         font_color=COLORS['text'],
                         yaxis=dict(gridcolor='rgba(138, 127, 186, 0.2)')
                     )
@@ -1078,11 +1001,10 @@ with tab2:
 
 # --- Agent Analytics Tab ---
 with tab3:
-    st.markdown("""
-    <div class="chart-container">
+    st.markdown(f"""
+    <div class="chart-box">
+    <h3>Agent Performance Analytics</h3>
     """, unsafe_allow_html=True)
-    
-    st.subheader("Agent Performance Analytics")
     
     if 'AGENT' not in df_filtered.columns:
         st.warning("No 'AGENT' column found in dataset.")
@@ -1091,16 +1013,7 @@ with tab3:
             agents = df_filtered['AGENT'].dropna().unique()
             
             # Create a more visually appealing agent selector
-            col1, col2 = st.columns([1, 2])
-            with col1:
-                selected_agent = st.selectbox("Select agent:", sorted(agents))
-            with col2:
-                st.markdown(f"""
-                <div style="background-color: {COLORS['light_purple']}; border-left: 4px solid {COLORS['primary']}; 
-                padding: 15px; border-radius: 0 10px 10px 0; margin-top: 32px;">
-                    Select an agent to view their detailed performance metrics
-                </div>
-                """, unsafe_allow_html=True)
+            selected_agent = st.selectbox("Select agent:", sorted(agents))
             
             agent_df = df_filtered[df_filtered['AGENT'] == selected_agent]
             agent_active = agent_df[agent_df['CATEGORY'] == 'ACTIVE']
@@ -1110,36 +1023,47 @@ with tab3:
             # Calculate success rate safely
             success_rate = (len(agent_active)/len(agent_df)*100) if len(agent_df) > 0 else 0
             
-            # Create more visually appealing metrics
-            st.markdown(f"""
-            <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
-                <div style="flex: 1; min-width: 150px; background-color: {COLORS['light_purple']}; 
-                     border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['primary']};">
+            # Create agent metrics
+            col1, col2, col3, col4, col5 = st.columns(5)
+            with col1:
+                st.markdown(f"""
+                <div style="background-color: {COLORS['light_purple']}; border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['primary']};">
                     <div style="font-size: 1.1rem; color: {COLORS['dark']}; font-weight: 600;">Total Contracts</div>
                     <div style="font-size: 2rem; font-weight: bold; color: {COLORS['primary']};">{len(agent_df)}</div>
                 </div>
-                <div style="flex: 1; min-width: 150px; background-color: {COLORS['light_purple']}; 
-                     border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['med_green']};">
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+                <div style="background-color: {COLORS['light_purple']}; border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['med_green']};">
                     <div style="font-size: 1.1rem; color: {COLORS['dark']}; font-weight: 600;">Active</div>
                     <div style="font-size: 2rem; font-weight: bold; color: {COLORS['med_green']};">{len(agent_active)}</div>
                 </div>
-                <div style="flex: 1; min-width: 150px; background-color: {COLORS['light_purple']}; 
-                     border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['warning']};">
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                <div style="background-color: {COLORS['light_purple']}; border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['warning']};">
                     <div style="font-size: 1.1rem; color: {COLORS['dark']}; font-weight: 600;">NSF</div>
                     <div style="font-size: 2rem; font-weight: bold; color: {COLORS['warning']};">{len(agent_nsf)}</div>
                 </div>
-                <div style="flex: 1; min-width: 150px; background-color: {COLORS['light_purple']}; 
-                     border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['danger']};">
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                st.markdown(f"""
+                <div style="background-color: {COLORS['light_purple']}; border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['danger']};">
                     <div style="font-size: 1.1rem; color: {COLORS['dark']}; font-weight: 600;">Cancelled</div>
                     <div style="font-size: 2rem; font-weight: bold; color: {COLORS['danger']};">{len(agent_cancelled)}</div>
                 </div>
-                <div style="flex: 1; min-width: 150px; background-color: {COLORS['light_purple']}; 
-                     border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['dark_accent']};">
+                """, unsafe_allow_html=True)
+            
+            with col5:
+                st.markdown(f"""
+                <div style="background-color: {COLORS['light_purple']}; border-radius: 10px; padding: 15px; text-align: center; border-left: 5px solid {COLORS['dark_accent']};">
                     <div style="font-size: 1.1rem; color: {COLORS['dark']}; font-weight: 600;">Success Rate</div>
                     <div style="font-size: 2rem; font-weight: bold; color: {COLORS['dark_accent']};">{success_rate:.1f}%</div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
             
             st.markdown("""
             </div>
@@ -1147,11 +1071,11 @@ with tab3:
             
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown("""
-                <div class="chart-container">
+                st.markdown(f"""
+                <div class="chart-box">
+                <h3>Agent's Status Distribution</h3>
                 """, unsafe_allow_html=True)
                 
-                st.subheader("Agent's Status Distribution")
                 status_counts = agent_df['CATEGORY'].value_counts()
                 fig = px.pie(
                     status_counts, 
@@ -1169,11 +1093,11 @@ with tab3:
                 )
                 fig.update_layout(
                     height=400,
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
+                    plot_bgcolor=COLORS['background'],
+                    paper_bgcolor=COLORS['background'],
                     font_color=COLORS['text'],
                     legend=dict(
-                        bgcolor='rgba(255, 255, 255, 0.8)',
+                        bgcolor=COLORS['background'],
                         bordercolor=COLORS['primary'],
                         borderwidth=1
                     )
@@ -1185,11 +1109,11 @@ with tab3:
                 """, unsafe_allow_html=True)
             
             with col2:
-                st.markdown("""
-                <div class="chart-container">
+                st.markdown(f"""
+                <div class="chart-box">
+                <h3>Performance Timeline</h3>
                 """, unsafe_allow_html=True)
                 
-                st.subheader("Performance Timeline")
                 if 'ENROLLED_DATE' in agent_df.columns:
                     try:
                         agent_timeline = agent_df.set_index('ENROLLED_DATE').resample('W').size().reset_index(name='Contracts')
@@ -1207,8 +1131,8 @@ with tab3:
                         )
                         fig.update_layout(
                             height=400,
-                            plot_bgcolor='white',
-                            paper_bgcolor='white',
+                            plot_bgcolor=COLORS['background'],
+                            paper_bgcolor=COLORS['background'],
                             font_color=COLORS['text'],
                             yaxis=dict(gridcolor='rgba(138, 127, 186, 0.2)')
                         )
@@ -1222,11 +1146,10 @@ with tab3:
                 """, unsafe_allow_html=True)
             
             # Generate and download report
-            st.markdown("""
-            <div class="chart-container">
+            st.markdown(f"""
+            <div class="chart-box">
+            <h3>Contract Details</h3>
             """, unsafe_allow_html=True)
-            
-            st.subheader("Contract Details")
             
             # Add a search box for filtering contracts
             search_term = st.text_input("Search contracts:", "")
@@ -1268,27 +1191,17 @@ with tab3:
 
 # --- Data Explorer Tab ---
 with tab4:
-    st.markdown("""
-    <div class="chart-container">
+    st.markdown(f"""
+    <div class="chart-box">
+    <h3>Data Exploration</h3>
     """, unsafe_allow_html=True)
-    
-    st.subheader("Data Exploration")
     
     try:
         # Column selection with improved UI
         default_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY', 'SOURCE_SHEET']
         available_cols = [col for col in df_filtered.columns if col in default_cols] or df_filtered.columns.tolist()
         
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            selected_cols = st.multiselect("Select columns to display:", df_filtered.columns.tolist(), default=available_cols)
-        with col2:
-            st.markdown(f"""
-            <div style="background-color: {COLORS['light_purple']}; border-left: 4px solid {COLORS['primary']}; 
-            padding: 15px; border-radius: 0 10px 10px 0; margin-top: 32px;">
-                Choose columns to view
-            </div>
-            """, unsafe_allow_html=True)
+        selected_cols = st.multiselect("Select columns to display:", df_filtered.columns.tolist(), default=available_cols)
         
         if selected_cols:
             # Filter options
@@ -1338,7 +1251,7 @@ with tab4:
             
             # Export options with improved UI
             st.subheader("Export Data")
-            col1, col2, col3 = st.columns([1, 1, 2])
+            col1, col2 = st.columns(2)
             
             with col1:
                 export_format = st.radio("Select format:", ["CSV", "Excel"])
@@ -1346,38 +1259,37 @@ with tab4:
             with col2:
                 filename = st.text_input("Filename:", f"pepe_sales_data_{start.strftime('%Y%m%d')}_{end.strftime('%Y%m%d')}")
             
-            with col3:
-                if export_format == "CSV":
-                    csv = df_explorer[selected_cols].to_csv(index=False).encode()
-                    st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
-                else:
-                    excel_buffer = BytesIO()
-                    with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-                        df_explorer[selected_cols].to_excel(writer, index=False)
-                        
-                        # Format the Excel file
-                        workbook = writer.book
-                        worksheet = writer.sheets['Sheet1']
-                        
-                        # Format headers
-                        header_format = workbook.add_format({
-                            'bold': True,
-                            'bg_color': COLORS['primary'],
-                            'color': 'white',
-                            'border': 1
-                        })
-                        
-                        for col_num, value in enumerate(df_explorer[selected_cols].columns.values):
-                            worksheet.write(0, col_num, value, header_format)
-                        
-                        # Auto-fit columns
-                        for i, col in enumerate(df_explorer[selected_cols].columns):
-                            column_len = max(df_explorer[col].astype(str).str.len().max(), len(col)) + 2
-                            worksheet.set_column(i, i, column_len)
+            if export_format == "CSV":
+                csv = df_explorer[selected_cols].to_csv(index=False).encode()
+                st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
+            else:
+                excel_buffer = BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                    df_explorer[selected_cols].to_excel(writer, index=False)
                     
-                    excel_buffer.seek(0)
-                    st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
-                                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    # Format the Excel file
+                    workbook = writer.book
+                    worksheet = writer.sheets['Sheet1']
+                    
+                    # Format headers
+                    header_format = workbook.add_format({
+                        'bold': True,
+                        'bg_color': COLORS['primary'],
+                        'color': 'white',
+                        'border': 1
+                    })
+                    
+                    for col_num, value in enumerate(df_explorer[selected_cols].columns.values):
+                        worksheet.write(0, col_num, value, header_format)
+                    
+                    # Auto-fit columns
+                    for i, col in enumerate(df_explorer[selected_cols].columns):
+                        column_len = max(df_explorer[col].astype(str).str.len().max(), len(col)) + 2
+                        worksheet.set_column(i, i, column_len)
+                
+                excel_buffer.seek(0)
+                st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
+                                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         else:
             st.warning("Please select at least one column to display")
     except Exception as e:
@@ -1390,12 +1302,10 @@ with tab4:
 
 # --- Risk Analysis Tab ---
 with tab5:
-    st.markdown("""
-    <div class="chart-container">
+    st.markdown(f"""
+    <div class="chart-box">
+    <h3>Risk Analysis</h3>
     """, unsafe_allow_html=True)
-    
-    st.subheader("Risk Analysis")
-    
     try:
         # Filter for problematic contracts
         flagged = df_filtered[df_filtered['CATEGORY'].isin(["NSF", "CANCELLED", "OTHER"])]
@@ -1425,11 +1335,11 @@ with tab5:
         
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown("""
-            <div class="chart-container">
+            st.markdown(f"""
+            <div class="chart-box">
+            <h3>Cancellation Reasons</h3>
             """, unsafe_allow_html=True)
             
-            st.subheader("Cancellation Reasons")
             if 'STATUS' in flagged.columns and not flagged.empty:
                 try:
                     # Get top 10 status reasons
@@ -1446,15 +1356,14 @@ with tab5:
                     fig.update_layout(
                         height=450,
                         xaxis_tickangle=-45,
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
+                        plot_bgcolor=COLORS['background'],
+                        paper_bgcolor=COLORS['background'],
                         font_color=COLORS['text'],
                         margin=dict(t=50, b=120),  # Extra bottom margin for rotated labels
-                        coloraxis_colorbar=dict(
+                        coloraxis=dict(colorbar=dict(
                             title="Count",
                             tickfont=dict(color=COLORS['text']),
-                            titlefont=dict(color=COLORS['text'])
-                        )
+                        ))
                     )
                     fig.update_traces(marker_line_color=COLORS['primary'],
                                       marker_line_width=1.5)
@@ -1465,16 +1374,16 @@ with tab5:
             else:
                 st.info("No cancellation data available.")
             
-            st.markdown("""
+        st.markdown("""
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
-            st.markdown("""
-            <div class="chart-container">
+            st.markdown(f"""
+            <div class="chart-box">
+            <h3>Agents with Most Issues</h3>
             """, unsafe_allow_html=True)
             
-            st.subheader("Agents with Most Issues")
             if 'AGENT' in flagged.columns and not flagged.empty:
                 try:
                     agent_issues = flagged.groupby('AGENT').size().reset_index(name='Issue_Count')
@@ -1490,15 +1399,14 @@ with tab5:
                     fig.update_layout(
                         height=450,
                         xaxis_tickangle=-45,
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
+                        plot_bgcolor=COLORS['background'],
+                        paper_bgcolor=COLORS['background'],
                         font_color=COLORS['text'],
                         margin=dict(t=50, b=120),  # Extra bottom margin for rotated labels
-                        coloraxis_colorbar=dict(
-                            title="Issue Count",
+                        coloraxis=dict(colorbar=dict(
+                            title="Issues",
                             tickfont=dict(color=COLORS['text']),
-                            titlefont=dict(color=COLORS['text'])
-                        )
+                        ))
                     )
                     fig.update_traces(marker_line_color=COLORS['primary'],
                                       marker_line_width=1.5)
@@ -1514,11 +1422,11 @@ with tab5:
             """, unsafe_allow_html=True)
         
         # Risk analysis by time
-        st.markdown("""
-        <div class="chart-container">
+        st.markdown(f"""
+        <div class="chart-box">
+        <h3>Risk Trends Over Time</h3>
         """, unsafe_allow_html=True)
         
-        st.subheader("Risk Trends Over Time")
         if 'ENROLLED_DATE' in flagged.columns and not flagged.empty:
             try:
                 # Monthly risk trend - using 'ME' instead of 'M' to avoid deprecation warning
@@ -1538,8 +1446,8 @@ with tab5:
                 )
                 fig.update_layout(
                     height=450,
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
+                    plot_bgcolor=COLORS['background'],
+                    paper_bgcolor=COLORS['background'],
                     font_color=COLORS['text'],
                     yaxis=dict(gridcolor='rgba(138, 127, 186, 0.2)'),
                     xaxis_tickangle=-45
@@ -1556,11 +1464,11 @@ with tab5:
         """, unsafe_allow_html=True)
         
         # Problem contracts with search functionality
-        st.markdown("""
-        <div class="chart-container">
+        st.markdown(f"""
+        <div class="chart-box">
+        <h3>Problem Contracts</h3>
         """, unsafe_allow_html=True)
         
-        st.subheader("Problem Contracts")
         if not flagged.empty:
             # Add search functionality
             search_risk = st.text_input("Search problem contracts:", "")
@@ -1596,7 +1504,7 @@ with tab5:
 
 # --- Footer ---
 st.markdown(f"""
-<div class="footer-custom">
+<div style="text-align: center; color: {COLORS['dark']}; font-size: 0.9rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(138, 127, 186, 0.3);">
     © 2025 Pepe's Power Solutions | Dashboard v2.5 | Data updated {datetime.now().strftime('%Y-%m-%d %H:%M')}
 </div>
 """, unsafe_allow_html=True)
