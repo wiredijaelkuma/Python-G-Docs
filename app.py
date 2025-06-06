@@ -567,13 +567,29 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 # --- Overview Tab ---
 with tab1:
+    # Increase the height for charts
+    st.markdown("""
+    <style>
+    .chart-container {
+        margin-bottom: 30px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Use a single column for the gauge chart to give it more space
+    st.subheader("Contract Status Distribution")
+    fig = create_status_gauge(active_contracts, nsf_cases, cancelled_contracts, total_contracts)
+    # Increase the height of the gauge chart
+    fig.update_layout(height=350)
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Add a separator for better visual organization
+    st.markdown("---")
+    
+    # Now use columns for the remaining charts
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.subheader("Contract Status Distribution")
-        fig = create_status_gauge(active_contracts, nsf_cases, cancelled_contracts, total_contracts)
-        st.plotly_chart(fig, use_container_width=True)
-        
         st.subheader("Top Performing Agents")
         if 'AGENT' in df_filtered.columns:
             agent_stats = df_filtered.groupby('AGENT').agg(
@@ -592,87 +608,15 @@ with tab1:
                 color_discrete_map={'Active': '#3498db', 'Total': '#2c3e50'}
             )
             fig.update_layout(
+                height=400,  # Increase height
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                font_color='#ecf0f1'
+                font_color='#ecf0f1',
+                margin=dict(t=50, b=100),  # Add more bottom margin for labels
+                xaxis_tickangle=-45  # Angle the x-axis labels
             )
             st.plotly_chart(fig, use_container_width=True)
-            
-        # --- Weekly Active Sales for Top Performers ---
-        st.subheader("Weekly Active Sales for Top Performers")
-        if 'ENROLLED_DATE' in df_filtered.columns and 'AGENT' in df_filtered.columns:
-            try:
-                # Filter for active contracts only
-                active_df_weekly = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE'].copy()
-                
-                # Create a week identifier
-                active_df_weekly['WEEK_START_DATE'] = active_df_weekly['ENROLLED_DATE'].apply(
-                    lambda x: x.date() - timedelta(days=x.weekday())
-                )
-                
-                # Group by week start date and agent
-                weekly_agent_performance = active_df_weekly.groupby([
-                    'WEEK_START_DATE', 'AGENT'
-                ]).size().reset_index(name='Active_Contracts')
-                
-                # Create a user-friendly week string
-                weekly_agent_performance['WEEK_DISPLAY'] = weekly_agent_performance['WEEK_START_DATE'].apply(
-                    lambda x: f"{x.strftime('%Y-%m-%d')} to {(x + timedelta(days=6)).strftime('%Y-%m-%d')}"
-                )
-                
-                # Sort by week start date in descending order
-                weekly_agent_performance = weekly_agent_performance.sort_values('WEEK_START_DATE', ascending=False)
-                
-                # Get all unique display weeks for the dropdown
-                all_weeks_display = weekly_agent_performance['WEEK_DISPLAY'].unique()
-                
-                if len(all_weeks_display) > 0:
-                    # Allow user to select a week
-                    selected_week_display = st.selectbox("Select Week:", all_weeks_display)
-                    
-                    # Extract the week start date from the selected display string
-                    selected_week_start_str = selected_week_display.split(" to ")[0]
-                    selected_week_start = datetime.strptime(selected_week_start_str, '%Y-%m-%d').date()
-                    
-                    # Filter data for the selected week
-                    selected_week_data = weekly_agent_performance[
-                        weekly_agent_performance['WEEK_START_DATE'] == selected_week_start
-                    ]
-                    
-                    # Sort by Active_Contracts for the selected week
-                    selected_week_data = selected_week_data.sort_values(by='Active_Contracts', ascending=False)
-                    
-                    # Display top performers for the selected week
-                    top_agents_selected_week = selected_week_data.head(10)
-                    
-                    if not top_agents_selected_week.empty:
-                        fig = px.bar(
-                            top_agents_selected_week,
-                            x='AGENT',
-                            y='Active_Contracts',
-                            title=f"Top 10 Active Contracts for {selected_week_display}",
-                            labels={'AGENT': 'Agent', 'Active_Contracts': 'Active Contracts'},
-                            color='Active_Contracts',
-                            color_continuous_scale=px.colors.sequential.Blues
-                        )
-                        fig.update_layout(
-                            xaxis_title="Agent", 
-                            yaxis_title="Active Contracts",
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font_color='#ecf0f1'
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                    else:
-                        st.info(f"No active contracts for top performers in the week of {selected_week_display}.")
-                else:
-                    st.info("No weekly active sales data available.")
-            except Exception as e:
-                st.error(f"Error in weekly active sales analysis: {e}")
-                st.info("Could not generate weekly active sales data.")
-        else:
-            st.warning("Enrollment date or Agent data not available for weekly sales analysis.")
-        
+    
     with col2:
         st.subheader("Enrollment Timeline")
         if 'ENROLLED_DATE' in df_filtered.columns:
@@ -687,45 +631,135 @@ with tab1:
                 )
                 fig.update_traces(line=dict(color='#3498db', width=2))
                 fig.update_layout(
+                    height=400,  # Increase height
                     xaxis_rangeslider_visible=True,
                     plot_bgcolor='rgba(0,0,0,0)',
                     paper_bgcolor='rgba(0,0,0,0)',
-                    font_color='#ecf0f1'
+                    font_color='#ecf0f1',
+                    margin=dict(t=50, b=50)  # Add more margin
                 )
                 st.plotly_chart(fig, use_container_width=True)
             except Exception as e:
                 st.error(f"Error generating enrollment timeline: {e}")
                 st.info("Could not generate enrollment timeline.")
+    
+    # Add another separator
+    st.markdown("---")
+    
+    # Use separate rows for the remaining charts to avoid squishing
+    st.subheader("Weekly Active Sales for Top Performers")
+    if 'ENROLLED_DATE' in df_filtered.columns and 'AGENT' in df_filtered.columns:
+        try:
+            # Filter for active contracts only
+            active_df_weekly = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE'].copy()
             
-            st.subheader("Status by Source")
-            if 'SOURCE_SHEET' in df_filtered.columns:
-                try:
-                    source_status = df_filtered.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
+            # Create a week identifier
+            active_df_weekly['WEEK_START_DATE'] = active_df_weekly['ENROLLED_DATE'].apply(
+                lambda x: x.date() - timedelta(days=x.weekday())
+            )
+            
+            # Group by week start date and agent
+            weekly_agent_performance = active_df_weekly.groupby([
+                'WEEK_START_DATE', 'AGENT'
+            ]).size().reset_index(name='Active_Contracts')
+            
+            # Create a user-friendly week string
+            weekly_agent_performance['WEEK_DISPLAY'] = weekly_agent_performance['WEEK_START_DATE'].apply(
+                lambda x: f"{x.strftime('%Y-%m-%d')} to {(x + timedelta(days=6)).strftime('%Y-%m-%d')}"
+            )
+            
+            # Sort by week start date in descending order
+            weekly_agent_performance = weekly_agent_performance.sort_values('WEEK_START_DATE', ascending=False)
+            
+            # Get all unique display weeks for the dropdown
+            all_weeks_display = weekly_agent_performance['WEEK_DISPLAY'].unique()
+            
+            if len(all_weeks_display) > 0:
+                # Allow user to select a week
+                selected_week_display = st.selectbox("Select Week:", all_weeks_display)
+                
+                # Extract the week start date from the selected display string
+                selected_week_start_str = selected_week_display.split(" to ")[0]
+                selected_week_start = datetime.strptime(selected_week_start_str, '%Y-%m-%d').date()
+                
+                # Filter data for the selected week
+                selected_week_data = weekly_agent_performance[
+                    weekly_agent_performance['WEEK_START_DATE'] == selected_week_start
+                ]
+                
+                # Sort by Active_Contracts for the selected week
+                selected_week_data = selected_week_data.sort_values(by='Active_Contracts', ascending=False)
+                
+                # Display top performers for the selected week
+                top_agents_selected_week = selected_week_data.head(10)
+                
+                if not top_agents_selected_week.empty:
                     fig = px.bar(
-                        source_status.reset_index(),
-                        x='SOURCE_SHEET',
-                        y=source_status.columns,
-                        title="Contract Status by Source",
-                        labels={'value': 'Count', 'variable': 'Status'},
-                        barmode='stack',
-                        color_discrete_map={
-                            'ACTIVE': '#3498db',
-                            'NSF': '#f39c12',
-                            'CANCELLED': '#e74c3c',
-                            'OTHER': '#95a5a6'
-                        }
+                        top_agents_selected_week,
+                        x='AGENT',
+                        y='Active_Contracts',
+                        title=f"Top 10 Active Contracts for {selected_week_display}",
+                        labels={'AGENT': 'Agent', 'Active_Contracts': 'Active Contracts'},
+                        color='Active_Contracts',
+                        color_continuous_scale=px.colors.sequential.Blues
                     )
                     fig.update_layout(
+                        height=450,  # Increase height
+                        xaxis_title="Agent", 
+                        yaxis_title="Active Contracts",
                         plot_bgcolor='rgba(0,0,0,0)',
                         paper_bgcolor='rgba(0,0,0,0)',
-                        font_color='#ecf0f1'
+                        font_color='#ecf0f1',
+                        xaxis_tickangle=-45,  # Angle the x-axis labels
+                        margin=dict(t=50, b=100)  # Add more bottom margin for labels
                     )
                     st.plotly_chart(fig, use_container_width=True)
-                except Exception as e:
-                    st.error(f"Error generating source status chart: {e}")
-                    st.info("Could not generate source status chart.")
+                else:
+                    st.info(f"No active contracts for top performers in the week of {selected_week_display}.")
             else:
-                st.warning("Source data not available")
+                st.info("No weekly active sales data available.")
+        except Exception as e:
+            st.error(f"Error in weekly active sales analysis: {e}")
+            st.info("Could not generate weekly active sales data.")
+    else:
+        st.warning("Enrollment date or Agent data not available for weekly sales analysis.")
+    
+    # Add the Status by Source chart in its own row
+    st.markdown("---")
+    st.subheader("Status by Source")
+    if 'SOURCE_SHEET' in df_filtered.columns:
+        try:
+            source_status = df_filtered.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
+            fig = px.bar(
+                source_status.reset_index(),
+                x='SOURCE_SHEET',
+                y=source_status.columns,
+                title="Contract Status by Source",
+                labels={'value': 'Count', 'variable': 'Status'},
+                barmode='stack',
+                color_discrete_map={
+                    'ACTIVE': '#3498db',
+                    'NSF': '#f39c12',
+                    'CANCELLED': '#e74c3c',
+                    'OTHER': '#95a5a6'
+                }
+            )
+            fig.update_layout(
+                height=450,  # Increase height
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font_color='#ecf0f1',
+                xaxis_tickangle=-45,  # Angle the x-axis labels
+                margin=dict(t=50, b=100),  # Add more bottom margin for labels
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Error generating source status chart: {e}")
+            st.info("Could not generate source status chart.")
+    else:
+        st.warning("Source data not available")
+
 
 # --- Performance Trends Tab ---
 with tab2:
