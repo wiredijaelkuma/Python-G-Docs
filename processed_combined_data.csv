@@ -1,6 +1,8 @@
 CUSTOMER ID,AGENT,ENROLLED DATE,STATUS,SOURCE_SHEET
+1106107849,Heidi Elizondo,2025-06-09,ENROLLED / ACTIVE,PAC- Raw
 110581916,Israel Pelcastre,2025-06-05,ACTIVE,PAC- Raw
 1105676108,Amanda O'Banion,2025-06-05,ACTIVE,PAC- Raw
+1105819162,Israel Pelcastre,2025-06-05,ENROLLED / ACTIVE,PAC- Raw
 1105340612,Amanda O'Banion,2025-06-04,ACTIVE,PAC- Raw
 1103707348,Heidi Elizondo,2025-06-02,ACTIVE,PAC- Raw
 1103448613,Amanda O'Banion,2025-05-30,ACTIVE,PAC- Raw
@@ -134,8 +136,8 @@ CUSTOMER ID,AGENT,ENROLLED DATE,STATUS,SOURCE_SHEET
 1087440333,David Zepeda,2025-04-23,ACTIVE,PAC- Raw
 1087405074,Richard Hernandez,2025-04-23,ACTIVE,PAC- Raw
 1086946807,Heidi Elizondo,2025-04-22,DROPPED,PAC- Raw
-1086961829,Amanda O'Banion,2025-04-22,ENROLLED / NSF PROBLEM,PAC- Raw
-1087011445,Bianca Rodriguez,2025-04-22,ENROLLED / NSF PROBLEM,PAC- Raw
+1086961829,Amanda O'Banion,2025-04-22,DROPPED,PAC- Raw
+1087011445,Bianca Rodriguez,2025-04-22,DROPPED,PAC- Raw
 1087020435,Richard Hernandez,2025-04-22,DROPPED,PAC- Raw
 1085158905,David Zepeda,2025-04-21,DROPPED,PAC- Raw
 1086605994,David Zepeda,2025-04-21,DROPPED,PAC- Raw
@@ -180,7 +182,7 @@ CUSTOMER ID,AGENT,ENROLLED DATE,STATUS,SOURCE_SHEET
 1081169126,Bryan Garcia,2025-04-07,ACTIVE,PAC- Raw
 1078800567,Vanessa Hernandez,2025-04-04,ACTIVE,PAC- Raw
 1078799910,David Zepeda,2025-04-04,PENDING CANCELLATION,PAC- Raw
-1078797920,Richard Hernandez,2025-04-04,SUMMONS: PUSH OUT,PAC- Raw
+1078797920,Richard Hernandez,2025-04-04,PENDING CANCELLATION,PAC- Raw
 1078579707,Israel Pelcastre,2025-04-02,ACTIVE,PAC- Raw
 1078527392,David Zepeda,2025-04-02,DROPPED,PAC- Raw
 1077244493,Amanda O'Banion,2025-04-01,ACTIVE,PAC- Raw
@@ -377,6 +379,8 @@ CID196068,Israel Pelcastre,2025-05-29,ACTIVE,MLG- Raw
 CID135605,Richard Hernandez,2025-05-29,ACTIVE,MLG- Raw
 CID123505,Richard Hernandez,2025-05-28,ACTIVE,MLG- Raw
 CID124200,Vanessa Glass,2025-06-02,ACTIVE,MLG- Raw
+Daniel Christianson,Vanessa Hernandez,2025-06-09,ACTIVE,ELP- Raw
+Sandra Perez,Vanessa Hernandez,2025-06-09,ACTIVE,ELP- Raw
 Elizabeth Ashe,Vanessa Glass,2025-06-04,ACTIVE,ELP- Raw
 Jeffery Van Vleck,Vanessa Hernandez,2025-06-04,ACTIVE,ELP- Raw
 James Hahn,David Zepeda,2025-06-03,ACTIVE,ELP- Raw
@@ -421,23 +425,23 @@ Sandra Sullivan,Miriam Guizar,2025-03-24,ACTIVE,ELP- Raw
 Robert Zivojnovity,Richard Hernandez,2025-03-24,ACTIVE,ELP- Raw
 William Burkhalter,David Zepeda,2025-03-23,ACTIVE,ELP- Raw
 Suzette Hughes,Richard Hernandez,2025-03-20,ACTIVE,ELP- Raw
-Willie Chambers,Heidi G Elizondo,2025-03-19,ACTIVE,ELP- Raw
+Willie Chambers,Heidi Elizondo,2025-03-19,ACTIVE,ELP- Raw
 Audrey Swartz,Vanessa Hernandez,2025-03-19,ACTIVE,ELP- Raw
-Jose Manuel Robledo Salazar,Heidi G Elizondo,2025-03-17,ACTIVE,ELP- Raw
-Ana Herrera Shapiama,Brent Lewis,2025-03-17,ACTIVE,ELP- Raw
+Jose Manuel Robledo Salazar,Heidi Elizondo,2025-03-17,ACTIVE,ELP- Raw
+Ana Herrera Shapiama,Bryan Garcia,2025-03-17,ACTIVE,ELP- Raw
 Dalias Ogetange,David Zepeda,2025-03-13,ACTIVE,ELP- Raw
 Donte Marshall,Richard Hernandez,2025-03-13,ACTIVE,ELP- Raw
-Kaye Tune-Ross,Brent Lewis,2025-03-12,ACTIVE,ELP- Raw
+Kaye Tune-Ross,Bryan Garcia,2025-03-12,ACTIVE,ELP- Raw
 Deborah Hall,Miriam Guizar,2025-03-11,ACTIVE,ELP- Raw
 Jeffrey Shoemaker,Andy Wade,2025-03-11,ACTIVE,ELP- Raw
-Roberto Campos,Brent Lewis,2025-03-11,ACTIVE,ELP- Raw
+Roberto Campos,Bryan Garcia,2025-03-11,ACTIVE,ELP- Raw
 Mellisa Cole,Andy Wade,2025-03-06,ACTIVE,ELP- Raw
 Richard Lowe,Andy Wade,2025-03-06,ACTIVE,ELP- Raw
 Corina Beevers,Amy Franco,2025-03-06,ACTIVE,ELP- Raw
 Leonora Hurst,David Zepeda,2025-03-05,ACTIVE,ELP- Raw
 Robyn Hughes,David Zepeda,2025-03-04,ACTIVE,ELP- Raw
 Rodney Thompson,David Zepeda,2025-03-03,ACTIVE,ELP- Raw
-David Currie,Heidi G Elizondo,2025-03-03,ACTIVE,ELP- Raw
+David Currie,Heidi Elizondo,2025-03-03,ACTIVE,ELP- Raw
 Joan Dorr,Richard Hernandez,2025-03-03,ACTIVE,ELP- Raw
 William Chaffman,Brent Lewis,2025-03-02,ACTIVE,ELP- Raw
 Gail Schill Emmons,Arthur Perez,2025-02-28,ACTIVE,ELP- Raw
@@ -445,10 +449,10 @@ Orin Williams,Miriam Guizar,2025-02-26,ACTIVE,ELP- Raw
 Aline Elias,Richard Hernandez,2025-02-26,ACTIVE,ELP- Raw
 Estaban Rosado,Dallas Villa,2025-02-26,ACTIVE,ELP- Raw
 Brian Higgins,Richard Hernandez,2025-02-26,ACTIVE,ELP- Raw
-Jeffrey Keinath,Heidi G Elizondo,2025-02-20,ACTIVE,ELP- Raw
+Jeffrey Keinath,Heidi Elizondo,2025-02-20,ACTIVE,ELP- Raw
 Randall Anderson,Dallas Villa,2025-02-18,ACTIVE,ELP- Raw
 Patrick Gohl,David Zepeda,2025-02-18,ACTIVE,ELP- Raw
-Martha Hrisoulas,Heidi G Elizondo,2025-02-17,ACTIVE,ELP- Raw
+Martha Hrisoulas,Heidi Elizondo,2025-02-17,ACTIVE,ELP- Raw
 Charlene Stoops,David Zepeda,2025-02-17,ACTIVE,ELP- Raw
 Mary Walters,Miriam Guizar,2025-02-13,ACTIVE,ELP- Raw
 Robert ly,Edwin Orantes,2025-02-11,ACTIVE,ELP- Raw
@@ -460,7 +464,7 @@ Jerome Goldsby,Richard Hernandez,2025-02-10,ACTIVE,ELP- Raw
 Thomas Ollie,Andy Wade,2025-02-10,ACTIVE,ELP- Raw
 Rodger Cates,Miriam Guizar,2025-02-09,ACTIVE,ELP- Raw
 Jacquelyn Shupak,Israel Pelcastre,2025-02-09,ACTIVE,ELP- Raw
-Elizabeth Allen,Brent Lewis,2025-02-06,ACTIVE,ELP- Raw
+Elizabeth Allen,Bryan Garcia,2025-02-06,ACTIVE,ELP- Raw
 John Doromal,Israel Pelcastre,2025-02-05,ACTIVE,ELP- Raw
 Billy Ray Hudson Jr,Mike Solis,2025-02-05,ACTIVE,ELP- Raw
 Carol E. Hamby,Andy Wade,2025-02-04,ACTIVE,ELP- Raw
