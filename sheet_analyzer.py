@@ -18,8 +18,8 @@ EXPECTED_COL_ENROLLED_DATE = "ENROLLED DATE"
 EXPECTED_COL_STATUS = "STATUS" 
 
 # --- Status Configuration ---
-ACTIVE_SALE_STATUSES = ["ACTIVE"] 
-POTENTIAL_RESCUE_STATUSES = ["NSF"]
+ACTIVE_SALE_STATUSES = ["ACTIVE", "ENROLLED / ACTIVE", "ENROLLED/ACTIVE"] 
+POTENTIAL_RESCUE_STATUSES = ["NSF", "ENROLLED / NSF PROBLEM", "ENROLLED/NSF"]
 
 # Visualization Settings
 AGENT_COLORS = {
@@ -301,6 +301,35 @@ if __name__ == "__main__":
         if not combined_df.empty:
             output_csv_path = "C:\\Users\\Mijae\\OneDrive\\Desktop\\Python G-Docs\\processed_combined_data.csv"
             try:
+                # Add CATEGORY column for better filtering in the app
+                if EXPECTED_COL_STATUS in combined_df.columns:
+                    # Define status categories for the app
+                    active_terms = ["ACTIVE", "ENROLLED / ACTIVE", "ENROLLED/ACTIVE"]
+                    nsf_terms = ["NSF", "ENROLLED / NSF PROBLEM", "ENROLLED/NSF"]
+                    cancelled_terms = ["CANCELLED", "DROPPED", "PENDING CANCELLATION", "TERMINATED", "NEEDS ROL"]
+                    
+                    # Create CATEGORY column
+                    combined_df['CATEGORY'] = 'OTHER'
+                    
+                    # Apply categorization using vectorized operations
+                    combined_df.loc[combined_df[EXPECTED_COL_STATUS].isin(active_terms), 'CATEGORY'] = 'ACTIVE'
+                    combined_df.loc[combined_df[EXPECTED_COL_STATUS].isin(nsf_terms), 'CATEGORY'] = 'NSF'
+                    combined_df.loc[combined_df[EXPECTED_COL_STATUS].isin(cancelled_terms), 'CATEGORY'] = 'CANCELLED'
+                    
+                    # Handle partial matches for complex statuses
+                    for term in active_terms:
+                        mask = combined_df[EXPECTED_COL_STATUS].str.contains(term, case=False, na=False)
+                        combined_df.loc[mask, 'CATEGORY'] = 'ACTIVE'
+                    
+                    for term in nsf_terms:
+                        mask = combined_df[EXPECTED_COL_STATUS].str.contains(term, case=False, na=False)
+                        combined_df.loc[mask, 'CATEGORY'] = 'NSF'
+                    
+                    for term in cancelled_terms:
+                        mask = combined_df[EXPECTED_COL_STATUS].str.contains(term, case=False, na=False)
+                        combined_df.loc[mask, 'CATEGORY'] = 'CANCELLED'
+                
+                # Save the processed data
                 combined_df.to_csv(output_csv_path, index=False)
                 print(f"\nSuccessfully saved combined data ({len(combined_df)} rows) to '{output_csv_path}'")
             except Exception as e_csv:

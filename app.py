@@ -417,9 +417,13 @@ with st.sidebar:
     except:
         st.title("🚀 Pepe's Power")
     
-    # Add refresh data button
-    if st.button("🔄 Refresh Data"):
+    # Add refresh data button with improved functionality
+    if st.button("🔄 Refresh Data", key="refresh_button", use_container_width=True):
+        # Clear all cached data to ensure fresh load
         st.cache_data.clear()
+        # Add a success message
+        st.sidebar.success("✅ Data refreshed successfully!")
+        # Force reload
         st.experimental_rerun()
     
     # Data source section - only show this if no data is loaded yet
@@ -605,7 +609,7 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
     
-    # Weekly Active Sales for Top Performers - moved to top as requested
+    # Weekly Active Sales for Top Performers - with improved logic
     st.markdown(f"""
     <div class="chart-box">
     <h3>Weekly Active Sales for Top Performers</h3>
@@ -613,7 +617,7 @@ with tab1:
     
     if 'ENROLLED_DATE' in df_filtered.columns and 'AGENT' in df_filtered.columns:
         try:
-            # Filter for active contracts only
+            # Filter for active contracts only - using the CATEGORY field for proper filtering
             active_df_weekly = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE'].copy()
             
             # Create a week identifier
@@ -639,7 +643,7 @@ with tab1:
             
             if len(all_weeks_display) > 0:
                 # Allow user to select a week with larger dropdown
-                selected_week_display = st.selectbox("Select Week:", all_weeks_display)
+                selected_week_display = st.selectbox("Select Week:", all_weeks_display, key="weekly_sales_week_selector")
                 
                 # Extract the week start date from the selected display string
                 selected_week_start_str = selected_week_display.split(" to ")[0]
@@ -657,11 +661,29 @@ with tab1:
                 top_agents_selected_week = selected_week_data.head(10)
                 
                 if not top_agents_selected_week.empty:
+                                    # Add a toggle to show all agents or just top 10
+                    col1, col2 = st.columns([1, 3])
+                    with col1:
+                        show_all = st.checkbox("Show all agents", False, key="show_all_agents_weekly")
+                    with col2:
+                        st.markdown(f"""
+                        <div style="background-color: {COLORS['light_purple']}; padding: 10px; border-radius: 10px; margin-top: 4px;">
+                            <b>Active Contracts Only:</b> This chart shows only ACTIVE status contracts, not cancelled or NSF
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    if show_all:
+                        display_data = selected_week_data
+                        title_text = f"All Agents Active Contracts for {selected_week_display}"
+                    else:
+                        display_data = top_agents_selected_week
+                        title_text = f"Top 10 Active Contracts for {selected_week_display}"
+                    
                     fig = px.bar(
-                        top_agents_selected_week,
+                        display_data,
                         x='AGENT',
                         y='Active_Contracts',
-                        title=f"Top 10 Active Contracts for {selected_week_display}",
+                        title=title_text,
                         labels={'AGENT': 'Agent', 'Active_Contracts': 'Active Contracts'},
                         color='Active_Contracts',
                         color_continuous_scale=[COLORS['light_purple'], COLORS['med_purple'], COLORS['primary'], COLORS['secondary']]
@@ -683,6 +705,46 @@ with tab1:
                     fig.update_traces(marker_line_color=COLORS['primary'],
                                       marker_line_width=1.5)
                     st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Add a detailed summary of the week's performance
+                    total_active = display_data['Active_Contracts'].sum()
+                    
+                    # Get total contracts for the week (all statuses)
+                    week_start_date = datetime.strptime(selected_week_start_str, '%Y-%m-%d').date()
+                    week_end_date = week_start_date + timedelta(days=6)
+                    
+                    # Filter the original dataframe for the selected week
+                    all_contracts_in_week = df_filtered[
+                        (df_filtered['ENROLLED_DATE'].dt.date >= week_start_date) & 
+                        (df_filtered['ENROLLED_DATE'].dt.date <= week_end_date)
+                    ]
+                    
+                    # Count by status
+                    total_contracts = len(all_contracts_in_week)
+                    active_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'ACTIVE'])
+                    nsf_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'NSF'])
+                    cancelled_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'CANCELLED'])
+                    other_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'OTHER'])
+                    
+                    # Calculate success rate
+                    success_rate = (active_count / total_contracts * 100) if total_contracts > 0 else 0
+                    
+                    st.markdown(f"""
+                    <div style="background-color: {COLORS['light_purple']}; padding: 15px; border-radius: 10px; margin-top: 10px;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <b>Week Summary:</b> {total_active} total active contracts for {len(display_data)} agents
+                                {f" (showing top 10 of {len(selected_week_data)} agents)" if not show_all and len(selected_week_data) > 10 else ""}
+                            </div>
+                            <div style="flex: 1; min-width: 200px;">
+                                <b>Week Status:</b> {active_count} Active, {nsf_count} NSF, {cancelled_count} Cancelled
+                            </div>
+                            <div style="flex: 1; min-width: 200px;">
+                                <b>Success Rate:</b> {success_rate:.1f}% ({active_count} of {total_contracts} total)
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
                     st.info(f"No active contracts for top performers in the week of {selected_week_display}.")
             else:
@@ -852,7 +914,11 @@ with tab2:
     
     if 'ENROLLED_DATE' in df_filtered.columns:
         try:
-            # Create monthly data with status breakdown
+            # Create monthly data with status breakdown - improved logic
+            # First ensure we have the MONTH_YEAR column
+            if 'MONTH_YEAR' not in df_filtered.columns and 'ENROLLED_DATE' in df_filtered.columns:
+                df_filtered['MONTH_YEAR'] = df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')
+                
             monthly_data = df_filtered.groupby(['MONTH_YEAR', 'CATEGORY']).size().unstack(fill_value=0).reset_index()
             
             # Ensure all status columns exist
@@ -947,9 +1013,18 @@ with tab2:
                 """, unsafe_allow_html=True)
                 
                 try:
-                    # Use a simpler approach for weekly data
+                    # Improved approach for weekly data with better week calculation
                     weekly_df = df_filtered.copy()
-                    weekly_df['Week'] = weekly_df['ENROLLED_DATE'].dt.strftime('%Y-W%U')
+                    
+                    # Create a proper ISO week identifier
+                    weekly_df['Week_Start'] = weekly_df['ENROLLED_DATE'].apply(
+                        lambda x: x.date() - timedelta(days=x.weekday())
+                    )
+                    weekly_df['Week'] = weekly_df['Week_Start'].apply(
+                        lambda x: f"{x.isocalendar()[0]}-W{x.isocalendar()[1]:02d}"
+                    )
+                    
+                    # Group by week and category
                     weekly_counts = weekly_df.groupby(['Week', 'CATEGORY']).size().reset_index(name='Count')
                     
                     # Create a pivot table
