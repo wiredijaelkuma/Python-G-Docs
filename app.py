@@ -8,13 +8,7 @@ import base64
 from io import BytesIO
 import calendar
 from pathlib import Path
-
-# Import modular components
-from data_explorer import render_data_explorer
-from risk_analysis import render_risk_analysis
-from performance_tab import render_performance_tab
-from agents_tab import render_agents_tab
-from overview_tab import render_overview_tab
+import os
 
 # --- Set page configuration first (must be the first Streamlit command) ---
 st.set_page_config(
@@ -24,19 +18,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Load custom CSS with beautiful periwinkle gradient styling
+# --- Import modular components ---
+# Use try/except to handle potential import errors gracefully
 try:
-    with open('assets/custom.css') as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-except Exception:
-    pass
+    from data_explorer import render_data_explorer
+    from risk_analysis import render_risk_analysis
+    from performance_tab import render_performance_tab
+    from agents_tab import render_agents_tab
+    from overview_tab import render_overview_tab
+    modules_loaded = True
+except ImportError as e:
+    st.error(f"Error loading modules: {e}")
+    modules_loaded = False
 
 # --- Constants ---
-# Simplified asset paths
-ASSETS_DIR = Path("assets")
+# Use os.path for cross-platform compatibility
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 # --- Color Palette ---
-# Periwinkle purples and opaque greens
 COLORS = {
     'primary': '#8A7FBA',      # Periwinkle purple
     'secondary': '#6A5ACD',    # Slateblue
@@ -55,11 +54,24 @@ COLORS = {
     'med_green': '#66CDAA',    # Medium aquamarine
 }
 
+# --- Load custom CSS ---
+def load_css():
+    css_path = os.path.join(ASSETS_DIR, "custom.css")
+    try:
+        with open(css_path) as f:
+            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    except Exception as e:
+        st.warning(f"Custom CSS not loaded: {e}")
+
 # --- Helper Functions ---
 @st.cache_data(ttl=3600)
 def load_csv_data(file_path="processed_combined_data.csv"):
     """Load data with minimal processing for speed"""
     try:
+        # Handle both relative and absolute paths
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(os.path.dirname(__file__), file_path)
+            
         # Simple CSV reading without complex options
         df = pd.read_csv(file_path)
         
@@ -86,13 +98,24 @@ def format_large_number(num):
     """Format large numbers with commas"""
     return f"{num:,}"
 
+def load_image(image_name):
+    """Load image with error handling"""
+    try:
+        image_path = os.path.join(ASSETS_DIR, image_name)
+        return st.image(image_path, use_column_width=True)
+    except Exception:
+        return None
+
 # --- Main App Logic ---
 def main():
+    # Load CSS
+    load_css()
+    
     # --- File Uploader in Sidebar for Data Source ---
     with st.sidebar:
         # Display the Pepe muscle icon
         try:
-            st.image("assets/pepe-muscle.jpg", width=180)
+            st.image(os.path.join(ASSETS_DIR, "pepe-muscle.jpg"), width=180)
         except:
             st.title("🐸 Pepe's Power")
         
@@ -111,14 +134,16 @@ def main():
                 st.success("✅ File uploaded successfully!")
 
     # --- Banner ---
-    try:
-        st.image("assets/banner.png", use_column_width=True)
-    except:
-        st.title("Pepe's Power Dashboard")
+    load_image("banner.png") or st.title("Pepe's Power Dashboard")
 
     # --- Data Loading ---
     with st.spinner("🔍 Loading data..."):
-        df, load_err = load_csv_data("processed_combined_data.csv")
+        # Try to load from uploaded file first, then fall back to default file
+        if 'uploaded_file' in st.session_state:
+            df = pd.read_csv(st.session_state['uploaded_file'])
+            load_err = None
+        else:
+            df, load_err = load_csv_data("processed_combined_data.csv")
         
     if load_err:
         st.error(f"🚨 Data Load Error: {load_err}")
@@ -237,90 +262,62 @@ def main():
 
     with col2:
         st.markdown(f"""
-        <div class="metric-card" style="border-left: 5px solid {COLORS['med_green']};">
-            <div class="metric-title">Active Contracts</div>
-            <div class="metric-value" style="color: {COLORS['med_green']};">{format_large_number(active_contracts)}</div>
+        <div class="metric-card">
+            <div class="metric-title">Active</div>
+            <div class="metric-value">{format_large_number(active_contracts)}</div>
         </div>
         """, unsafe_allow_html=True)
-
+        
     with col3:
         st.markdown(f"""
-        <div class="metric-card" style="border-left: 5px solid {COLORS['warning']};">
+        <div class="metric-card">
             <div class="metric-title">NSF Cases</div>
-            <div class="metric-value" style="color: {COLORS['warning']};">{format_large_number(nsf_cases)}</div>
+            <div class="metric-value">{format_large_number(nsf_cases)}</div>
         </div>
         """, unsafe_allow_html=True)
-
+        
     with col4:
         st.markdown(f"""
-        <div class="metric-card" style="border-left: 5px solid {COLORS['danger']};">
+        <div class="metric-card">
             <div class="metric-title">Cancelled</div>
-            <div class="metric-value" style="color: {COLORS['danger']};">{format_large_number(cancelled_contracts)}</div>
+            <div class="metric-value">{format_large_number(cancelled_contracts)}</div>
         </div>
         """, unsafe_allow_html=True)
-
+        
     with col5:
         st.markdown(f"""
-        <div class="metric-card" style="border-left: 5px solid {COLORS['dark_accent']};">
+        <div class="metric-card">
             <div class="metric-title">Success Rate</div>
-            <div class="metric-value" style="color: {COLORS['dark_accent']};">{success_rate:.1f}%</div>
+            <div class="metric-value">{success_rate:.1f}%</div>
         </div>
         """, unsafe_allow_html=True)
 
-    # --- Tab Interface ---
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Overview", 
-        "📈 Performance", 
-        "🧑 Agents", 
-        "🔍 Data Explorer", 
-        "🚨 Risk Analysis"
-    ])
-
-    # --- Overview Tab ---
-    with tab1:
-        try:
-            render_overview_tab(df_filtered, COLORS, active_contracts, nsf_cases, cancelled_contracts, total_contracts)
-        except Exception as e:
-            st.error(f"Error in Overview tab: {e}")
-
-    # --- Performance Tab ---
-    with tab2:
-        try:
+    # --- Tab Navigation ---
+    tabs = st.tabs(["Overview", "Performance", "Agents", "Risk Analysis", "Data Explorer"])
+    
+    # Only render tabs if modules are loaded
+    if modules_loaded:
+        # Overview Tab
+        with tabs[0]:
+            render_overview_tab(df_filtered, COLORS)
+            
+        # Performance Tab
+        with tabs[1]:
             render_performance_tab(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error in Performance tab: {e}")
-
-    # --- Agents Tab ---
-    with tab3:
-        try:
+            
+        # Agents Tab
+        with tabs[2]:
             render_agents_tab(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error in Agents tab: {e}")
-
-    # --- Data Explorer Tab ---
-    with tab4:
-        try:
-            render_data_explorer(df_filtered, COLORS, start)
-        except Exception as e:
-            st.error(f"Error in Data Explorer tab: {e}")
-
-    # --- Risk Analysis Tab ---
-    with tab5:
-        try:
+            
+        # Risk Analysis Tab
+        with tabs[3]:
             render_risk_analysis(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error in Risk Analysis tab: {e}")
+            
+        # Data Explorer Tab
+        with tabs[4]:
+            render_data_explorer(df_filtered, COLORS, start)
+    else:
+        st.error("Module imports failed. Please check your installation.")
 
-    # --- Footer ---
-    st.markdown("""
-    <div class="footer">
-        © 2025 Pepe's Power Solutions | Dashboard v3.0
-    </div>
-    """, unsafe_allow_html=True)
-
-    # --- Notifications ---
-    st.toast("Dashboard loaded successfully!", icon="🐸")
-
-# Run the main function
 if __name__ == "__main__":
     main()

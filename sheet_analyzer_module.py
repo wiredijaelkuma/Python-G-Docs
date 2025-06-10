@@ -300,3 +300,24 @@ def create_gauge_chart(value, min_val, max_val, title):
     )
     
     return fig
+
+def prepare_weekly_performance(df, selected_week, selected_year):
+    """Prepare weekly performance data for the given week and year."""
+    try:
+        # Filter data for the selected week and year
+        weekly_data = df[(df['WEEK'] == selected_week) & (df['YEAR'] == selected_year)]
+        
+        if weekly_data.empty:
+            return pd.DataFrame({"Message": ["No data available for the selected week"]}), None
+        
+        # Example: Group by agent and count active enrollments
+        weekly_summary = weekly_data[weekly_data['CATEGORY'] == 'ACTIVE'].groupby('AGENT').size().reset_index(name='Active Enrollments')
+        
+        # Create a bar chart for visualization
+        weekly_fig = create_bar_chart(weekly_summary, f"Weekly Performance for Week {selected_week}", 'AGENT', 'Active Enrollments')
+        
+        return weekly_summary, weekly_fig
+    
+    except Exception as e:
+        print(f"Error in prepare_weekly_performance: {e}")
+        return pd.DataFrame({"Message": [str(e)]}), None
