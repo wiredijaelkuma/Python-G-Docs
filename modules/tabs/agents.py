@@ -266,16 +266,16 @@ def render_agents_tab(df, COLORS):
                 recent_enrollments = agent_df.sort_values('ENROLLED_DATE', ascending=False).head(10)
                 
                 # Select columns to display
-                display_cols = ['ENROLLED_DATE', 'CATEGORY', 'STATUS']
+                display_cols = ['ENROLLED_DATE', 'CATEGORY', 'STATUS', 'SOURCE_SHEET']
                 display_cols = [col for col in display_cols if col in recent_enrollments.columns]
                 
                 if display_cols and not recent_enrollments.empty:
                     # Format date columns
-                    if 'ENROLLED_DATE' in recent_enrollments.columns:
-                        recent_enrollments = recent_enrollments.copy()
-                        recent_enrollments['ENROLLED_DATE'] = recent_enrollments['ENROLLED_DATE'].dt.strftime('%Y-%m-%d')
+                    recent_enrollments_display = recent_enrollments.copy()
+                    if 'ENROLLED_DATE' in recent_enrollments_display.columns:
+                        recent_enrollments_display['ENROLLED_DATE'] = recent_enrollments_display['ENROLLED_DATE'].dt.strftime('%Y-%m-%d')
                     
-                    st.dataframe(recent_enrollments[display_cols], use_container_width=True)
+                    st.dataframe(recent_enrollments_display[display_cols], use_container_width=True)
                 else:
                     st.info("No recent enrollments to display")
             else:
@@ -295,8 +295,12 @@ def render_agents_tab(df, COLORS):
                 day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
                 
                 # Get counts by day
-                day_counts = agent_df.groupby('DayOfWeek').size().reindex(day_order).reset_index()
+                day_counts = agent_df.groupby('DayOfWeek').size().reset_index()
                 day_counts.columns = ['Day', 'Count']
+                
+                # Make sure we have all days in the correct order
+                day_df = pd.DataFrame({'Day': day_order})
+                day_counts = pd.merge(day_df, day_counts, on='Day', how='left').fillna(0)
                 
                 if not day_counts.empty:
                     # Create the chart

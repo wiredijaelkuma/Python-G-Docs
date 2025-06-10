@@ -22,7 +22,7 @@ st.set_page_config(
     layout="wide", 
     page_title="Pepe's Power Dashboard",
     page_icon="🐸",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Start with sidebar collapsed to maximize chart space
 )
 
 # --- Constants ---
@@ -171,7 +171,10 @@ def main():
     display_metrics(df_filtered, COLORS)
 
     # --- Tab Navigation ---
-    tabs = st.tabs(["Home", "Overview", "Performance", "Agents", "Drop Rate", "Risk Analysis", "Data Explorer"])
+    tabs = st.tabs([
+        "Home", "Overview", "Performance", "Agents", 
+        "Drop Rate", "Risk Analysis", "Data Explorer"
+    ])
     
     # Home/Landing Page Tab
     with tabs[0]:
@@ -257,7 +260,7 @@ def fallback_landing_page(df_filtered, COLORS):
         if not recent_df.empty:
             # Determine which columns to show
             display_columns = []
-            for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'STATUS', 'CATEGORY', 'AMOUNT']:
+            for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'SOURCE_SHEET', 'STATUS', 'CATEGORY', 'AMOUNT']:
                 if col in recent_df.columns:
                     display_columns.append(col)
             

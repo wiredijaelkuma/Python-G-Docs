@@ -1,4 +1,4 @@
-# modules/tabs/data_explorer.py (completed)
+# modules/tabs/data_explorer.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -8,6 +8,10 @@ def render_data_explorer(df, COLORS):
     """Render the data explorer tab with interactive analysis tools"""
     
     st.subheader("Data Explorer")
+    
+    if df.empty:
+        st.warning("No data available for exploration. Please adjust your filters.")
+        return
     
     # Create tabs for different explorer views
     explorer_tabs = st.tabs(["Data Viewer", "Column Analysis", "Custom Query"])
@@ -136,6 +140,7 @@ def render_data_explorer(df, COLORS):
         st.subheader("Column Analysis")
         
         # Column selector
+        all_columns = df.columns.tolist()
         analysis_column = st.selectbox(
             "Select Column to Analyze",
             options=all_columns
@@ -194,7 +199,7 @@ def render_data_explorer(df, COLORS):
                     title=f"Distribution of {analysis_column}",
                     color_discrete_sequence=[COLORS['primary']]
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="column_histogram")
                 
                 # Create box plot
                 fig = px.box(
@@ -203,87 +208,99 @@ def render_data_explorer(df, COLORS):
                     title=f"Box Plot of {analysis_column}",
                     color_discrete_sequence=[COLORS['primary']]
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="column_boxplot")
                 
             elif pd.api.types.is_datetime64_dtype(col_type):
                 # Date column analysis
-                date_stats = pd.DataFrame({
-                    'Statistic': ['Minimum', 'Maximum', 'Range'],
-                    'Value': [
-                        col_data.min().strftime('%Y-%m-%d'),
-                        col_data.max().strftime('%Y-%m-%d'),
-                        f"{(col_data.max() - col_data.min()).days} days"
-                    ]
-                })
-                
-                st.table(date_stats)
-                
-                # Group by month and year
-                col_data_valid = col_data.dropna()
-                monthly_counts = col_data_valid.dt.strftime('%Y-%m').value_counts().sort_index()
-                monthly_data = pd.DataFrame({
-                    'Month': monthly_counts.index,
-                    'Count': monthly_counts.values
-                })
-                
-                # Create time series chart
-                fig = px.line(
-                    monthly_data,
-                    x='Month',
-                    y='Count',
-                    markers=True,
-                    title=f"Distribution of {analysis_column} by Month",
-                    color_discrete_sequence=[COLORS['primary']]
-                )
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Day of week distribution
-                dow_counts = col_data_valid.dt.day_name().value_counts()
-                
-                # Order days correctly
-                day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-                dow_data = pd.DataFrame({
-                    'Day': day_order,
-                    'Count': [dow_counts.get(day, 0) for day in day_order]
-                })
-                
-                fig = px.bar(
-                    dow_data,
-                    x='Day',
-                    y='Count',
-                    title=f"Distribution of {analysis_column} by Day of Week",
-                    color_discrete_sequence=[COLORS['secondary']]
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                if col_data.notna().any():  # Check if there's at least one non-null value
+                    date_stats = pd.DataFrame({
+                        'Statistic': ['Minimum', 'Maximum', 'Range'],
+                        'Value': [
+                            col_data.min().strftime('%Y-%m-%d'),
+                            col_data.max().strftime('%Y-%m-%d'),
+                            f"{(col_data.max() - col_data.min()).days} days"
+                        ]
+                    })
+                    
+                    st.table(date_stats)
+                    
+                    # Group by month and year
+                    col_data_valid = col_data.dropna()
+                    if not col_data_valid.empty:
+                        monthly_counts = col_data_valid.dt.strftime('%Y-%m').value_counts().sort_index()
+                        monthly_data = pd.DataFrame({
+                            'Month': monthly_counts.index,
+                            'Count': monthly_counts.values
+                        })
+                        
+                        # Create time series chart
+                        fig = px.line(
+                            monthly_data,
+                            x='Month',
+                            y='Count',
+                            markers=True,
+                            title=f"Distribution of {analysis_column} by Month",
+                            color_discrete_sequence=[COLORS['primary']]
+                        )
+                        st.plotly_chart(fig, use_container_width=True, key="column_timeseries")
+                        
+                        # Day of week distribution
+                        dow_counts = col_data_valid.dt.day_name().value_counts()
+                        
+                        # Order days correctly
+                        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                        dow_data = pd.DataFrame({
+                            'Day': day_order,
+                            'Count': [dow_counts.get(day, 0) for day in day_order]
+                        })
+                        
+                        fig = px.bar(
+                            dow_data,
+                            x='Day',
+                            y='Count',
+                            title=f"Distribution of {analysis_column} by Day of Week",
+                            color_discrete_sequence=[COLORS['secondary']]
+                        )
+                        st.plotly_chart(fig, use_container_width=True, key="column_dayofweek")
+                    else:
+                        st.warning("No valid date values to analyze")
+                else:
+                    st.warning("No valid date values to analyze")
                 
             else:
                 # Categorical column analysis
-                value_counts = col_data.value_counts().reset_index()
-                value_counts.columns = ['Value', 'Count']
-                
-                # Calculate percentage
-                value_counts['Percentage'] = (value_counts['Count'] / value_counts['Count'].sum() * 100).round(1)
-                
-                # Show the top values
-                top_n = min(20, len(value_counts))
-                st.write(f"Top {top_n} Values:")
-                
-                # Create bar chart
-                fig = px.bar(
-                    value_counts.head(top_n),
-                    x='Value',
-                    y='Count',
-                    title=f"Top {top_n} Values in {analysis_column}",
-                    color='Count',
-                    color_continuous_scale=px.colors.sequential.Purp,
-                    text='Percentage'
-                )
-                fig.update_traces(texttemplate='%{text}%', textposition='outside')
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Show the data table
-                with st.expander(f"Show all values for {analysis_column}"):
-                    st.dataframe(value_counts, use_container_width=True)
+                if col_data.notna().any():  # Check if there's at least one non-null value
+                    value_counts = col_data.value_counts().reset_index()
+                    if not value_counts.empty:
+                        value_counts.columns = ['Value', 'Count']
+                        
+                        # Calculate percentage
+                        value_counts['Percentage'] = (value_counts['Count'] / value_counts['Count'].sum() * 100).round(1)
+                        
+                        # Show the top values
+                        top_n = min(20, len(value_counts))
+                        st.write(f"Top {top_n} Values:")
+                        
+                        # Create bar chart
+                        fig = px.bar(
+                            value_counts.head(top_n),
+                            x='Value',
+                            y='Count',
+                            title=f"Top {top_n} Values in {analysis_column}",
+                            color='Count',
+                            color_continuous_scale=px.colors.sequential.Purp,
+                            text='Percentage'
+                        )
+                        fig.update_traces(texttemplate='%{text}%', textposition='outside')
+                        st.plotly_chart(fig, use_container_width=True, key="column_barchart")
+                        
+                        # Show the data table
+                        with st.expander(f"Show all values for {analysis_column}"):
+                            st.dataframe(value_counts, use_container_width=True)
+                    else:
+                        st.warning("No data to display for this column")
+                else:
+                    st.warning("No non-null values to analyze in this column")
     
     # Custom Query Tab
     with explorer_tabs[2]:
@@ -358,7 +375,7 @@ def render_data_explorer(df, COLORS):
                                     title=f"Histogram of {hist_col}",
                                     color_discrete_sequence=[COLORS['primary']]
                                 )
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, use_container_width=True, key="query_histogram")
                             
                             elif viz_type == "Scatter Plot" and len(numeric_cols) >= 2:
                                 x_col = st.selectbox("Select X Column", numeric_cols)
@@ -384,7 +401,7 @@ def render_data_explorer(df, COLORS):
                                         color=color_col,
                                         title=f"{y_col} vs {x_col} (colored by {color_col})"
                                     )
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, use_container_width=True, key="query_scatter")
                             
                             elif viz_type == "Bar Chart" and cat_cols:
                                 x_col = st.selectbox("Select Category Column", cat_cols)
@@ -415,7 +432,7 @@ def render_data_explorer(df, COLORS):
                                         title=f"Average {y_col} by {x_col}",
                                         color_discrete_sequence=[COLORS['primary']]
                                     )
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, use_container_width=True, key="query_bar")
                             
                             elif viz_type == "Pie Chart" and cat_cols:
                                 pie_col = st.selectbox("Select Category Column", cat_cols)
@@ -429,7 +446,7 @@ def render_data_explorer(df, COLORS):
                                     names='Value',
                                     title=f"Distribution of {pie_col}"
                                 )
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, use_container_width=True, key="query_pie")
                             
                             elif viz_type == "Time Series" and date_cols:
                                 x_col = st.selectbox("Select Date Column", date_cols)
@@ -488,7 +505,7 @@ def render_data_explorer(df, COLORS):
                                         title=f"Average {y_col} by {agg_level}",
                                         color_discrete_sequence=[COLORS['primary']]
                                     )
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, use_container_width=True, key="query_timeseries")
                         else:
                             st.warning("No suitable columns available for visualization.")
                 except Exception as e:

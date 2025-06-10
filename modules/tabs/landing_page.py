@@ -35,14 +35,15 @@ def render_landing_page(df, COLORS):
         st.warning("No weekly data available for the selected date range")
         return
     
-    # Add week ending date for better display
+    # Add week starting date for better display
     week_dates = []
     week_labels = []
     for week_str in weekly_data['Week']:
         year, week_num = week_str.split('-')
-        # Calculate the date of the Sunday of that week
+        # Calculate the date of the Monday of that week (start of week)
         try:
-            week_date = datetime.strptime(f'{year}-{week_num}-0', '%Y-%U-%w')
+            # Use Monday (1) as the start of the week
+            week_date = datetime.strptime(f'{year}-{week_num}-1', '%Y-%U-%w')
             week_dates.append(week_date)
             week_labels.append(week_date.strftime('%b %d, %Y'))
         except ValueError:
@@ -50,7 +51,7 @@ def render_landing_page(df, COLORS):
             week_dates.append(datetime.now())
             week_labels.append(f"Week {week_num}, {year}")
     
-    weekly_data['Week_Ending'] = week_labels
+    weekly_data['Week_Starting'] = week_labels
     weekly_data['Week_Date'] = week_dates
     
     # Sort by date (newest first)
@@ -64,18 +65,18 @@ def render_landing_page(df, COLORS):
     selected_week_idx = st.selectbox(
         "Choose a week:", 
         range(len(weekly_data)),
-        format_func=lambda i: weekly_data['Week_Ending'][i],
+        format_func=lambda i: weekly_data['Week_Starting'][i],
         index=default_week_idx
     )
     
     selected_week = weekly_data['Week'].iloc[selected_week_idx]
-    selected_week_ending = weekly_data['Week_Ending'].iloc[selected_week_idx]
+    selected_week_starting = weekly_data['Week_Starting'].iloc[selected_week_idx]
     
     # Filter data for selected week (active deals only)
     week_df = active_df[active_df['Week'] == selected_week]
     
     # Display metrics for selected week
-    st.markdown(f"### Week Ending: {selected_week_ending}")
+    st.markdown(f"### Week Starting: {selected_week_starting}")
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -109,19 +110,19 @@ def render_landing_page(df, COLORS):
         if not recent_weeks.empty:
             fig = px.line(
                 recent_weeks, 
-                x='Week_Ending', 
+                x='Week_Starting', 
                 y='Count',
                 markers=True,
-                labels={'Count': 'Active Enrollments', 'Week_Ending': 'Week Ending'},
+                labels={'Count': 'Active Enrollments', 'Week_Starting': 'Week Starting'},
                 color_discrete_sequence=[COLORS['primary']]
             )
             
             # Highlight the selected week
-            selected_week_in_chart = selected_week_ending in recent_weeks['Week_Ending'].values
+            selected_week_in_chart = selected_week_starting in recent_weeks['Week_Starting'].values
             if selected_week_in_chart:
-                idx = recent_weeks[recent_weeks['Week_Ending'] == selected_week_ending].index[0]
+                idx = recent_weeks[recent_weeks['Week_Starting'] == selected_week_starting].index[0]
                 fig.add_trace(go.Scatter(
-                    x=[selected_week_ending],
+                    x=[selected_week_starting],
                     y=[recent_weeks['Count'].iloc[idx]],
                     mode='markers',
                     marker=dict(color=COLORS['accent'], size=12),
@@ -131,7 +132,7 @@ def render_landing_page(df, COLORS):
             # Add values as annotations
             for i in range(len(recent_weeks)):
                 fig.add_annotation(
-                    x=recent_weeks['Week_Ending'].iloc[i],
+                    x=recent_weeks['Week_Starting'].iloc[i],
                     y=recent_weeks['Count'].iloc[i],
                     text=str(recent_weeks['Count'].iloc[i]),
                     showarrow=True,
@@ -145,7 +146,7 @@ def render_landing_page(df, COLORS):
             # Add a bar chart showing the same data
             fig = px.bar(
                 recent_weeks,
-                x='Week_Ending',
+                x='Week_Starting',
                 y='Count',
                 title='Weekly Active Enrollments',
                 color_discrete_sequence=[COLORS['primary']]
@@ -153,14 +154,15 @@ def render_landing_page(df, COLORS):
             
             # Highlight the selected week
             if selected_week_in_chart:
-                idx = recent_weeks[recent_weeks['Week_Ending'] == selected_week_ending].index[0]
+                idx = recent_weeks[recent_weeks['Week_Starting'] == selected_week_starting].index[0]
                 fig.add_trace(go.Bar(
-                    x=[selected_week_ending],
+                    x=[selected_week_starting],
                     y=[recent_weeks['Count'].iloc[idx]],
                     marker=dict(color=COLORS['accent']),
                     name='Selected Week'
                 ))
             
+            # Use the full container width for the chart
             st.plotly_chart(fig, use_container_width=True, key="weekly_trend_bar")
         else:
             st.info("Not enough data to display weekly trend")
@@ -179,29 +181,22 @@ def render_landing_page(df, COLORS):
                 top_agents,
                 x='Agent',
                 y='Count',
-                title=f'Top Agents for Week Ending {selected_week_ending}',
+                title=f'Top Agents for Week Starting {selected_week_starting}',
                 color='Count',
                 color_continuous_scale=px.colors.sequential.Viridis
             )
             st.plotly_chart(fig, use_container_width=True, key="agent_distribution")
             
-            # Show pie chart of top agents vs others
-            if len(agent_counts) > 5:
-                top_5_agents = agent_counts.head(5)
-                other_agents = pd.DataFrame({
-                    'Agent': ['Other Agents'],
-                    'Count': [agent_counts['Count'][5:].sum()]
-                })
-                pie_data = pd.concat([top_5_agents, other_agents])
-                
-                fig = px.pie(
-                    pie_data,
-                    values='Count',
-                    names='Agent',
-                    title='Agent Distribution'
-                )
-                fig.update_traces(textinfo='percent+label')
-                st.plotly_chart(fig, use_container_width=True, key="agent_pie")
+            # Show pie chart of all agents
+            fig = px.pie(
+                agent_counts,
+                values='Count',
+                names='Agent',
+                title='Agent Distribution (All Agents)'
+            )
+            fig.update_traces(textinfo='percent+label')
+            # Use the full container width for the chart
+            st.plotly_chart(fig, use_container_width=True, key="agent_pie")
         else:
             st.warning("Agent data not available for this week")
     
@@ -214,7 +209,7 @@ def render_landing_page(df, COLORS):
     
     # Determine which columns to show in the table
     display_columns = []
-    for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'AMOUNT']:
+    for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'SOURCE_SHEET', 'AMOUNT']:
         if col in week_df.columns:
             display_columns.append(col)
     
@@ -232,6 +227,11 @@ def render_landing_page(df, COLORS):
             column_config["AMOUNT"] = st.column_config.NumberColumn(
                 "Amount",
                 format="$%.2f",
+            )
+        
+        if 'SOURCE_SHEET' in table_df.columns:
+            column_config["SOURCE_SHEET"] = st.column_config.TextColumn(
+                "Campaign",
             )
         
         st.dataframe(
