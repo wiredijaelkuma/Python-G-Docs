@@ -9,6 +9,7 @@ import os
 # Import modules
 from modules.utils import load_css, load_csv_data, format_large_number
 from modules.ui_components import display_metrics, create_header
+from modules.tabs.landing_page import render_landing_page
 from modules.tabs.overview import render_overview_tab
 from modules.tabs.performance import render_performance_tab
 from modules.tabs.agents import render_agents_tab
@@ -170,10 +171,20 @@ def main():
     display_metrics(df_filtered, COLORS)
 
     # --- Tab Navigation ---
-    tabs = st.tabs(["Overview", "Performance", "Agents", "Drop Rate", "Risk Analysis", "Data Explorer"])
+    tabs = st.tabs(["Home", "Overview", "Performance", "Agents", "Drop Rate", "Risk Analysis", "Data Explorer"])
+    
+    # Home/Landing Page Tab
+    with tabs[0]:
+        try:
+            render_landing_page(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Landing Page: {e}")
+            import traceback
+            st.exception(traceback.format_exc())
+            fallback_landing_page(df_filtered, COLORS)
     
     # Overview Tab
-    with tabs[0]:
+    with tabs[1]:
         try:
             render_overview_tab(df_filtered, COLORS)
         except Exception as e:
@@ -181,7 +192,7 @@ def main():
             fallback_overview(df_filtered, COLORS)
         
     # Performance Tab
-    with tabs[1]:
+    with tabs[2]:
         try:
             render_performance_tab(df_filtered, COLORS)
         except Exception as e:
@@ -189,15 +200,15 @@ def main():
             fallback_performance(df_filtered, COLORS)
         
     # Agents Tab
-    with tabs[2]:
+    with tabs[3]:
         try:
             render_agents_tab(df_filtered, COLORS)
         except Exception as e:
             st.error(f"Error rendering Agents tab: {e}")
             fallback_agents(df_filtered, COLORS)
         
-    # Drop Rate Tab (New)
-    with tabs[3]:
+    # Drop Rate Tab
+    with tabs[4]:
         try:
             render_drop_rate_tab(df_filtered, COLORS)
         except Exception as e:
@@ -205,7 +216,7 @@ def main():
             fallback_drop_rate(df_filtered, COLORS)
         
     # Risk Analysis Tab
-    with tabs[4]:
+    with tabs[5]:
         try:
             render_risk_analysis(df_filtered, COLORS)
         except Exception as e:
@@ -213,12 +224,57 @@ def main():
             fallback_risk_analysis(df_filtered, COLORS)
         
     # Data Explorer Tab
-    with tabs[5]:
+    with tabs[6]:
         try:
             render_data_explorer(df_filtered, COLORS)
         except Exception as e:
             st.error(f"Error rendering Data Explorer tab: {e}")
             fallback_data_explorer(df_filtered)
+
+def fallback_landing_page(df_filtered, COLORS):
+    import plotly.express as px
+    
+    st.subheader("Weekly Performance Summary")
+    if 'ENROLLED_DATE' in df_filtered.columns and not df_filtered.empty:
+        # Get the most recent week's data
+        today = datetime.now()
+        one_week_ago = today - timedelta(days=7)
+        
+        recent_df = df_filtered[df_filtered['ENROLLED_DATE'] >= one_week_ago]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.metric("New Enrollments (Last 7 Days)", len(recent_df))
+            
+        with col2:
+            if 'CATEGORY' in recent_df.columns and len(recent_df) > 0:
+                active_count = len(recent_df[recent_df['CATEGORY'] == 'ACTIVE'])
+                active_rate = (active_count / len(recent_df) * 100) if len(recent_df) > 0 else 0
+                st.metric("Active Rate", f"{active_rate:.1f}%")
+        
+        # Simple table of recent enrollments
+        if not recent_df.empty:
+            # Determine which columns to show
+            display_columns = []
+            for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'STATUS', 'CATEGORY', 'AMOUNT']:
+                if col in recent_df.columns:
+                    display_columns.append(col)
+            
+            if display_columns:
+                table_df = recent_df[display_columns].copy()
+                
+                # Format date columns
+                if 'ENROLLED_DATE' in table_df.columns:
+                    table_df['ENROLLED_DATE'] = table_df['ENROLLED_DATE'].dt.strftime('%Y-%m-%d')
+                
+                st.dataframe(table_df.head(10), use_container_width=True, hide_index=True)
+            else:
+                st.info("No data columns available to display")
+        else:
+            st.info("No recent enrollments to display")
+    else:
+        st.warning("Enrollment date data not available or no data matches the current filters")
 
 def fallback_overview(df_filtered, COLORS):
     import plotly.express as px
@@ -246,87 +302,44 @@ def fallback_performance(df_filtered, COLORS):
     if 'ENROLLED_DATE' in df_filtered.columns:
         monthly_data = df_filtered.groupby(df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')).size().reset_index()
         monthly_data.columns = ['Month', 'Count']
-        fig = px.bar(monthly_data, x='Month', y='Count', color_discrete_sequence=[COLORS['primary']])
+        
+        fig = px.bar(
+            monthly_data,
+            x='Month',
+            y='Count',
+            title='Monthly Enrollment Count',
+            color_discrete_sequence=[COLORS['primary']]
+        )
         st.plotly_chart(fig, use_container_width=True)
 
 def fallback_agents(df_filtered, COLORS):
-    import plotly.express as px
-    
     st.subheader("Agent Performance")
     if 'AGENT' in df_filtered.columns:
-        agent_data = df_filtered.groupby('AGENT').size().reset_index()
-        agent_data.columns = ['Agent', 'Count']
-        fig = px.bar(agent_data, x='Agent', y='Count', color_discrete_sequence=[COLORS['secondary']])
-        st.plotly_chart(fig, use_container_width=True)
+        agent_counts = df_filtered['AGENT'].value_counts().head(10).reset_index()
+        agent_counts.columns = ['Agent', 'Enrollments']
+        st.dataframe(agent_counts)
 
 def fallback_drop_rate(df_filtered, COLORS):
-    import plotly.express as px
-    
     st.subheader("Drop Rate Analysis")
     if 'CATEGORY' in df_filtered.columns and 'ENROLLED_DATE' in df_filtered.columns:
-        # Calculate drop rate by month
-        df_filtered['Month'] = df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')
-        monthly_total = df_filtered.groupby('Month').size()
-        monthly_drops = df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'].groupby('Month').size()
+        # Calculate overall drop rate
+        total = len(df_filtered)
+        cancelled = len(df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'])
+        drop_rate = (cancelled / total * 100) if total > 0 else 0
         
-        drop_rate_data = pd.DataFrame({
-            'Month': monthly_total.index,
-            'Total': monthly_total.values,
-            'Dropped': monthly_drops.reindex(monthly_total.index, fill_value=0).values
-        })
-        
-        drop_rate_data['Drop_Rate'] = (drop_rate_data['Dropped'] / drop_rate_data['Total'] * 100).round(1)
-        
-        fig = px.line(
-            drop_rate_data, 
-            x='Month', 
-            y='Drop_Rate',
-            markers=True,
-            title='Monthly Drop Rate (%)',
-            color_discrete_sequence=[COLORS['danger']]
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning("Required data columns missing for drop rate analysis")
+        st.metric("Overall Drop Rate", f"{drop_rate:.1f}%")
 
 def fallback_risk_analysis(df_filtered, COLORS):
-    import plotly.express as px
-    
-    st.subheader("Risk Distribution")
+    st.subheader("Risk Analysis")
     if 'CATEGORY' in df_filtered.columns:
-        risk_data = pd.DataFrame({
-            'Category': ['Low Risk', 'Medium Risk', 'High Risk'],
-            'Count': [
-                len(df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']),
-                len(df_filtered[df_filtered['CATEGORY'] == 'NSF']),
-                len(df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'])
-            ]
-        })
-        fig = px.bar(
-            risk_data, 
-            x='Category', 
-            y='Count',
-            color='Category',
-            color_discrete_map={
-                'Low Risk': COLORS['med_green'],
-                'Medium Risk': COLORS['warning'],
-                'High Risk': COLORS['danger']
-            }
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        risk_data = df_filtered['CATEGORY'].value_counts(normalize=True).reset_index()
+        risk_data.columns = ['Status', 'Percentage']
+        risk_data['Percentage'] = risk_data['Percentage'] * 100
+        st.dataframe(risk_data)
 
 def fallback_data_explorer(df_filtered):
-    st.subheader("Data Preview")
-    st.dataframe(df_filtered.head(100), use_container_width=True)
-    
-    # Download button
-    csv = df_filtered.to_csv(index=False)
-    st.download_button(
-        label="Download Filtered Data",
-        data=csv,
-        file_name="filtered_data.csv",
-        mime="text/csv"
-    )
+    st.subheader("Data Explorer")
+    st.dataframe(df_filtered.head(100))
 
 if __name__ == "__main__":
     main()
