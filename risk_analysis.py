@@ -68,18 +68,18 @@ def render_risk_analysis(df_filtered, COLORS):
                     fig.update_layout(
                         height=450,
                         xaxis_tickangle=-45,
-                        plot_bgcolor=COLORS['background'],
-                        paper_bgcolor=COLORS['background'],
-                        font_color=COLORS['text'],
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font_color='darkblue',
                         margin=dict(t=50, b=120),
                         coloraxis=dict(colorbar=dict(
                             title="Count",
-                            tickfont=dict(color=COLORS['text']),
+                            tickfont=dict(color='darkblue'),
                         ))
                     )
                     fig.update_traces(marker_line_color=COLORS['primary'],
                                       marker_line_width=1.5)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="risk_cancellation_reasons_chart")
                 except Exception as e:
                     st.error(f"Error generating cancellation reasons chart: {e}")
                     st.info("Could not generate cancellation reasons chart.")
@@ -112,23 +112,118 @@ def render_risk_analysis(df_filtered, COLORS):
                     fig.update_layout(
                         height=450,
                         xaxis_tickangle=-45,
-                        plot_bgcolor=COLORS['background'],
-                        paper_bgcolor=COLORS['background'],
-                        font_color=COLORS['text'],
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font_color='darkblue',
                         margin=dict(t=50, b=120),
                         coloraxis=dict(colorbar=dict(
                             title="Issues",
-                            tickfont=dict(color=COLORS['text']),
+                            tickfont=dict(color='darkblue'),
                         ))
                     )
                     fig.update_traces(marker_line_color=COLORS['primary'],
                                       marker_line_width=1.5)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="risk_agents_issues_chart")
                 except Exception as e:
                     st.error(f"Error generating agents with issues chart: {e}")
                     st.info("Could not generate agents with issues chart.")
             else:
                 st.info("No agent issue data available.")
+            
+            st.markdown("""
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Risk by Program - NEW SECTION
+        with st.container():
+            st.markdown("""
+            <div class="chart-box">
+            <h3>Risk Analysis by Program</h3>
+            """, unsafe_allow_html=True)
+            
+            if 'SOURCE_SHEET' in flagged.columns and not flagged.empty:
+                try:
+                    # Clean source names
+                    flagged['CLEAN_SOURCE'] = flagged['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '')
+                    
+                    # Get risk counts by program
+                    program_risk = flagged.groupby(['CLEAN_SOURCE', 'CATEGORY']).size().reset_index(name='Count')
+                    
+                    # Create stacked bar chart
+                    fig = px.bar(
+                        program_risk,
+                        x='CLEAN_SOURCE',
+                        y='Count',
+                        color='CATEGORY',
+                        title="Risk Distribution by Program",
+                        barmode='stack',
+                        color_discrete_map={
+                            'NSF': COLORS['warning'],
+                            'CANCELLED': COLORS['danger'],
+                            'OTHER': COLORS['dark_accent']
+                        }
+                    )
+                    
+                    fig.update_layout(
+                        height=400,
+                        xaxis_tickangle=-45,
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font_color='darkblue',
+                        xaxis_title="Program",
+                        yaxis_title="Number of Risk Contracts"
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True, key="risk_program_distribution_chart")
+                    
+                    # Calculate risk rates by program
+                    program_totals = df_filtered.groupby('SOURCE_SHEET').size().reset_index(name='Total')
+                    program_totals['CLEAN_SOURCE'] = program_totals['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '')
+                    program_risk_totals = flagged.groupby('SOURCE_SHEET').size().reset_index(name='Risk_Count')
+                    program_risk_totals['CLEAN_SOURCE'] = program_risk_totals['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '')
+                    
+                    program_risk_rates = pd.merge(
+                        program_totals[['CLEAN_SOURCE', 'Total']], 
+                        program_risk_totals[['CLEAN_SOURCE', 'Risk_Count']], 
+                        on='CLEAN_SOURCE', 
+                        how='left'
+                    )
+                    
+                    program_risk_rates['Risk_Count'] = program_risk_rates['Risk_Count'].fillna(0)
+                    program_risk_rates['Risk_Rate'] = (program_risk_rates['Risk_Count'] / program_risk_rates['Total'] * 100).round(1)
+                    program_risk_rates = program_risk_rates.sort_values('Risk_Rate', ascending=False)
+                    
+                    # Create horizontal bar chart for risk rates
+                    fig = px.bar(
+                        program_risk_rates,
+                        y='CLEAN_SOURCE',
+                        x='Risk_Rate',
+                        title="Risk Rate by Program",
+                        orientation='h',
+                        color='Risk_Rate',
+                        color_continuous_scale=[COLORS['med_green'], COLORS['warning'], COLORS['danger']],
+                        text=program_risk_rates['Risk_Rate'].astype(str) + '%'
+                    )
+                    
+                    fig.update_layout(
+                        height=400,
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        font_color='darkblue',
+                        xaxis_title="Risk Rate (%)",
+                        yaxis_title="Program",
+                        xaxis=dict(range=[0, 100])
+                    )
+                    
+                    fig.update_traces(textposition='outside')
+                    
+                    st.plotly_chart(fig, use_container_width=True, key="risk_program_rates_chart")
+                    
+                except Exception as e:
+                    st.error(f"Error generating program risk analysis: {e}")
+                    st.info("Could not generate program risk analysis.")
+            else:
+                st.info("No program risk data available.")
             
             st.markdown("""
             </div>
@@ -171,7 +266,7 @@ def render_risk_analysis(df_filtered, COLORS):
                 
                 # Display the clean dataframe
                 st.dataframe(clean_df.sort_values('Date', ascending=False) if 'Date' in clean_df.columns else clean_df, 
-                           use_container_width=True, height=400)
+                           use_container_width=True, height=400, key="risk_problem_contracts_table")
                 
                 # Add export button
                 excel_buffer = BytesIO()

@@ -98,6 +98,9 @@ def render_data_explorer(df_filtered, COLORS, start):
                     # Add status
                     clean_df['Status'] = df_explorer['STATUS'] if 'STATUS' in df_explorer.columns else "N/A"
                     
+                    # Add category
+                    clean_df['Category'] = df_explorer['CATEGORY'] if 'CATEGORY' in df_explorer.columns else "N/A"
+                    
                     # Add program (cleaned)
                     if 'SOURCE_SHEET' in df_explorer.columns:
                         clean_df['Program'] = df_explorer['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '')
@@ -108,7 +111,7 @@ def render_data_explorer(df_filtered, COLORS, start):
                     
                     # Display the clean dataframe
                     st.dataframe(clean_df.sort_values('Date', ascending=False) if 'Date' in clean_df.columns else clean_df, 
-                               use_container_width=True, height=400)
+                               use_container_width=True, height=400, key="explorer_results_table")
                     
                     # Add export button
                     excel_buffer = BytesIO()
@@ -139,7 +142,7 @@ def render_data_explorer(df_filtered, COLORS, start):
                     filename = f"pepe_sales_data_{start.strftime('%Y%m%d')}"
                     st.download_button("📤 Download Report", excel_buffer, file_name=f"{filename}.xlsx", 
                                      mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                     use_container_width=True)
+                                     use_container_width=True, key="explorer_download_button")
                 else:
                     st.info("No records match your filter criteria.")
                 
