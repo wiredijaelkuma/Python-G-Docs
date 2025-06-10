@@ -608,23 +608,38 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 # --- Overview Tab ---
 with tab1:
-    st.markdown(f"""
-    <div class="chart-box">
-    <h3>Contract Status Distribution</h3>
-    """, unsafe_allow_html=True)
+    # Create a clean modular layout
+    st.markdown("<h2 style='text-align: center; color: #483D8B;'>Sales Overview Dashboard</h2>", unsafe_allow_html=True)
     
-    fig = create_status_gauge(active_contracts, nsf_cases, cancelled_contracts, total_contracts)
-    st.plotly_chart(fig, use_container_width=True)
+    # Status summary module
+    with st.container():
+        st.markdown(f"""
+        <div class="chart-box">
+        <h3>Contract Status Distribution</h3>
+        """, unsafe_allow_html=True)
+        
+        fig = create_status_gauge(active_contracts, nsf_cases, cancelled_contracts, total_contracts)
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Add a clean summary below the gauge
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Active Rate", f"{(active_contracts/total_contracts*100):.1f}%" if total_contracts > 0 else "0%")
+        with col2:
+            st.metric("NSF Rate", f"{(nsf_cases/total_contracts*100):.1f}%" if total_contracts > 0 else "0%")
+        with col3:
+            st.metric("Cancellation Rate", f"{(cancelled_contracts/total_contracts*100):.1f}%" if total_contracts > 0 else "0%")
+        
+        st.markdown("""
+        </div>
+        """, unsafe_allow_html=True)
     
-    st.markdown("""
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Weekly Active Sales for Top Performers - with improved logic
-    st.markdown(f"""
-    <div class="chart-box">
-    <h3>Weekly Active Sales for Top Performers</h3>
-    """, unsafe_allow_html=True)
+    # Weekly Performance Module
+    with st.container():
+        st.markdown(f"""
+        <div class="chart-box">
+        <h3>Weekly Sales Performance</h3>
+        """, unsafe_allow_html=True)
     
     if 'ENROLLED_DATE' in df_filtered.columns and 'AGENT' in df_filtered.columns:
         try:
@@ -727,7 +742,7 @@ with tab1:
                                       marker_line_width=1.5)
                     st.plotly_chart(fig, use_container_width=True)
                     
-                    # Add a detailed summary of the week's performance
+                    # Add a clean summary with metrics
                     total_active = display_data['Active_Contracts'].sum()
                     
                     # Get total contracts for the week (all statuses)
@@ -745,27 +760,25 @@ with tab1:
                     active_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'ACTIVE'])
                     nsf_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'NSF'])
                     cancelled_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'CANCELLED'])
-                    other_count = len(all_contracts_in_week[all_contracts_in_week['CATEGORY'] == 'OTHER'])
                     
                     # Calculate success rate
                     success_rate = (active_count / total_contracts * 100) if total_contracts > 0 else 0
                     
-                    st.markdown(f"""
-                    <div class="week-summary">
-                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                            <div style="flex: 1; min-width: 200px;">
-                                <b>Week Summary:</b> {total_active} total active contracts for {len(display_data)} agents
-                                {f" (showing top 10 of {len(selected_week_data)} agents)" if not show_all and len(selected_week_data) > 10 else ""}
-                            </div>
-                            <div style="flex: 1; min-width: 200px;">
-                                <b>Week Status:</b> {active_count} Active, {nsf_count} NSF, {cancelled_count} Cancelled
-                            </div>
-                            <div style="flex: 1; min-width: 200px;">
-                                <b>Success Rate:</b> {success_rate:.1f}% ({active_count} of {total_contracts} total)
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    # Display metrics in columns
+                    st.markdown("### Week Performance Summary")
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.metric("Active Contracts", active_count)
+                    with col2:
+                        st.metric("NSF Cases", nsf_count)
+                    with col3:
+                        st.metric("Cancelled", cancelled_count)
+                    with col4:
+                        st.metric("Success Rate", f"{success_rate:.1f}%")
+                        
+                    # Show agent count
+                    st.info(f"Total of {len(display_data)} agents {f'(showing top 10 of {len(selected_week_data)})' if not show_all and len(selected_week_data) > 10 else ''}")
                 else:
                     st.info(f"No active contracts for top performers in the week of {selected_week_display}.")
             else:
@@ -780,87 +793,118 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
     
-    # Two column layout for the remaining charts
-    col1, col2 = st.columns(2)
-    
-    with col1:
+    # Agent Performance Module
+    with st.container():
         st.markdown(f"""
         <div class="chart-box">
         <h3>Top Performing Agents</h3>
         """, unsafe_allow_html=True)
         
         if 'AGENT' in df_filtered.columns:
-            agent_stats = df_filtered.groupby('AGENT').agg(
-                Total=('CUSTOMER_ID', 'count'),
-                Active=('CATEGORY', lambda x: (x == 'ACTIVE').sum()),
-                Success_Rate=('CATEGORY', lambda x: (x == 'ACTIVE').mean() * 100)
-            )
-            agent_stats = agent_stats.sort_values('Total', ascending=False).head(10)
-            fig = px.bar(
-                agent_stats.reset_index(),
-                x='AGENT',
-                y=['Active', 'Total'],
-                title="Top Agents by Contract Volume",
-                labels={'value': 'Contract Count', 'variable': 'Status'},
-                barmode='group',
-                color_discrete_map={
-                    'Active': COLORS['med_green'],
-                    'Total': COLORS['primary']
-                }
-            )
-            fig.update_layout(
-                height=400,  # Increase height
-                plot_bgcolor=COLORS['background'],
-                paper_bgcolor=COLORS['background'],
-                font_color=COLORS['text'],
-                margin=dict(t=50, b=100),  # Add more bottom margin for labels
-                xaxis_tickangle=-45,  # Angle the x-axis labels
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1,
-                    bgcolor=COLORS['background'],
-                    bordercolor=COLORS['primary'],
-                    borderwidth=1
+            # Create agent selector
+            all_agents = sorted(df_filtered['AGENT'].unique())
+            if len(all_agents) > 10:
+                top_agents = df_filtered.groupby('AGENT').size().nlargest(10).index.tolist()
+                selected_agents = st.multiselect("Select agents to display:", 
+                                               options=["Top 10"] + all_agents,
+                                               default=["Top 10"])
+                
+                if "Top 10" in selected_agents:
+                    display_agents = top_agents
+                else:
+                    display_agents = selected_agents
+            else:
+                display_agents = all_agents
+            
+            # Filter for selected agents
+            if display_agents:
+                agent_stats = df_filtered[df_filtered['AGENT'].isin(display_agents)].groupby('AGENT').agg(
+                    Total=('CUSTOMER_ID', 'count'),
+                    Active=('CATEGORY', lambda x: (x == 'ACTIVE').sum()),
+                    Success_Rate=('CATEGORY', lambda x: (x == 'ACTIVE').mean() * 100)
                 )
-            )
-            fig.update_traces(marker_line_color=COLORS['primary'],
-                              marker_line_width=1.5)
-            st.plotly_chart(fig, use_container_width=True)
+                agent_stats = agent_stats.sort_values('Total', ascending=False)
+                
+                # Create chart
+                fig = px.bar(
+                    agent_stats.reset_index(),
+                    x='AGENT',
+                    y=['Active', 'Total'],
+                    title="Agent Performance",
+                    labels={'value': 'Contract Count', 'variable': 'Status'},
+                    barmode='group',
+                    color_discrete_map={
+                        'Active': COLORS['med_green'],
+                        'Total': COLORS['primary']
+                    }
+                )
+                fig.update_layout(
+                    height=400,
+                    plot_bgcolor=COLORS['background'],
+                    paper_bgcolor=COLORS['background'],
+                    font_color=COLORS['text'],
+                    margin=dict(t=50, b=100),
+                    xaxis_tickangle=-45,
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    )
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Show agent metrics in a clean table
+                st.markdown("### Agent Success Rates")
+                agent_metrics = agent_stats.reset_index()[['AGENT', 'Active', 'Total', 'Success_Rate']]
+                agent_metrics['Success_Rate'] = agent_metrics['Success_Rate'].round(1).astype(str) + '%'
+                st.dataframe(agent_metrics, use_container_width=True, height=300)
         
         st.markdown("""
         </div>
         """, unsafe_allow_html=True)
     
-    with col2:
+    # Timeline Module
+    with st.container():
         st.markdown(f"""
         <div class="chart-box">
         <h3>Enrollment Timeline</h3>
         """, unsafe_allow_html=True)
         
         if 'ENROLLED_DATE' in df_filtered.columns:
+            # Add time period selector
+            time_period = st.radio("Select time period:", ["Daily", "Weekly", "Monthly"], horizontal=True)
+            
             try:
-                timeline_df = df_filtered.set_index('ENROLLED_DATE').resample('D').size().reset_index(name='Count')
+                if time_period == "Daily":
+                    timeline_df = df_filtered.set_index('ENROLLED_DATE').resample('D').size().reset_index(name='Count')
+                    x_title = "Date"
+                elif time_period == "Weekly":
+                    timeline_df = df_filtered.set_index('ENROLLED_DATE').resample('W').size().reset_index(name='Count')
+                    x_title = "Week"
+                else:  # Monthly
+                    timeline_df = df_filtered.set_index('ENROLLED_DATE').resample('M').size().reset_index(name='Count')
+                    x_title = "Month"
+                
                 fig = px.line(
                     timeline_df, 
                     x='ENROLLED_DATE', 
                     y='Count', 
-                    title="Daily Contract Enrollment",
-                    labels={'ENROLLED_DATE': 'Date', 'Count': 'Contracts'}
+                    title=f"{time_period} Contract Enrollment",
+                    labels={'ENROLLED_DATE': x_title, 'Count': 'Contracts'}
                 )
                 fig.update_traces(
                     line=dict(color=COLORS['primary'], width=3),
                     marker=dict(size=8, color=COLORS['secondary'])
                 )
                 fig.update_layout(
-                    height=400,  # Increase height
+                    height=400,
                     xaxis_rangeslider_visible=True,
                     plot_bgcolor=COLORS['background'],
                     paper_bgcolor=COLORS['background'],
                     font_color=COLORS['text'],
-                    margin=dict(t=50, b=50),  # Add more margin
+                    margin=dict(t=50, b=50),
                     yaxis=dict(gridcolor='rgba(138, 127, 186, 0.2)')
                 )
                 st.plotly_chart(fig, use_container_width=True)
@@ -872,59 +916,95 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
     
-    # Full width chart for Status by Source
-    st.markdown(f"""
-    <div class="chart-box">
-    <h3>Status by Source</h3>
-    """, unsafe_allow_html=True)
-    
-    if 'SOURCE_SHEET' in df_filtered.columns:
-        try:
-            source_status = df_filtered.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
-            fig = px.bar(
-                source_status.reset_index(),
-                x='SOURCE_SHEET',
-                y=source_status.columns,
-                title="Contract Status by Source",
-                labels={'value': 'Count', 'variable': 'Status'},
-                barmode='stack',
-                color_discrete_map={
-                    'ACTIVE': COLORS['med_green'],
-                    'NSF': COLORS['warning'],
-                    'CANCELLED': COLORS['danger'],
-                    'OTHER': COLORS['med_purple']
-                }
-            )
-            fig.update_layout(
-                height=450,  # Increase height
-                plot_bgcolor=COLORS['background'],
-                paper_bgcolor=COLORS['background'],
-                font_color=COLORS['text'],
-                xaxis_tickangle=-45,  # Angle the x-axis labels
-                margin=dict(t=50, b=100),  # Add more bottom margin for labels
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1,
-                    bgcolor=COLORS['background'],
-                    bordercolor=COLORS['primary'],
-                    borderwidth=1
+    # Program Performance Module
+    with st.container():
+        st.markdown(f"""
+        <div class="chart-box">
+        <h3>Program Performance</h3>
+        """, unsafe_allow_html=True)
+        
+        if 'SOURCE_SHEET' in df_filtered.columns:
+            # Clean program names
+            df_filtered['Program'] = df_filtered['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '')
+            
+            # Add program selector
+            all_programs = sorted(df_filtered['Program'].unique())
+            selected_programs = st.multiselect("Select programs to display:", 
+                                             options=["All Programs"] + all_programs,
+                                             default=["All Programs"])
+            
+            if "All Programs" in selected_programs or not selected_programs:
+                program_filter = all_programs
+            else:
+                program_filter = selected_programs
+            
+            try:
+                # Filter and group data
+                program_df = df_filtered[df_filtered['Program'].isin(program_filter)]
+                source_status = program_df.groupby(['Program', 'CATEGORY']).size().unstack(fill_value=0)
+                
+                # Create chart
+                fig = px.bar(
+                    source_status.reset_index(),
+                    x='Program',
+                    y=source_status.columns,
+                    title="Contract Status by Program",
+                    labels={'value': 'Count', 'variable': 'Status'},
+                    barmode='stack',
+                    color_discrete_map={
+                        'ACTIVE': COLORS['med_green'],
+                        'NSF': COLORS['warning'],
+                        'CANCELLED': COLORS['danger'],
+                        'OTHER': COLORS['med_purple']
+                    }
                 )
-            )
-            fig.update_traces(marker_line_color='white',
-                              marker_line_width=1)
-            st.plotly_chart(fig, use_container_width=True)
-        except Exception as e:
-            st.error(f"Error generating source status chart: {e}")
-            st.info("Could not generate source status chart.")
-    else:
-        st.warning("Source data not available")
-    
-    st.markdown("""
-    </div>
-    """, unsafe_allow_html=True)
+                fig.update_layout(
+                    height=450,
+                    plot_bgcolor=COLORS['background'],
+                    paper_bgcolor=COLORS['background'],
+                    font_color=COLORS['text'],
+                    xaxis_tickangle=-45,
+                    margin=dict(t=50, b=100),
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    )
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Add program metrics
+                st.markdown("### Program Success Rates")
+                
+                # Calculate metrics
+                program_metrics = pd.DataFrame()
+                for program in program_filter:
+                    program_data = program_df[program_df['Program'] == program]
+                    total = len(program_data)
+                    active = len(program_data[program_data['CATEGORY'] == 'ACTIVE'])
+                    success_rate = (active / total * 100) if total > 0 else 0
+                    
+                    program_metrics = pd.concat([program_metrics, pd.DataFrame({
+                        'Program': [program],
+                        'Total': [total],
+                        'Active': [active],
+                        'Success Rate': [f"{success_rate:.1f}%"]
+                    })])
+                
+                # Display metrics
+                st.dataframe(program_metrics.sort_values('Total', ascending=False), 
+                           use_container_width=True, height=300)
+                
+            except Exception as e:
+                st.error(f"Error generating program performance chart: {e}")
+        else:
+            st.warning("Program data not available")
+        
+        st.markdown("""
+        </div>
+        """, unsafe_allow_html=True)
 
 # --- Performance Trends Tab ---
 with tab2:
@@ -1310,29 +1390,28 @@ with tab4:
     """, unsafe_allow_html=True)
     
     try:
-        # Simplified UI with dropdowns instead of multiselect
-        st.subheader("Filter Data")
+        st.markdown("<h2 style='text-align: center; color: #483D8B;'>Data Explorer</h2>", unsafe_allow_html=True)
         
-        col1, col2 = st.columns(2)
+        # Create a clean filter UI with 3 columns
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             # Agent filter dropdown
             if 'AGENT' in df_filtered.columns:
                 agent_options = ["All Agents"] + sorted(df_filtered['AGENT'].unique().tolist())
-                selected_agent = st.selectbox("Select Agent:", agent_options)
+                selected_agent = st.selectbox("Agent:", agent_options, key="explorer_agent")
         
         with col2:
             # Status filter dropdown
             if 'STATUS' in df_filtered.columns:
                 status_options = ["All Statuses"] + sorted(df_filtered['STATUS'].unique().tolist())
-                selected_status = st.selectbox("Select Status:", status_options)
-                
-        # Program filter dropdown
-        if 'SOURCE_SHEET' in df_filtered.columns:
-            program_options = ["All Programs"] + sorted(df_filtered['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '').unique().tolist())
-            selected_program = st.selectbox("Select Program:", program_options)
+                selected_status = st.selectbox("Status:", status_options, key="explorer_status")
         
-        if selected_cols:
+        with col3:
+            # Program filter dropdown
+            if 'SOURCE_SHEET' in df_filtered.columns:
+                program_options = ["All Programs"] + sorted(df_filtered['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '').unique().tolist())
+                selected_program = st.selectbox("Program:", program_options, key="explorer_program")
             # Filter options
             st.subheader("Additional Filters")
             
