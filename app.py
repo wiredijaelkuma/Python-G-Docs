@@ -9,25 +9,34 @@ from io import BytesIO
 import calendar
 from pathlib import Path
 
-# Import optimized data loader
-from sheet_loader import load_csv_data
-
 # Import modular components
 from data_explorer import render_data_explorer
 from risk_analysis import render_risk_analysis
 from performance_tab import render_performance_tab
 from agents_tab import render_agents_tab
 from overview_tab import render_overview_tab
-from streamlit_config import configure_page
 
 # --- Set page configuration first (must be the first Streamlit command) ---
-configure_page()
+st.set_page_config(
+    layout="wide", 
+    page_title="Pepe's Power Dashboard", 
+    page_icon="🐸",
+    initial_sidebar_state="expanded"
+)
+
+# Load custom CSS with beautiful periwinkle gradient styling
+try:
+    with open('assets/custom.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except Exception:
+    pass
 
 # --- Constants ---
 # Simplified asset paths
 ASSETS_DIR = Path("assets")
 
 # --- Color Palette ---
+# Periwinkle purples and opaque greens
 COLORS = {
     'primary': '#8A7FBA',      # Periwinkle purple
     'secondary': '#6A5ACD',    # Slateblue
@@ -46,15 +55,32 @@ COLORS = {
     'med_green': '#66CDAA',    # Medium aquamarine
 }
 
-# Load custom CSS
-try:
-    with open('assets/custom.css') as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-except:
-    pass
-
 # --- Helper Functions ---
-# Data loading moved to sheet_loader.py
+@st.cache_data(ttl=3600)
+def load_csv_data(file_path="processed_combined_data.csv"):
+    """Load data with minimal processing for speed"""
+    try:
+        # Simple CSV reading without complex options
+        df = pd.read_csv(file_path)
+        
+        # Standardize column names
+        df.columns = [col.strip().upper().replace(" ", "_") for col in df.columns]
+        
+        # Only process essential columns
+        if 'ENROLLED_DATE' in df.columns:
+            df['ENROLLED_DATE'] = pd.to_datetime(df['ENROLLED_DATE'], errors='coerce')
+            df['MONTH_YEAR'] = df['ENROLLED_DATE'].dt.strftime('%Y-%m')
+        
+        if 'STATUS' in df.columns:
+            # Simplified status categorization
+            df['CATEGORY'] = 'OTHER'
+            df.loc[df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
+            df.loc[df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
+            df.loc[df['STATUS'].str.contains('CANCEL|DROP|TERMIN', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
+        
+        return df, None
+    except Exception as e:
+        return pd.DataFrame(), str(e)
 
 def format_large_number(num):
     """Format large numbers with commas"""
