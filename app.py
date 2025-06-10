@@ -25,8 +25,11 @@ st.set_page_config(
 )
 
 # Load custom CSS with beautiful periwinkle gradient styling
-with open('assets/custom.css') as f:
-    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+try:
+    with open('assets/custom.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except Exception as e:
+    st.warning(f"Could not load custom CSS: {e}")
 
 # --- Constants ---
 # Simplified asset paths
@@ -60,14 +63,13 @@ def load_data():
         # Try to load from the processed file
         try:
             df = pd.read_csv("processed_combined_data.csv")
-        except:
+        except Exception as file_error:
             # If that fails, try to load from uploaded file
             uploaded_file = st.session_state.get('uploaded_file', None)
             if uploaded_file is not None:
                 df = pd.read_csv(uploaded_file)
             else:
-                st.error("No data file found. Please upload a CSV file.")
-                return pd.DataFrame(), "No data file found"
+                return pd.DataFrame(), "No data file found. Please upload a CSV file."
         
         # Standardize column names
         df.columns = [col.strip().upper().replace(" ", "_") for col in df.columns]
@@ -111,211 +113,251 @@ def format_large_number(num):
     """Format large numbers with commas"""
     return f"{num:,}"
 
-# --- File Uploader in Sidebar for Data Source ---
-with st.sidebar:
-    # Display the Pepe muscle icon
+# --- Main App Logic ---
+def main():
+    # --- File Uploader in Sidebar for Data Source ---
+    with st.sidebar:
+        # Display the Pepe muscle icon
+        try:
+            st.image("assets/pepe-muscle.jpg", width=180)
+        except:
+            st.title("🐸 Pepe's Power")
+        
+        # Add refresh data button with improved functionality
+        if st.button("🔄 Refresh Data", key="refresh_button", use_container_width=True):
+            # Clear all cached data to ensure fresh load
+            st.cache_data.clear()
+            # Add a success message
+            st.sidebar.success("✅ Data refreshed successfully!")
+            # Force reload
+            st.rerun()
+        
+        # Data source section - only show this if no data is loaded yet
+        if 'df' not in st.session_state:
+            st.header("Data Source")
+            uploaded_file = st.file_uploader("Upload processed data CSV", type=["csv"])
+            if uploaded_file is not None:
+                st.session_state['uploaded_file'] = uploaded_file
+                st.success("✅ File uploaded successfully!")
+
+    # --- Banner ---
     try:
-        st.image("assets/pepe-muscle.jpg", width=180)
+        st.image("assets/banner.png", use_column_width=True)
     except:
-        st.title("🐸 Pepe's Power")
-    
-    # Add refresh data button with improved functionality
-    if st.button("🔄 Refresh Data", key="refresh_button", use_container_width=True):
-        # Clear all cached data to ensure fresh load
-        st.cache_data.clear()
-        # Add a success message
-        st.sidebar.success("✅ Data refreshed successfully!")
-        # Force reload
-        st.rerun()
-    
-    # Data source section - only show this if no data is loaded yet
-    if 'df' not in st.session_state:
-        st.header("Data Source")
-        uploaded_file = st.file_uploader("Upload processed data CSV", type=["csv"])
-        if uploaded_file is not None:
-            st.session_state['uploaded_file'] = uploaded_file
-            st.success("✅ File uploaded successfully!")
+        st.title("Pepe's Power Dashboard")
 
-# --- Banner ---
-try:
-    st.image("assets/banner.png", use_column_width=True)
-except:
-    st.title("Pepe's Power Dashboard")
+    # --- Data Loading ---
+    with st.spinner("🔍 Loading data..."):
+        df, load_err = load_data()
+        
+    if load_err:
+        st.error(f"🚨 Data Load Error: {load_err}")
+        st.stop()
+        
+    if df.empty:
+        st.warning("⚠️ No data available. Please upload a CSV file with your data.")
+        st.stop()
 
-# --- Data Loading ---
-with st.spinner("🔍 Loading data..."):
-    df, load_err = load_data()
-    
-if load_err:
-    st.error(f"🚨 Data Load Error: {load_err}")
-    st.stop()
-    
-if df.empty:
-    st.warning("⚠️ No data available. Please upload a CSV file with your data.")
-    st.stop()
+    # Store data in session state
+    st.session_state['df'] = df
 
-# Store data in session state
-st.session_state['df'] = df
-
-# --- Sidebar Controls ---
-with st.sidebar:
-    st.markdown(f"""
-    <div class="section-header">Dashboard Controls</div>
-    """, unsafe_allow_html=True)
-    
-    # Date Range Selector
-    st.subheader("Date Range")
-    today = datetime.now().date()
-    min_date = df['ENROLLED_DATE'].min().date() if 'ENROLLED_DATE' in df.columns else date(2024, 10, 1)
-    # Always allow selection up to today regardless of data
-    max_date = max(df['ENROLLED_DATE'].max().date() if 'ENROLLED_DATE' in df.columns else date(2024, 10, 1), today)
-    start = st.date_input("Start Date", max_date - timedelta(days=30), min_value=min_date, max_value=max_date)
-    end = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date)
-    
-    # Status Filter
-    st.subheader("Status Filter")
-    show_active = st.checkbox("Active", True)
-    show_nsf = st.checkbox("NSF", True)
-    show_cancelled = st.checkbox("Cancelled", True)
-    show_other = st.checkbox("Other Statuses", True)
-    
-    # Source Filter
-    st.subheader("Data Source")
-    if 'SOURCE_SHEET' in df.columns:
-        all_sources = st.checkbox("All Sources", True)
-        if not all_sources:
-            sources = st.multiselect("Select sources:", df['SOURCE_SHEET'].unique())
+    # --- Sidebar Controls ---
+    with st.sidebar:
+        st.markdown(f"""
+        <div class="section-header">Dashboard Controls</div>
+        """, unsafe_allow_html=True)
+        
+        # Date Range Selector
+        st.subheader("Date Range")
+        today = datetime.now().date()
+        
+        # Handle case where ENROLLED_DATE might not exist or have valid dates
+        if 'ENROLLED_DATE' in df.columns and not df['ENROLLED_DATE'].isna().all():
+            min_date = df['ENROLLED_DATE'].min().date()
+            max_date = max(df['ENROLLED_DATE'].max().date(), today)
         else:
-            sources = df['SOURCE_SHEET'].unique().tolist()
+            min_date = date(2024, 10, 1)
+            max_date = today
+            
+        start = st.date_input("Start Date", max_date - timedelta(days=30), min_value=min_date, max_value=max_date)
+        end = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date)
+        
+        # Status Filter
+        st.subheader("Status Filter")
+        show_active = st.checkbox("Active", True)
+        show_nsf = st.checkbox("NSF", True)
+        show_cancelled = st.checkbox("Cancelled", True)
+        show_other = st.checkbox("Other Statuses", True)
+        
+        # Source Filter
+        st.subheader("Data Source")
+        if 'SOURCE_SHEET' in df.columns:
+            all_sources = st.checkbox("All Sources", True)
+            if not all_sources:
+                sources = st.multiselect("Select sources:", df['SOURCE_SHEET'].unique())
+            else:
+                sources = df['SOURCE_SHEET'].unique().tolist()
+        else:
+            all_sources = True
+            sources = []
+
+    # --- Apply Filters ---
+    # Apply date filter
+    if 'ENROLLED_DATE' in df.columns:
+        # Handle NaT values in date filtering
+        valid_dates = df['ENROLLED_DATE'].notna()
+        date_filter = (df['ENROLLED_DATE'].dt.date >= start) & (df['ENROLLED_DATE'].dt.date <= end)
+        df_filtered = df[valid_dates & date_filter]
     else:
-        all_sources = True
-        sources = []
+        df_filtered = df
 
-# --- Apply Filters ---
-# Apply date filter
-if 'ENROLLED_DATE' in df.columns:
-    df_filtered = df[(df['ENROLLED_DATE'].dt.date >= start) & (df['ENROLLED_DATE'].dt.date <= end)]
-else:
-    df_filtered = df
+    # Apply status filter
+    status_filter = []
+    if show_active: status_filter.append('ACTIVE')
+    if show_nsf: status_filter.append('NSF')
+    if show_cancelled: status_filter.append('CANCELLED')
+    if show_other: status_filter.append('OTHER')
+    
+    # Check if CATEGORY column exists before filtering
+    if 'CATEGORY' in df_filtered.columns and len(status_filter) > 0:
+        df_filtered = df_filtered[df_filtered['CATEGORY'].isin(status_filter)]
 
-# Apply status filter
-status_filter = []
-if show_active: status_filter.append('ACTIVE')
-if show_nsf: status_filter.append('NSF')
-if show_cancelled: status_filter.append('CANCELLED')
-if show_other: status_filter.append('OTHER')
-df_filtered = df_filtered[df_filtered['CATEGORY'].isin(status_filter)]
+    # Apply source filter
+    if 'SOURCE_SHEET' in df_filtered.columns and not all_sources and sources:
+        df_filtered = df_filtered[df_filtered['SOURCE_SHEET'].isin(sources)]
 
-# Apply source filter
-if 'SOURCE_SHEET' in df_filtered.columns and not all_sources:
-    df_filtered = df_filtered[df_filtered['SOURCE_SHEET'].isin(sources)]
-
-# --- Dashboard Header ---
-st.markdown(f"""
-<div class="section-header">Pepe's Power Sales Dashboard</div>
-<div style="background-color: {COLORS['light_purple']}; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-    <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-        <div>
-            <b>Date Range:</b> {start.strftime('%b %d, %Y')} - {end.strftime('%b %d, %Y')}<br>
-            <b>Total Contracts:</b> {format_large_number(len(df_filtered))}
-        </div>
-        <div>
-            <b>Status Shown:</b> {', '.join(status_filter)}
+    # --- Dashboard Header ---
+    st.markdown(f"""
+    <div class="section-header">Pepe's Power Sales Dashboard</div>
+    <div style="background-color: {COLORS['light_purple']}; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+            <div>
+                <b>Date Range:</b> {start.strftime('%b %d, %Y')} - {end.strftime('%b %d, %Y')}<br>
+                <b>Total Contracts:</b> {format_large_number(len(df_filtered))}
+            </div>
+            <div>
+                <b>Status Shown:</b> {', '.join(status_filter)}
+            </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# --- Metrics Summary ---
-active_df = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']
-nsf_df = df_filtered[df_filtered['CATEGORY'] == 'NSF']
-cancelled_df = df_filtered[df_filtered['CATEGORY'] == 'CANCELLED']
-other_df = df_filtered[df_filtered['CATEGORY'] == 'OTHER']
+    # --- Metrics Summary ---
+    # Handle case where CATEGORY column might not exist
+    if 'CATEGORY' in df_filtered.columns:
+        active_df = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']
+        nsf_df = df_filtered[df_filtered['CATEGORY'] == 'NSF']
+        cancelled_df = df_filtered[df_filtered['CATEGORY'] == 'CANCELLED']
+        other_df = df_filtered[df_filtered['CATEGORY'] == 'OTHER']
+        
+        active_contracts = len(active_df)
+        nsf_cases = len(nsf_df)
+        cancelled_contracts = len(cancelled_df)
+        other_statuses = len(other_df)
+    else:
+        active_contracts = 0
+        nsf_cases = 0
+        cancelled_contracts = 0
+        other_statuses = 0
 
-total_contracts = len(df_filtered)
-active_contracts = len(active_df)
-nsf_cases = len(nsf_df)
-cancelled_contracts = len(cancelled_df)
-other_statuses = len(other_df)
+    total_contracts = len(df_filtered)
+    success_rate = (active_contracts / total_contracts * 100) if total_contracts > 0 else 0
 
-success_rate = (active_contracts / total_contracts * 100) if total_contracts > 0 else 0
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Total Contracts</div>
+            <div class="metric-value">{format_large_number(total_contracts)}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-col1, col2, col3, col4, col5 = st.columns(5)
-with col1:
+    with col2:
+        st.markdown(f"""
+        <div class="metric-card" style="border-left: 5px solid {COLORS['med_green']};">
+            <div class="metric-title">Active Contracts</div>
+            <div class="metric-value" style="color: {COLORS['med_green']};">{format_large_number(active_contracts)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown(f"""
+        <div class="metric-card" style="border-left: 5px solid {COLORS['warning']};">
+            <div class="metric-title">NSF Cases</div>
+            <div class="metric-value" style="color: {COLORS['warning']};">{format_large_number(nsf_cases)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col4:
+        st.markdown(f"""
+        <div class="metric-card" style="border-left: 5px solid {COLORS['danger']};">
+            <div class="metric-title">Cancelled</div>
+            <div class="metric-value" style="color: {COLORS['danger']};">{format_large_number(cancelled_contracts)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col5:
+        st.markdown(f"""
+        <div class="metric-card" style="border-left: 5px solid {COLORS['dark_accent']};">
+            <div class="metric-title">Success Rate</div>
+            <div class="metric-value" style="color: {COLORS['dark_accent']};">{success_rate:.1f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # --- Tab Interface ---
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 Overview", 
+        "📈 Performance", 
+        "🧑 Agents", 
+        "🔍 Data Explorer", 
+        "🚨 Risk Analysis"
+    ])
+
+    # --- Overview Tab ---
+    with tab1:
+        try:
+            render_overview_tab(df_filtered, COLORS, active_contracts, nsf_cases, cancelled_contracts, total_contracts)
+        except Exception as e:
+            st.error(f"Error in Overview tab: {e}")
+
+    # --- Performance Tab ---
+    with tab2:
+        try:
+            render_performance_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error in Performance tab: {e}")
+
+    # --- Agents Tab ---
+    with tab3:
+        try:
+            render_agents_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error in Agents tab: {e}")
+
+    # --- Data Explorer Tab ---
+    with tab4:
+        try:
+            render_data_explorer(df_filtered, COLORS, start)
+        except Exception as e:
+            st.error(f"Error in Data Explorer tab: {e}")
+
+    # --- Risk Analysis Tab ---
+    with tab5:
+        try:
+            render_risk_analysis(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error in Risk Analysis tab: {e}")
+
+    # --- Footer ---
     st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-title">Total Contracts</div>
-        <div class="metric-value">{format_large_number(total_contracts)}</div>
+    <div class="footer">
+        © 2025 Pepe's Power Solutions | Dashboard v3.0
     </div>
     """, unsafe_allow_html=True)
 
-with col2:
-    st.markdown(f"""
-    <div class="metric-card" style="border-left: 5px solid {COLORS['med_green']};">
-        <div class="metric-title">Active Contracts</div>
-        <div class="metric-value" style="color: {COLORS['med_green']};">{format_large_number(active_contracts)}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # --- Notifications ---
+    st.toast("Dashboard loaded successfully!", icon="🐸")
 
-with col3:
-    st.markdown(f"""
-    <div class="metric-card" style="border-left: 5px solid {COLORS['warning']};">
-        <div class="metric-title">NSF Cases</div>
-        <div class="metric-value" style="color: {COLORS['warning']};">{format_large_number(nsf_cases)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col4:
-    st.markdown(f"""
-    <div class="metric-card" style="border-left: 5px solid {COLORS['danger']};">
-        <div class="metric-title">Cancelled</div>
-        <div class="metric-value" style="color: {COLORS['danger']};">{format_large_number(cancelled_contracts)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col5:
-    st.markdown(f"""
-    <div class="metric-card" style="border-left: 5px solid {COLORS['dark_accent']};">
-        <div class="metric-title">Success Rate</div>
-        <div class="metric-value" style="color: {COLORS['dark_accent']};">{success_rate:.1f}%</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# --- Tab Interface ---
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Overview", 
-    "📈 Performance", 
-    "🧑 Agents", 
-    "🔍 Data Explorer", 
-    "🚨 Risk Analysis"
-])
-
-# --- Overview Tab ---
-with tab1:
-    render_overview_tab(df_filtered, COLORS, active_contracts, nsf_cases, cancelled_contracts, total_contracts)
-
-# --- Performance Tab ---
-with tab2:
-    render_performance_tab(df_filtered, COLORS)
-
-# --- Agents Tab ---
-with tab3:
-    render_agents_tab(df_filtered, COLORS)
-
-# --- Data Explorer Tab ---
-with tab4:
-    render_data_explorer(df_filtered, COLORS, start)
-
-# --- Risk Analysis Tab ---
-with tab5:
-    render_risk_analysis(df_filtered, COLORS)
-
-# --- Footer ---
-st.markdown(f"""
-<div class="footer">
-    © 2025 Pepe's Power Solutions | Dashboard v3.0
-</div>
-""", unsafe_allow_html=True)
-
-# --- Notifications ---
-st.toast("Dashboard loaded successfully!", icon="🐸")
+# Run the main function
+if __name__ == "__main__":
+    main()
