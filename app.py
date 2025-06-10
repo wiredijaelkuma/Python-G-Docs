@@ -23,11 +23,8 @@ with open('assets/custom.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 # --- Constants ---
-# Define asset paths correctly for Streamlit Cloud
+# Simplified asset paths
 ASSETS_DIR = Path("assets")
-BACKGROUND_IMAGE = ASSETS_DIR / "pepe-background.png"
-BANNER_IMAGE = ASSETS_DIR / "pepe-sunset-banner.png"
-LOGO_IMAGE = ASSETS_DIR / "pepe-rocket.png"
 
 # --- Color Palette ---
 # Periwinkle purples and opaque greens
@@ -50,15 +47,7 @@ COLORS = {
 }
 
 # --- Helper Functions ---
-@st.cache_data(ttl=3600)  # Cache for 1 hour
-def load_image_base64(path):
-    """Load image and convert to base64 with error handling"""
-    try:
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except Exception as e:
-        st.warning(f"Image not found: {path}. Error: {e}")
-        return None
+# Removed unused load_image_base64 function
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def load_data():
@@ -436,11 +425,11 @@ st.markdown(f"""
 
 # --- File Uploader in Sidebar for Data Source ---
 with st.sidebar:
-    # Try to display the logo image with fallback
+    # Display the Pepe muscle icon
     try:
-        st.image(str(LOGO_IMAGE), width=180)
+        st.image("assets/pepe-muscle.jpg", width=180)
     except:
-        st.title("🚀 Pepe's Power")
+        st.title("🐸 Pepe's Power")
     
     # Add refresh data button with improved functionality
     if st.button("🔄 Refresh Data", key="refresh_button", use_container_width=True):
@@ -459,17 +448,13 @@ with st.sidebar:
             st.session_state['uploaded_file'] = uploaded_file
             st.success("✅ File uploaded successfully!")
 
-# --- Load Assets ---
-bg_img_base64 = load_image_base64(BACKGROUND_IMAGE)
-banner_img_base64 = load_image_base64(BANNER_IMAGE)
+# No need to load assets as base64 anymore
 
 # --- Banner ---
-if banner_img_base64:
-    st.markdown(f"""
-    <div style="margin-bottom: 20px;">
-        <img src="data:image/png;base64,{banner_img_base64}" style="width:100%; border-radius:0 0 15px 15px;"/>
-    </div>
-    """, unsafe_allow_html=True)
+try:
+    st.image("assets/banner.png", use_column_width=True)
+except:
+    st.title("Pepe's Power Dashboard")
 
 # --- Data Loading ---
 with st.spinner("🔍 Loading data..."):
@@ -549,32 +534,13 @@ st.markdown(f"""
             <b>Total Contracts:</b> {format_large_number(len(df_filtered))}
         </div>
         <div>
-            <b>Status Shown:</b> {', '.join(status_filter)}<br>
-            <b>Data Last Updated:</b> {st.session_state.get('data_modified', 'Unknown')} 
-            <span style="font-weight: bold; color: {'green' if 'Fresh' in st.session_state.get('data_freshness', '') else 'orange'}">
-                {st.session_state.get('data_freshness', '❓')}
-            </span>
+            <b>Status Shown:</b> {', '.join(status_filter)}
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Add data quality check
-def check_data_quality(df):
-    issues = []
-    if 'ENROLLED_DATE' in df.columns and df['ENROLLED_DATE'].isnull().sum() > 0:
-        issues.append(f"⚠️ {df['ENROLLED_DATE'].isnull().sum()} missing enrollment dates")
-    if 'STATUS' in df.columns and df['STATUS'].isnull().sum() > 0:
-        issues.append(f"⚠️ {df['STATUS'].isnull().sum()} missing status values")
-    if 'CATEGORY' in df.columns:
-        category_counts = df['CATEGORY'].value_counts()
-        if 'OTHER' in category_counts and category_counts['OTHER'] > 0:
-            issues.append(f"⚠️ {category_counts['OTHER']} records with unclassified status")
-    return issues
-
-quality_issues = check_data_quality(df)
-if quality_issues:
-    st.warning("Data quality issues detected:\n" + "\n".join(quality_issues))
+# Removed data quality check to simplify UI
 
 # --- Metrics Summary ---
 active_df = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']
@@ -1288,7 +1254,11 @@ with tab3:
             else:
                 filtered_agent_df = agent_df
                 
-            st.dataframe(filtered_agent_df.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+            # Display simplified dataframe with only essential columns
+            essential_cols = ['CUSTOMER_ID', 'ENROLLED_DATE', 'STATUS', 'CATEGORY']
+            display_cols = [col for col in essential_cols if col in filtered_agent_df.columns]
+            st.dataframe(filtered_agent_df[display_cols].sort_values('ENROLLED_DATE', ascending=False), 
+                       use_container_width=True, height=400)
             
             # Excel report with improved styling
             try:
@@ -1377,7 +1347,17 @@ with tab4:
             st.subheader(f"Filtered Data ({len(df_explorer)} records)")
             
             # Display dataframe
-            st.dataframe(df_explorer[selected_cols], use_container_width=True)
+            # Limit to essential columns if too many are selected
+            if len(selected_cols) > 5:
+                essential_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY']
+                display_cols = [col for col in essential_cols if col in selected_cols]
+                if len(display_cols) < 3:  # If not enough essential columns, use the first 4 selected
+                    display_cols = selected_cols[:4]
+                st.info(f"Showing only essential columns for better readability. Selected: {', '.join(display_cols)}")
+            else:
+                display_cols = selected_cols
+                
+            st.dataframe(df_explorer[display_cols], use_container_width=True, height=500)
             
             # Export options with improved UI
             st.subheader("Export Data")
@@ -1608,7 +1588,11 @@ with tab5:
             else:
                 filtered_flagged = flagged
             
-            st.dataframe(filtered_flagged.sort_values('ENROLLED_DATE', ascending=False), use_container_width=True)
+            # Display simplified risk dataframe with only essential columns
+            essential_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY']
+            display_cols = [col for col in essential_cols if col in filtered_flagged.columns]
+            st.dataframe(filtered_flagged[display_cols].sort_values('ENROLLED_DATE', ascending=False), 
+                       use_container_width=True, height=400)
             
             # Export flagged data with better UI
             col1, col2 = st.columns([1, 3])
@@ -1635,7 +1619,7 @@ with tab5:
 # --- Footer ---
 st.markdown(f"""
 <div class="footer">
-    © 2025 Pepe's Power Solutions | Dashboard v2.6.0 | Data updated {st.session_state.get('data_modified', datetime.now().strftime('%Y-%m-%d %H:%M'))}
+    © 2025 Pepe's Power Solutions | Dashboard v3.0
 </div>
 """, unsafe_allow_html=True)
 
