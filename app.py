@@ -18,6 +18,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Load custom CSS with beautiful periwinkle gradient styling
+with open('assets/custom.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
 # --- Constants ---
 # Define asset paths correctly for Streamlit Cloud
 ASSETS_DIR = Path("assets")
@@ -56,18 +60,32 @@ def load_image_base64(path):
         st.warning(f"Image not found: {path}. Error: {e}")
         return None
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes to ensure refresh works properly
+@st.cache_data(ttl=300)  # Cache for 5 minutes
 def load_data():
     """Load and preprocess data with robust error handling"""
     try:
-        # First try to load from the processed file with absolute path
+        # Try to load from the processed file
         try:
-            df = pd.read_csv("C:\\Users\\Mijae\\OneDrive\\Desktop\\Python G-Docs\\processed_combined_data.csv")
+            df = pd.read_csv("processed_combined_data.csv")
+            
+            # Get file modification time for data freshness indicator
+            try:
+                import os
+                data_modified = os.path.getmtime("processed_combined_data.csv")
+                st.session_state['data_modified'] = datetime.fromtimestamp(data_modified).strftime('%Y-%m-%d %H:%M')
+                data_age = (datetime.now() - datetime.fromtimestamp(data_modified)).total_seconds() / 3600
+                st.session_state['data_freshness'] = "✅ Fresh" if data_age < 24 else "⚠️ Outdated"
+            except:
+                st.session_state['data_modified'] = "Unknown"
+                st.session_state['data_freshness'] = "❓ Unknown"
+                
         except:
             # If that fails, try to load from uploaded file
             uploaded_file = st.session_state.get('uploaded_file', None)
             if uploaded_file is not None:
                 df = pd.read_csv(uploaded_file)
+                st.session_state['data_modified'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+                st.session_state['data_freshness'] = "✅ Fresh (Uploaded)"
             else:
                 st.error("No data file found. Please upload a CSV file.")
                 return pd.DataFrame(), "No data file found"
@@ -291,9 +309,16 @@ st.markdown(f"""
         --med-green: {COLORS['med_green']};
     }}
     
-    /* Main containers */
+    /* Main containers - background already set by gradient */
     div.stApp {{
-        background-color: var(--light);
+        /* Background is set by the gradient above */
+    }}
+    
+    /* Add semi-transparent backgrounds for better readability with background image */
+    div.stTabs, div.chart-box, div.metric-card, div[data-testid="stSidebarContent"] {{
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
     }}
     
     /* Tab styling - BIGGER TABS */
@@ -525,11 +550,31 @@ st.markdown(f"""
         </div>
         <div>
             <b>Status Shown:</b> {', '.join(status_filter)}<br>
-            <b>Data Updated:</b> {datetime.now().strftime('%Y-%m-%d %H:%M')}
+            <b>Data Last Updated:</b> {st.session_state.get('data_modified', 'Unknown')} 
+            <span style="font-weight: bold; color: {'green' if 'Fresh' in st.session_state.get('data_freshness', '') else 'orange'}">
+                {st.session_state.get('data_freshness', '❓')}
+            </span>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# Add data quality check
+def check_data_quality(df):
+    issues = []
+    if 'ENROLLED_DATE' in df.columns and df['ENROLLED_DATE'].isnull().sum() > 0:
+        issues.append(f"⚠️ {df['ENROLLED_DATE'].isnull().sum()} missing enrollment dates")
+    if 'STATUS' in df.columns and df['STATUS'].isnull().sum() > 0:
+        issues.append(f"⚠️ {df['STATUS'].isnull().sum()} missing status values")
+    if 'CATEGORY' in df.columns:
+        category_counts = df['CATEGORY'].value_counts()
+        if 'OTHER' in category_counts and category_counts['OTHER'] > 0:
+            issues.append(f"⚠️ {category_counts['OTHER']} records with unclassified status")
+    return issues
+
+quality_issues = check_data_quality(df)
+if quality_issues:
+    st.warning("Data quality issues detected:\n" + "\n".join(quality_issues))
 
 # --- Metrics Summary ---
 active_df = df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']
@@ -661,7 +706,7 @@ with tab1:
                 top_agents_selected_week = selected_week_data.head(10)
                 
                 if not top_agents_selected_week.empty:
-                                    # Add a toggle to show all agents or just top 10
+                    # Add a toggle to show all agents or just top 10
                     col1, col2 = st.columns([1, 3])
                     with col1:
                         show_all = st.checkbox("Show all agents", False, key="show_all_agents_weekly")
@@ -671,6 +716,16 @@ with tab1:
                             <b>Active Contracts Only:</b> This chart shows only ACTIVE status contracts, not cancelled or NSF
                         </div>
                         """, unsafe_allow_html=True)
+                    
+                    # Highlight the top performer
+                    top_performer = top_agents_selected_week.iloc[0]['AGENT']
+                    top_performer_count = top_agents_selected_week.iloc[0]['Active_Contracts']
+                    
+                    st.markdown(f"""
+                    <div class="top-performer">
+                        <b>🏆 Top Performer:</b> {top_performer} with {top_performer_count} active contracts this week
+                    </div>
+                    """, unsafe_allow_html=True)
                     
                     if show_all:
                         display_data = selected_week_data
@@ -730,7 +785,7 @@ with tab1:
                     success_rate = (active_count / total_contracts * 100) if total_contracts > 0 else 0
                     
                     st.markdown(f"""
-                    <div style="background-color: {COLORS['light_purple']}; padding: 15px; border-radius: 10px; margin-top: 10px;">
+                    <div class="week-summary">
                         <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                             <div style="flex: 1; min-width: 200px;">
                                 <b>Week Summary:</b> {total_active} total active contracts for {len(display_data)} agents
@@ -1390,15 +1445,15 @@ with tab5:
         risk_percentage = (total_risk / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
         
         st.markdown(f"""
-        <div style="background-color: rgba(255, 99, 71, 0.1); border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 5px solid {COLORS['danger']};">
+        <div class="risk-indicator">
             <div style="display: flex; flex-wrap: wrap; gap: 20px;">
                 <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 1.1rem; color: {COLORS['dark']}; font-weight: 600;">Total Risk Contracts</div>
-                    <div style="font-size: 2rem; font-weight: bold; color: {COLORS['danger']};">{total_risk}</div>
+                    <div style="font-size: 1.1rem; color: #483D8B; font-weight: 600;">Total Risk Contracts</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: #FF6347;">{total_risk}</div>
                 </div>
                 <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 1.1rem; color: {COLORS['dark']}; font-weight: 600;">Risk Percentage</div>
-                    <div style="font-size: 2rem; font-weight: bold; color: {COLORS['danger']};">{risk_percentage:.1f}%</div>
+                    <div style="font-size: 1.1rem; color: #483D8B; font-weight: 600;">Risk Percentage</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: #FF6347;">{risk_percentage:.1f}%</div>
                 </div>
             </div>
         </div>
@@ -1579,8 +1634,8 @@ with tab5:
 
 # --- Footer ---
 st.markdown(f"""
-<div style="text-align: center; color: {COLORS['dark']}; font-size: 0.9rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(138, 127, 186, 0.3);">
-    © 2025 Pepe's Power Solutions | Dashboard v2.5 | Data updated {datetime.now().strftime('%Y-%m-%d %H:%M')}
+<div class="footer">
+    © 2025 Pepe's Power Solutions | Dashboard v2.6.0 | Data updated {st.session_state.get('data_modified', datetime.now().strftime('%Y-%m-%d %H:%M'))}
 </div>
 """, unsafe_allow_html=True)
 
