@@ -18,10 +18,17 @@ def render_landing_page(df, COLORS):
     if df.empty:
         st.warning("No data available for the selected filters")
         return
+    
+    # Filter to only show active deals
+    active_df = df[df['CATEGORY'] == 'ACTIVE'] if 'CATEGORY' in df.columns else df
+    
+    if active_df.empty:
+        st.warning("No active deals found in the selected date range")
+        return
         
     # Group data by week
-    df['Week'] = df['ENROLLED_DATE'].dt.strftime('%Y-%U')
-    weekly_data = df.groupby('Week').size().reset_index()
+    active_df['Week'] = active_df['ENROLLED_DATE'].dt.strftime('%Y-%U')
+    weekly_data = active_df.groupby('Week').size().reset_index()
     weekly_data.columns = ['Week', 'Count']
     
     if weekly_data.empty:
@@ -64,8 +71,8 @@ def render_landing_page(df, COLORS):
     selected_week = weekly_data['Week'].iloc[selected_week_idx]
     selected_week_ending = weekly_data['Week_Ending'].iloc[selected_week_idx]
     
-    # Filter data for selected week
-    week_df = df[df['Week'] == selected_week]
+    # Filter data for selected week (active deals only)
+    week_df = active_df[active_df['Week'] == selected_week]
     
     # Display metrics for selected week
     st.markdown(f"### Week Ending: {selected_week_ending}")
@@ -73,25 +80,23 @@ def render_landing_page(df, COLORS):
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Total Enrollments", len(week_df))
+        st.metric("Total Active Enrollments", len(week_df))
     
-    if 'CATEGORY' in week_df.columns and len(week_df) > 0:
-        active_count = len(week_df[week_df['CATEGORY'] == 'ACTIVE'])
-        nsf_count = len(week_df[week_df['CATEGORY'] == 'NSF'])
-        cancelled_count = len(week_df[week_df['CATEGORY'] == 'CANCELLED'])
-        
-        active_rate = (active_count / len(week_df) * 100) if len(week_df) > 0 else 0
-        nsf_rate = (nsf_count / len(week_df) * 100) if len(week_df) > 0 else 0
-        drop_rate = (cancelled_count / len(week_df) * 100) if len(week_df) > 0 else 0
+    # Calculate additional metrics if possible
+    if 'AMOUNT' in week_df.columns:
+        total_amount = week_df['AMOUNT'].sum()
+        avg_amount = week_df['AMOUNT'].mean() if len(week_df) > 0 else 0
         
         with col2:
-            st.metric("Active Rate", f"{active_rate:.1f}%")
+            st.metric("Total Revenue", f"${total_amount:,.2f}")
         
         with col3:
-            st.metric("NSF Rate", f"{nsf_rate:.1f}%")
-        
+            st.metric("Avg Deal Size", f"${avg_amount:,.2f}")
+    
+    if 'AGENT' in week_df.columns:
+        agent_count = week_df['AGENT'].nunique()
         with col4:
-            st.metric("Drop Rate", f"{drop_rate:.1f}%")
+            st.metric("Active Agents", agent_count)
     
     # Create two columns for charts
     chart_col1, chart_col2 = st.columns(2)
@@ -107,7 +112,7 @@ def render_landing_page(df, COLORS):
                 x='Week_Ending', 
                 y='Count',
                 markers=True,
-                labels={'Count': 'Enrollments', 'Week_Ending': 'Week Ending'},
+                labels={'Count': 'Active Enrollments', 'Week_Ending': 'Week Ending'},
                 color_discrete_sequence=[COLORS['primary']]
             )
             
@@ -135,47 +140,81 @@ def render_landing_page(df, COLORS):
                     ay=-30
                 )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="weekly_trend_line")
+            
+            # Add a bar chart showing the same data
+            fig = px.bar(
+                recent_weeks,
+                x='Week_Ending',
+                y='Count',
+                title='Weekly Active Enrollments',
+                color_discrete_sequence=[COLORS['primary']]
+            )
+            
+            # Highlight the selected week
+            if selected_week_in_chart:
+                idx = recent_weeks[recent_weeks['Week_Ending'] == selected_week_ending].index[0]
+                fig.add_trace(go.Bar(
+                    x=[selected_week_ending],
+                    y=[recent_weeks['Count'].iloc[idx]],
+                    marker=dict(color=COLORS['accent']),
+                    name='Selected Week'
+                ))
+            
+            st.plotly_chart(fig, use_container_width=True, key="weekly_trend_bar")
         else:
             st.info("Not enough data to display weekly trend")
     
     with chart_col2:
-        st.subheader("Status Distribution")
-        if 'CATEGORY' in week_df.columns and not week_df.empty:
-            status_counts = week_df['CATEGORY'].value_counts().reset_index()
-            if not status_counts.empty:
-                status_counts.columns = ['Status', 'Count']
+        # Show agent distribution for the selected week
+        if 'AGENT' in week_df.columns and not week_df.empty:
+            st.subheader("Agent Distribution")
+            agent_counts = week_df['AGENT'].value_counts().reset_index()
+            agent_counts.columns = ['Agent', 'Count']
+            
+            # Take top 10 agents
+            top_agents = agent_counts.head(10) if len(agent_counts) > 10 else agent_counts
+            
+            fig = px.bar(
+                top_agents,
+                x='Agent',
+                y='Count',
+                title=f'Top Agents for Week Ending {selected_week_ending}',
+                color='Count',
+                color_continuous_scale=px.colors.sequential.Viridis
+            )
+            st.plotly_chart(fig, use_container_width=True, key="agent_distribution")
+            
+            # Show pie chart of top agents vs others
+            if len(agent_counts) > 5:
+                top_5_agents = agent_counts.head(5)
+                other_agents = pd.DataFrame({
+                    'Agent': ['Other Agents'],
+                    'Count': [agent_counts['Count'][5:].sum()]
+                })
+                pie_data = pd.concat([top_5_agents, other_agents])
                 
                 fig = px.pie(
-                    status_counts,
+                    pie_data,
                     values='Count',
-                    names='Status',
-                    color='Status',
-                    color_discrete_map={
-                        'ACTIVE': COLORS['med_green'],
-                        'NSF': COLORS['warning'],
-                        'CANCELLED': COLORS['danger'],
-                        'OTHER': COLORS['dark_accent']
-                    }
+                    names='Agent',
+                    title='Agent Distribution'
                 )
-                
                 fig.update_traces(textinfo='percent+label')
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No status data available for this week")
+                st.plotly_chart(fig, use_container_width=True, key="agent_pie")
         else:
-            st.warning("Status category data not available")
+            st.warning("Agent data not available for this week")
     
     # Display data table with enrollments for the selected week
-    st.subheader("Enrollments for Selected Week")
+    st.subheader("Active Enrollments for Selected Week")
     
     if week_df.empty:
-        st.info("No enrollments found for the selected week")
+        st.info("No active enrollments found for the selected week")
         return
     
     # Determine which columns to show in the table
     display_columns = []
-    for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'STATUS', 'CATEGORY', 'AMOUNT']:
+    for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'AMOUNT']:
         if col in week_df.columns:
             display_columns.append(col)
     

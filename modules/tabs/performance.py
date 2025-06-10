@@ -1,4 +1,4 @@
-# modules/tabs/performance.py (completed)
+# modules/tabs/performance.py
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -91,7 +91,7 @@ def render_performance_tab(df, COLORS):
                 )
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="monthly_trends_chart")
             
             # Show the data table
             with st.expander("Show Monthly Data"):
@@ -123,7 +123,7 @@ def render_performance_tab(df, COLORS):
                     )
                     fig.update_traces(texttemplate='%{text}%', textposition='outside')
                     fig.update_layout(yaxis_title="MoM Change (%)")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="mom_change_chart")
         else:
             st.warning("Enrollment date data not available")
     
@@ -148,7 +148,7 @@ def render_performance_tab(df, COLORS):
                 title='Enrollments by Day of Week',
                 color_discrete_sequence=[COLORS['secondary']]
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="day_of_week_chart")
             
             # Time of day analysis if time data is available
             if 'ENROLLED_DATE' in df.columns and df['ENROLLED_DATE'].dt.hour.nunique() > 1:
@@ -170,7 +170,7 @@ def render_performance_tab(df, COLORS):
                     title='Enrollments by Hour of Day',
                     color_discrete_sequence=[COLORS['accent']]
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="hour_of_day_chart")
                 
                 # Show daily patterns by weekday/weekend
                 st.subheader("Weekday vs. Weekend Performance")
@@ -201,7 +201,7 @@ def render_performance_tab(df, COLORS):
                     text='Daily_Average'
                 )
                 fig.update_traces(texttemplate='%{text}', textposition='outside')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="weekday_weekend_chart")
                 
                 # Hour distribution by weekday/weekend
                 df['Hour'] = df['ENROLLED_DATE'].dt.hour
@@ -228,7 +228,7 @@ def render_performance_tab(df, COLORS):
                         'Weekend': COLORS['accent']
                     }
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="hourly_distribution_chart")
         else:
             st.warning("Enrollment date data not available")
     
@@ -264,7 +264,7 @@ def render_performance_tab(df, COLORS):
                 color_discrete_sequence=[COLORS['primary']]
             )
             fig.update_layout(xaxis_title="Days to Convert", yaxis_title="Count")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="conversion_histogram")
             
             # Show conversion rates by month if available
             if 'MONTH_YEAR' in df.columns:
@@ -292,7 +292,7 @@ def render_performance_tab(df, COLORS):
                     color_discrete_sequence=[COLORS['med_green']]
                 )
                 fig.update_layout(yaxis_title="Conversion Rate (%)")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="monthly_conversion_chart")
                 
                 # Show the data table
                 with st.expander("Show Monthly Conversion Data"):
@@ -333,7 +333,7 @@ def render_performance_tab(df, COLORS):
                 )
                 fig.update_traces(texttemplate='%{text}%', textposition='outside')
                 fig.update_layout(yaxis_title="Conversion Rate (%)")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="source_conversion_chart")
                 
                 # Show the data table
                 with st.expander("Show Source Conversion Data"):
@@ -375,7 +375,7 @@ def render_performance_tab(df, COLORS):
                 )
                 fig.update_traces(texttemplate='%{text}%', textposition='outside')
                 fig.update_layout(yaxis_title="Conversion Rate (%)")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="agent_conversion_chart")
                 
                 # Show the data table
                 with st.expander("Show Agent Conversion Data"):
@@ -402,7 +402,7 @@ def render_performance_tab(df, COLORS):
                 )
                 fig.update_traces(texttemplate='%{text} days', textposition='outside')
                 fig.update_layout(yaxis_title="Average Days to Convert")
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="agent_conversion_time_chart")
         else:
             st.warning("Lead date or enrollment date data not available for conversion metrics")
             
@@ -431,7 +431,7 @@ def render_performance_tab(df, COLORS):
                     }
                 )
                 fig.update_traces(textinfo='percent+label')
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="status_distribution_chart")
                 
                 # If we have agent data, show performance by agent
                 if 'AGENT' in df.columns:
@@ -467,4 +467,4 @@ def render_performance_tab(df, COLORS):
                     )
                     fig.update_traces(texttemplate='%{text}%', textposition='outside')
                     fig.update_layout(yaxis_title="Success Rate (%)")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="agent_success_rate_chart")
