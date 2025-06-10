@@ -1,4 +1,5 @@
 CUSTOMER ID,AGENT,ENROLLED DATE,STATUS,SOURCE_SHEET,CATEGORY
+1106356516,Bryan Garcia,2025-06-10,Active,PAC,ACTIVE
 1106107849,Heidi Elizondo,2025-06-09,Pending Cancellation,PAC,CANCELLED
 1105980267,Israel Pelcastre,2025-06-09,Active,PAC,ACTIVE
 1096236626,David Zepeda,2025-06-09,Active,PAC,ACTIVE
@@ -383,6 +384,8 @@ CID191239,Israel Pelcastre,2025-05-30,Active,MLG,ACTIVE
 CID196068,Israel Pelcastre,2025-05-29,Active,MLG,ACTIVE
 CID135605,Richard Hernandez,2025-05-29,Active,MLG,ACTIVE
 CID123505,Richard Hernandez,2025-05-28,Active,MLG,ACTIVE
+Brian Christian,David Zepeda,2025-06-10,Active,ELP,ACTIVE
+Julieta Pimentel,David Zepeda,2025-06-09,Active,ELP,ACTIVE
 Jules Stfort,Richard Hernandez,2025-06-09,Active,ELP,ACTIVE
 Brandy Short,Vanessa Hernandez,2025-06-09,Active,ELP,ACTIVE
 Daniel Christianson,Vanessa Hernandez,2025-06-09,Active,ELP,ACTIVE
@@ -477,7 +480,7 @@ Carol E. Hamby,Andy Wade,2025-02-04,Cancelled,ELP,CANCELLED
 Tracy Halley,Miriam Guizar,2025-02-04,Cancelled,ELP,CANCELLED
 1106274869,Karen Gonzalez,2025-06-09,Active,Cordoba,ACTIVE
 1105738880,Vivian Garza,2025-06-05,Active,Cordoba,ACTIVE
-1104378721,David Zepeda,2025-06-03,Active,Cordoba,ACTIVE
+1104378721,David Zepeda,2025-06-03,Cancelled,Cordoba,CANCELLED
 1103691841,Vanessa Hernandez,2025-06-02,Active,Cordoba,ACTIVE
 1103051609,Vanessa Hernandez,2025-05-29,Active,Cordoba,ACTIVE
 1099465573,Vanessa Hernandez,2025-05-22,Active,Cordoba,ACTIVE
