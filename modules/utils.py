@@ -22,7 +22,7 @@ def load_csv_data(file_path="processed_combined_data.csv"):
             df['CATEGORY'] = 'OTHER'
             df.loc[df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
             df.loc[df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
-            df.loc[df['STATUS'].str.contains('CANCEL|DROP|TERMIN', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
+            df.loc[df['STATUS'].str.contains('CANCEL|DROP|TERMIN|PENDING', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
         
         return df, None
     except Exception as e:
@@ -62,6 +62,20 @@ def load_css():
             font-weight: bold;
             margin-bottom: 15px;
             color: #483D8B;
+        }
+        /* Make charts expand properly */
+        .stPlotlyChart {
+            width: 100% !important;
+        }
+        /* Fix sidebar issues */
+        .main .block-container {
+            max-width: 100% !important;
+            padding-left: 5% !important;
+            padding-right: 5% !important;
+        }
+        /* Ensure tables display properly */
+        .dataframe-container {
+            width: 100% !important;
         }
         </style>
         """, unsafe_allow_html=True)

@@ -116,12 +116,8 @@ def render_data_explorer(df, COLORS):
                 st.dataframe(search_results[selected_columns], use_container_width=True)
                 st.info(f"Found {len(search_results)} records matching '{search_term}'")
             else:
-                # Show first 1000 rows to avoid performance issues
-                display_df = filtered_df[selected_columns].head(1000)
-                st.dataframe(display_df, use_container_width=True)
-                
-                if len(filtered_df) > 1000:
-                    st.info(f"Showing first 1,000 of {len(filtered_df)} records. Use filters or search to narrow results.")
+                # Show all rows
+                st.dataframe(filtered_df[selected_columns], use_container_width=True)
         else:
             st.warning("Please select at least one column to display.")
         
@@ -328,7 +324,7 @@ def render_data_explorer(df, COLORS):
                     
                     # Show results
                     st.write(f"Found {len(result_df)} matching records")
-                    st.dataframe(result_df.head(1000), use_container_width=True)
+                    st.dataframe(result_df, use_container_width=True)
                     
                     # Download button for query results
                     csv = result_df.to_csv(index=False)
