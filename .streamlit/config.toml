@@ -1,0 +1,21 @@
+[server]
+maxUploadSize = 200
+maxMessageSize = 200
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#8A7FBA"
+backgroundColor = "#F8F9FA"
+secondaryBackgroundColor = "#E6E6FA"
+textColor = "#2E2E2E"
+font = "sans serif"
+
+[runner]
+fastReruns = true
+
+[global]
+developmentMode = false

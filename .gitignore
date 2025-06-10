@@ -1,9 +1,38 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Streamlit specific
+.streamlit/secrets.toml
+
 # Credentials
 credentials.json
+*.key
+*.pem
 
-# Python script
-sheet_analyzer.py
+# Logs
+*.log
 
-GIT_GUD.code-workspace
-
-.env
+# OS specific
+.DS_Store
+Thumbs.db
