@@ -1254,10 +1254,23 @@ with tab3:
             else:
                 filtered_agent_df = agent_df
                 
-            # Display simplified dataframe with only essential columns
-            essential_cols = ['CUSTOMER_ID', 'ENROLLED_DATE', 'STATUS', 'CATEGORY']
-            display_cols = [col for col in essential_cols if col in filtered_agent_df.columns]
-            st.dataframe(filtered_agent_df[display_cols].sort_values('ENROLLED_DATE', ascending=False), 
+            # Create a clean, simplified view with better column names
+            if 'ENROLLED_DATE' in filtered_agent_df.columns:
+                filtered_agent_df['Week'] = filtered_agent_df['ENROLLED_DATE'].dt.strftime('%Y-W%U')
+            
+            # Get source/program info if available
+            program_col = 'SOURCE_SHEET' if 'SOURCE_SHEET' in filtered_agent_df.columns else None
+            
+            # Create clean display dataframe
+            clean_df = pd.DataFrame()
+            clean_df['Date'] = filtered_agent_df['ENROLLED_DATE'].dt.strftime('%Y-%m-%d') if 'ENROLLED_DATE' in filtered_agent_df.columns else "N/A"
+            clean_df['Week'] = filtered_agent_df['Week'] if 'Week' in filtered_agent_df.columns else "N/A"
+            clean_df['Status'] = filtered_agent_df['STATUS'] if 'STATUS' in filtered_agent_df.columns else "N/A"
+            if program_col:
+                clean_df['Program'] = filtered_agent_df[program_col].str.replace('-Raw', '').str.replace(' Raw', '')
+            
+            # Display the clean dataframe
+            st.dataframe(clean_df.sort_values('Date', ascending=False), 
                        use_container_width=True, height=400)
             
             # Excel report with improved styling
@@ -1297,11 +1310,27 @@ with tab4:
     """, unsafe_allow_html=True)
     
     try:
-        # Column selection with improved UI
-        default_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY', 'SOURCE_SHEET']
-        available_cols = [col for col in df_filtered.columns if col in default_cols] or df_filtered.columns.tolist()
+        # Simplified UI with dropdowns instead of multiselect
+        st.subheader("Filter Data")
         
-        selected_cols = st.multiselect("Select columns to display:", df_filtered.columns.tolist(), default=available_cols)
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Agent filter dropdown
+            if 'AGENT' in df_filtered.columns:
+                agent_options = ["All Agents"] + sorted(df_filtered['AGENT'].unique().tolist())
+                selected_agent = st.selectbox("Select Agent:", agent_options)
+        
+        with col2:
+            # Status filter dropdown
+            if 'STATUS' in df_filtered.columns:
+                status_options = ["All Statuses"] + sorted(df_filtered['STATUS'].unique().tolist())
+                selected_status = st.selectbox("Select Status:", status_options)
+                
+        # Program filter dropdown
+        if 'SOURCE_SHEET' in df_filtered.columns:
+            program_options = ["All Programs"] + sorted(df_filtered['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '').unique().tolist())
+            selected_program = st.selectbox("Select Program:", program_options)
         
         if selected_cols:
             # Filter options
@@ -1330,15 +1359,20 @@ with tab4:
             df_explorer = df_filtered.copy()
             
             # Apply agent filter
-            if 'AGENT' in selected_cols and "All" not in agent_filter:
-                df_explorer = df_explorer[df_explorer['AGENT'].isin(agent_filter)]
+            if 'AGENT' in df_explorer.columns and selected_agent != "All Agents":
+                df_explorer = df_explorer[df_explorer['AGENT'] == selected_agent]
             
             # Apply status filter
-            if 'CATEGORY' in selected_cols and "All" not in status_filter_explorer:
-                df_explorer = df_explorer[df_explorer['CATEGORY'].isin(status_filter_explorer)]
+            if 'STATUS' in df_explorer.columns and selected_status != "All Statuses":
+                df_explorer = df_explorer[df_explorer['STATUS'] == selected_status]
+                
+            # Apply program filter
+            if 'SOURCE_SHEET' in df_explorer.columns and selected_program != "All Programs":
+                clean_program = selected_program
+                df_explorer = df_explorer[df_explorer['SOURCE_SHEET'].str.replace('-Raw', '').str.replace(' Raw', '') == clean_program]
             
-            # Add search functionality
-            search_query = st.text_input("Search in data (searches across all columns):", "")
+            # Add simple search functionality
+            search_query = st.text_input("Search by customer ID or agent name:", "", placeholder="Enter search term...")
             if search_query:
                 df_explorer = df_explorer[df_explorer.astype(str).apply(
                     lambda row: row.str.contains(search_query, case=False).any(), axis=1)]
@@ -1347,59 +1381,61 @@ with tab4:
             st.subheader(f"Filtered Data ({len(df_explorer)} records)")
             
             # Display dataframe
-            # Limit to essential columns if too many are selected
-            if len(selected_cols) > 5:
-                essential_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY']
-                display_cols = [col for col in essential_cols if col in selected_cols]
-                if len(display_cols) < 3:  # If not enough essential columns, use the first 4 selected
-                    display_cols = selected_cols[:4]
-                st.info(f"Showing only essential columns for better readability. Selected: {', '.join(display_cols)}")
-            else:
-                display_cols = selected_cols
-                
-            st.dataframe(df_explorer[display_cols], use_container_width=True, height=500)
+            # Create a clean, simplified view with better column names
+            if 'ENROLLED_DATE' in df_explorer.columns:
+                df_explorer['Week'] = df_explorer['ENROLLED_DATE'].dt.strftime('%Y-W%U')
             
-            # Export options with improved UI
+            # Get source/program info if available
+            program_col = 'SOURCE_SHEET' if 'SOURCE_SHEET' in df_explorer.columns else None
+            
+            # Create clean display dataframe
+            clean_df = pd.DataFrame()
+            clean_df['Date'] = df_explorer['ENROLLED_DATE'].dt.strftime('%Y-%m-%d') if 'ENROLLED_DATE' in df_explorer.columns else "N/A"
+            clean_df['Week'] = df_explorer['Week'] if 'Week' in df_explorer.columns else "N/A"
+            clean_df['Status'] = df_explorer['STATUS'] if 'STATUS' in df_explorer.columns else "N/A"
+            if program_col:
+                clean_df['Program'] = df_explorer[program_col].str.replace('-Raw', '').str.replace(' Raw', '')
+            if 'AGENT' in df_explorer.columns:
+                clean_df['Agent'] = df_explorer['AGENT']
+                
+            # Display the clean dataframe
+            st.dataframe(clean_df.sort_values('Date', ascending=False), 
+                       use_container_width=True, height=500)
+            
+            # Simplified export options
             st.subheader("Export Data")
-            col1, col2 = st.columns(2)
+            export_format = "Excel"  # Default to Excel
+            filename = f"pepe_sales_data_{start.strftime('%Y%m%d')}_{end.strftime('%Y%m%d')}"
             
-            with col1:
-                export_format = st.radio("Select format:", ["CSV", "Excel"])
-            
-            with col2:
-                filename = st.text_input("Filename:", f"pepe_sales_data_{start.strftime('%Y%m%d')}_{end.strftime('%Y%m%d')}")
-            
-            if export_format == "CSV":
-                csv = df_explorer[selected_cols].to_csv(index=False).encode()
-                st.download_button("📤 Download CSV", csv, file_name=f"{filename}.csv", mime="text/csv")
-            else:
-                excel_buffer = BytesIO()
-                with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-                    df_explorer[selected_cols].to_excel(writer, index=False)
-                    
-                    # Format the Excel file
-                    workbook = writer.book
-                    worksheet = writer.sheets['Sheet1']
-                    
-                    # Format headers
-                    header_format = workbook.add_format({
-                        'bold': True,
-                        'bg_color': COLORS['primary'],
-                        'color': 'white',
-                        'border': 1
-                    })
-                    
-                    for col_num, value in enumerate(df_explorer[selected_cols].columns.values):
-                        worksheet.write(0, col_num, value, header_format)
-                    
-                    # Auto-fit columns
-                    for i, col in enumerate(df_explorer[selected_cols].columns):
-                        column_len = max(df_explorer[col].astype(str).str.len().max(), len(col)) + 2
-                        worksheet.set_column(i, i, column_len)
+            # Create Excel with clean data
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                clean_df.to_excel(writer, index=False)
                 
-                excel_buffer.seek(0)
-                st.download_button("📤 Download Excel", excel_buffer, file_name=f"{filename}.xlsx", 
-                                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                # Format the Excel file
+                workbook = writer.book
+                worksheet = writer.sheets['Sheet1']
+                
+                # Format headers
+                header_format = workbook.add_format({
+                    'bold': True,
+                    'bg_color': COLORS['primary'],
+                    'color': 'white',
+                    'border': 1
+                })
+                
+                for col_num, value in enumerate(clean_df.columns.values):
+                    worksheet.write(0, col_num, value, header_format)
+                
+                # Auto-fit columns
+                for i, col in enumerate(clean_df.columns):
+                    column_len = max(clean_df[col].astype(str).str.len().max(), len(col)) + 2
+                    worksheet.set_column(i, i, column_len)
+            
+            excel_buffer.seek(0)
+            st.download_button("📤 Download Report", excel_buffer, file_name=f"{filename}.xlsx", 
+                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                             use_container_width=True)
         else:
             st.warning("Please select at least one column to display")
     except Exception as e:
@@ -1588,10 +1624,23 @@ with tab5:
             else:
                 filtered_flagged = flagged
             
-            # Display simplified risk dataframe with only essential columns
-            essential_cols = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'CATEGORY']
-            display_cols = [col for col in essential_cols if col in filtered_flagged.columns]
-            st.dataframe(filtered_flagged[display_cols].sort_values('ENROLLED_DATE', ascending=False), 
+            # Create a clean, simplified view with better column names
+            if 'ENROLLED_DATE' in filtered_flagged.columns:
+                filtered_flagged['Week'] = filtered_flagged['ENROLLED_DATE'].dt.strftime('%Y-W%U')
+            
+            # Get source/program info if available
+            program_col = 'SOURCE_SHEET' if 'SOURCE_SHEET' in filtered_flagged.columns else None
+            
+            # Create clean display dataframe
+            clean_df = pd.DataFrame()
+            clean_df['Date'] = filtered_flagged['ENROLLED_DATE'].dt.strftime('%Y-%m-%d') if 'ENROLLED_DATE' in filtered_flagged.columns else "N/A"
+            clean_df['Week'] = filtered_flagged['Week'] if 'Week' in filtered_flagged.columns else "N/A"
+            clean_df['Status'] = filtered_flagged['STATUS'] if 'STATUS' in filtered_flagged.columns else "N/A"
+            if program_col:
+                clean_df['Program'] = filtered_flagged[program_col].str.replace('-Raw', '').str.replace(' Raw', '')
+            
+            # Display the clean dataframe
+            st.dataframe(clean_df.sort_values('Date', ascending=False), 
                        use_container_width=True, height=400)
             
             # Export flagged data with better UI
