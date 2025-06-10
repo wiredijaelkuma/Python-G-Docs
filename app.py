@@ -1,19 +1,25 @@
+# app.py - Main application file
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 from datetime import datetime, date, timedelta
-import base64
-from io import BytesIO
-import calendar
 from pathlib import Path
 import os
+
+# Import modules
+from modules.utils import load_css, load_csv_data, format_large_number
+from modules.ui_components import display_metrics, create_header
+from modules.tabs.overview import render_overview_tab
+from modules.tabs.performance import render_performance_tab
+from modules.tabs.agents import render_agents_tab
+from modules.tabs.risk_analysis import render_risk_analysis
+from modules.tabs.data_explorer import render_data_explorer
+from modules.tabs.drop_rate import render_drop_rate_tab
 
 # --- Set page configuration first (must be the first Streamlit command) ---
 st.set_page_config(
     layout="wide", 
-    page_title="Pepe's Power Dashboard", 
+    page_title="Pepe's Power Dashboard",
     page_icon="🐸",
     initial_sidebar_state="expanded"
 )
@@ -42,83 +48,6 @@ COLORS = {
     'med_green': '#66CDAA',    # Medium aquamarine
 }
 
-# Try to import modular components
-modules_loaded = True
-try:
-    from data_explorer import render_data_explorer
-    from risk_analysis import render_risk_analysis
-    from performance_tab import render_performance_tab
-    from agents_tab import render_agents_tab
-    from overview_tab import render_overview_tab
-except ImportError:
-    modules_loaded = False
-
-# --- Helper Functions ---
-def load_css():
-    """Load custom CSS with error handling"""
-    try:
-        with open('assets/custom.css') as f:
-            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-    except Exception:
-        # Add some basic styling if custom CSS is not available
-        st.markdown("""
-        <style>
-        .metric-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .metric-title {
-            font-size: 14px;
-            color: #666;
-        }
-        .metric-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-        }
-        .section-header {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #483D8B;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-@st.cache_data(ttl=3600)
-def load_csv_data(file_path="processed_combined_data.csv"):
-    """Load data with minimal processing for speed"""
-    try:
-        # Simple CSV reading without complex options
-        df = pd.read_csv(file_path)
-        
-        # Standardize column names
-        df.columns = [col.strip().upper().replace(" ", "_") for col in df.columns]
-        
-        # Only process essential columns
-        if 'ENROLLED_DATE' in df.columns:
-            df['ENROLLED_DATE'] = pd.to_datetime(df['ENROLLED_DATE'], errors='coerce')
-            df['MONTH_YEAR'] = df['ENROLLED_DATE'].dt.strftime('%Y-%m')
-        
-        if 'STATUS' in df.columns:
-            # Simplified status categorization
-            df['CATEGORY'] = 'OTHER'
-            df.loc[df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
-            df.loc[df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
-            df.loc[df['STATUS'].str.contains('CANCEL|DROP|TERMIN', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
-        
-        return df, None
-    except Exception as e:
-        return pd.DataFrame(), str(e)
-
-def format_large_number(num):
-    """Format large numbers with commas"""
-    return f"{num:,}"
-
-# --- Main App Logic ---
 def main():
     # Load CSS
     load_css()
@@ -235,239 +164,169 @@ def main():
     df_filtered = df[mask]
 
     # --- Dashboard Header ---
-    st.markdown(f"""
-    <div class="section-header">Pepe's Power Sales Dashboard</div>
-    <div style="background-color: {COLORS['light_purple']}; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-            <div>
-                <b>Date Range:</b> {start.strftime('%b %d, %Y')} - {end.strftime('%b %d, %Y')}<br>
-                <b>Total Contracts:</b> {format_large_number(len(df_filtered))}
-            </div>
-            <div>
-                <b>Status Shown:</b> {', '.join(status_filter)}
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    create_header(df_filtered, start, end, status_filter, COLORS)
 
     # --- Metrics Summary ---
-    # Calculate metrics based on filtered data
-    total_contracts = len(df_filtered)
-    
-    # Only calculate these if CATEGORY exists
-    if 'CATEGORY' in df_filtered.columns:
-        active_contracts = len(df_filtered[df_filtered['CATEGORY'] == 'ACTIVE'])
-        nsf_cases = len(df_filtered[df_filtered['CATEGORY'] == 'NSF'])
-        cancelled_contracts = len(df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'])
-        other_statuses = len(df_filtered[df_filtered['CATEGORY'] == 'OTHER'])
-    else:
-        active_contracts = nsf_cases = cancelled_contracts = other_statuses = 0
-    
-    success_rate = (active_contracts / total_contracts * 100) if total_contracts > 0 else 0
-
-    # Display metrics
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Total Contracts</div>
-            <div class="metric-value">{format_large_number(total_contracts)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Active</div>
-            <div class="metric-value">{format_large_number(active_contracts)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">NSF Cases</div>
-            <div class="metric-value">{format_large_number(nsf_cases)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with col4:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Cancelled</div>
-            <div class="metric-value">{format_large_number(cancelled_contracts)}</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with col5:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Success Rate</div>
-            <div class="metric-value">{success_rate:.1f}%</div>
-        </div>
-        """, unsafe_allow_html=True)
+    display_metrics(df_filtered, COLORS)
 
     # --- Tab Navigation ---
-    tabs = st.tabs(["Overview", "Performance", "Agents", "Risk Analysis", "Data Explorer"])
+    tabs = st.tabs(["Overview", "Performance", "Agents", "Drop Rate", "Risk Analysis", "Data Explorer"])
     
-    # Only render tabs if modules are loaded
-    if modules_loaded:
-        # Overview Tab
-        with tabs[0]:
-            try:
-                render_overview_tab(df_filtered, COLORS)
-            except Exception as e:
-                st.error(f"Error rendering Overview tab: {e}")
-                st.write("Displaying basic overview instead:")
-                # Basic overview fallback
-                if 'CATEGORY' in df_filtered.columns:
-                    st.subheader("Status Distribution")
-                    fig = px.pie(
-                        df_filtered['CATEGORY'].value_counts().reset_index(),
-                        values='count',
-                        names='CATEGORY',
-                        color='CATEGORY',
-                        color_discrete_map={
-                            'ACTIVE': COLORS['med_green'],
-                            'NSF': COLORS['warning'],
-                            'CANCELLED': COLORS['danger'],
-                            'OTHER': COLORS['dark_accent']
-                        }
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-            
-        # Performance Tab
-        with tabs[1]:
-            try:
-                render_performance_tab(df_filtered, COLORS)
-            except Exception as e:
-                st.error(f"Error rendering Performance tab: {e}")
-                # Basic performance fallback
-                if 'ENROLLED_DATE' in df_filtered.columns:
-                    st.subheader("Monthly Enrollments")
-                    monthly_data = df_filtered.groupby(df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')).size().reset_index()
-                    monthly_data.columns = ['Month', 'Count']
-                    fig = px.bar(monthly_data, x='Month', y='Count')
-                    st.plotly_chart(fig, use_container_width=True)
-            
-        # Agents Tab
-        with tabs[2]:
-            try:
-                render_agents_tab(df_filtered, COLORS)
-            except Exception as e:
-                st.error(f"Error rendering Agents tab: {e}")
-                # Basic agents fallback
-                if 'AGENT' in df_filtered.columns:
-                    st.subheader("Agent Performance")
-                    agent_data = df_filtered.groupby('AGENT').size().reset_index()
-                    agent_data.columns = ['Agent', 'Count']
-                    fig = px.bar(agent_data, x='Agent', y='Count')
-                    st.plotly_chart(fig, use_container_width=True)
-            
-        # Risk Analysis Tab
-        with tabs[3]:
-            try:
-                render_risk_analysis(df_filtered, COLORS)
-            except Exception as e:
-                st.error(f"Error rendering Risk Analysis tab: {e}")
-                # Basic risk analysis fallback
-                st.subheader("Risk Distribution")
-                if 'CATEGORY' in df_filtered.columns:
-                    risk_data = pd.DataFrame({
-                        'Category': ['Low Risk', 'Medium Risk', 'High Risk'],
-                        'Count': [
-                            len(df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']),
-                            len(df_filtered[df_filtered['CATEGORY'] == 'NSF']),
-                            len(df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'])
-                        ]
-                    })
-                    fig = px.bar(risk_data, x='Category', y='Count')
-                    st.plotly_chart(fig, use_container_width=True)
-            
-        # Data Explorer Tab
-        with tabs[4]:
-            try:
-                render_data_explorer(df_filtered, COLORS, start)
-            except Exception as e:
-                st.error(f"Error rendering Data Explorer tab: {e}")
-                # Basic data explorer fallback
-                st.subheader("Data Preview")
-                st.dataframe(df_filtered.head(100), use_container_width=True)
-                
-                # Download button
-                csv = df_filtered.to_csv(index=False)
-                st.download_button(
-                    label="Download Filtered Data",
-                    data=csv,
-                    file_name="filtered_data.csv",
-                    mime="text/csv"
-                )
+    # Overview Tab
+    with tabs[0]:
+        try:
+            render_overview_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Overview tab: {e}")
+            fallback_overview(df_filtered, COLORS)
+        
+    # Performance Tab
+    with tabs[1]:
+        try:
+            render_performance_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Performance tab: {e}")
+            fallback_performance(df_filtered, COLORS)
+        
+    # Agents Tab
+    with tabs[2]:
+        try:
+            render_agents_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Agents tab: {e}")
+            fallback_agents(df_filtered, COLORS)
+        
+    # Drop Rate Tab (New)
+    with tabs[3]:
+        try:
+            render_drop_rate_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Drop Rate tab: {e}")
+            fallback_drop_rate(df_filtered, COLORS)
+        
+    # Risk Analysis Tab
+    with tabs[4]:
+        try:
+            render_risk_analysis(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Risk Analysis tab: {e}")
+            fallback_risk_analysis(df_filtered, COLORS)
+        
+    # Data Explorer Tab
+    with tabs[5]:
+        try:
+            render_data_explorer(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Data Explorer tab: {e}")
+            fallback_data_explorer(df_filtered)
+
+def fallback_overview(df_filtered, COLORS):
+    import plotly.express as px
+    
+    st.subheader("Status Distribution")
+    if 'CATEGORY' in df_filtered.columns:
+        fig = px.pie(
+            df_filtered['CATEGORY'].value_counts().reset_index(),
+            values='count',
+            names='CATEGORY',
+            color='CATEGORY',
+            color_discrete_map={
+                'ACTIVE': COLORS['med_green'],
+                'NSF': COLORS['warning'],
+                'CANCELLED': COLORS['danger'],
+                'OTHER': COLORS['dark_accent']
+            }
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+def fallback_performance(df_filtered, COLORS):
+    import plotly.express as px
+    
+    st.subheader("Monthly Enrollments")
+    if 'ENROLLED_DATE' in df_filtered.columns:
+        monthly_data = df_filtered.groupby(df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')).size().reset_index()
+        monthly_data.columns = ['Month', 'Count']
+        fig = px.bar(monthly_data, x='Month', y='Count', color_discrete_sequence=[COLORS['primary']])
+        st.plotly_chart(fig, use_container_width=True)
+
+def fallback_agents(df_filtered, COLORS):
+    import plotly.express as px
+    
+    st.subheader("Agent Performance")
+    if 'AGENT' in df_filtered.columns:
+        agent_data = df_filtered.groupby('AGENT').size().reset_index()
+        agent_data.columns = ['Agent', 'Count']
+        fig = px.bar(agent_data, x='Agent', y='Count', color_discrete_sequence=[COLORS['secondary']])
+        st.plotly_chart(fig, use_container_width=True)
+
+def fallback_drop_rate(df_filtered, COLORS):
+    import plotly.express as px
+    
+    st.subheader("Drop Rate Analysis")
+    if 'CATEGORY' in df_filtered.columns and 'ENROLLED_DATE' in df_filtered.columns:
+        # Calculate drop rate by month
+        df_filtered['Month'] = df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')
+        monthly_total = df_filtered.groupby('Month').size()
+        monthly_drops = df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'].groupby('Month').size()
+        
+        drop_rate_data = pd.DataFrame({
+            'Month': monthly_total.index,
+            'Total': monthly_total.values,
+            'Dropped': monthly_drops.reindex(monthly_total.index, fill_value=0).values
+        })
+        
+        drop_rate_data['Drop_Rate'] = (drop_rate_data['Dropped'] / drop_rate_data['Total'] * 100).round(1)
+        
+        fig = px.line(
+            drop_rate_data, 
+            x='Month', 
+            y='Drop_Rate',
+            markers=True,
+            title='Monthly Drop Rate (%)',
+            color_discrete_sequence=[COLORS['danger']]
+        )
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        # Fallback if modules aren't loaded
-        # Overview Tab
-        with tabs[0]:
-            st.subheader("Status Distribution")
-            if 'CATEGORY' in df_filtered.columns:
-                fig = px.pie(
-                    df_filtered['CATEGORY'].value_counts().reset_index(),
-                    values='count',
-                    names='CATEGORY',
-                    color='CATEGORY',
-                    color_discrete_map={
-                        'ACTIVE': COLORS['med_green'],
-                        'NSF': COLORS['warning'],
-                        'CANCELLED': COLORS['danger'],
-                        'OTHER': COLORS['dark_accent']
-                    }
-                )
-                st.plotly_chart(fig, use_container_width=True)
-        
-        # Performance Tab
-        with tabs[1]:
-            st.subheader("Monthly Enrollments")
-            if 'ENROLLED_DATE' in df_filtered.columns:
-                monthly_data = df_filtered.groupby(df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')).size().reset_index()
-                monthly_data.columns = ['Month', 'Count']
-                fig = px.bar(monthly_data, x='Month', y='Count')
-                st.plotly_chart(fig, use_container_width=True)
-        
-        # Agents Tab
-        with tabs[2]:
-            st.subheader("Agent Performance")
-            if 'AGENT' in df_filtered.columns:
-                agent_data = df_filtered.groupby('AGENT').size().reset_index()
-                agent_data.columns = ['Agent', 'Count']
-                fig = px.bar(agent_data, x='Agent', y='Count')
-                st.plotly_chart(fig, use_container_width=True)
-        
-        # Risk Analysis Tab
-        with tabs[3]:
-            st.subheader("Risk Distribution")
-            if 'CATEGORY' in df_filtered.columns:
-                risk_data = pd.DataFrame({
-                    'Category': ['Low Risk', 'Medium Risk', 'High Risk'],
-                    'Count': [
-                        len(df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']),
-                        len(df_filtered[df_filtered['CATEGORY'] == 'NSF']),
-                        len(df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'])
-                    ]
-                })
-                fig = px.bar(risk_data, x='Category', y='Count')
-                st.plotly_chart(fig, use_container_width=True)
-        
-        # Data Explorer Tab
-        with tabs[4]:
-            st.subheader("Data Preview")
-            st.dataframe(df_filtered.head(100), use_container_width=True)
-            
-            # Download button
-            csv = df_filtered.to_csv(index=False)
-            st.download_button(
-                label="Download Filtered Data",
-                data=csv,
-                file_name="filtered_data.csv",
-                mime="text/csv"
-            )
+        st.warning("Required data columns missing for drop rate analysis")
+
+def fallback_risk_analysis(df_filtered, COLORS):
+    import plotly.express as px
+    
+    st.subheader("Risk Distribution")
+    if 'CATEGORY' in df_filtered.columns:
+        risk_data = pd.DataFrame({
+            'Category': ['Low Risk', 'Medium Risk', 'High Risk'],
+            'Count': [
+                len(df_filtered[df_filtered['CATEGORY'] == 'ACTIVE']),
+                len(df_filtered[df_filtered['CATEGORY'] == 'NSF']),
+                len(df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'])
+            ]
+        })
+        fig = px.bar(
+            risk_data, 
+            x='Category', 
+            y='Count',
+            color='Category',
+            color_discrete_map={
+                'Low Risk': COLORS['med_green'],
+                'Medium Risk': COLORS['warning'],
+                'High Risk': COLORS['danger']
+            }
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+def fallback_data_explorer(df_filtered):
+    st.subheader("Data Preview")
+    st.dataframe(df_filtered.head(100), use_container_width=True)
+    
+    # Download button
+    csv = df_filtered.to_csv(index=False)
+    st.download_button(
+        label="Download Filtered Data",
+        data=csv,
+        file_name="filtered_data.csv",
+        mime="text/csv"
+    )
 
 if __name__ == "__main__":
     main()
