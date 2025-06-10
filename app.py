@@ -56,13 +56,13 @@ def load_image_base64(path):
         st.warning(f"Image not found: {path}. Error: {e}")
         return None
 
-@st.cache_data(ttl=900)  # Cache for 15 minutes
+@st.cache_data(ttl=300)  # Cache for 5 minutes to ensure refresh works properly
 def load_data():
     """Load and preprocess data with robust error handling"""
     try:
-        # First try to load from the processed file
+        # First try to load from the processed file with absolute path
         try:
-            df = pd.read_csv("processed_combined_data.csv")
+            df = pd.read_csv("C:\\Users\\Mijae\\OneDrive\\Desktop\\Python G-Docs\\processed_combined_data.csv")
         except:
             # If that fails, try to load from uploaded file
             uploaded_file = st.session_state.get('uploaded_file', None)
@@ -79,14 +79,14 @@ def load_data():
         if 'ENROLLED_DATE' in df.columns:
             df['ENROLLED_DATE'] = pd.to_datetime(df['ENROLLED_DATE'], errors='coerce')
         
-        # Clean and standardize status
+        # Clean and standardize status - improved logic for better categorization
         if 'STATUS' in df.columns:
             df['STATUS'] = df['STATUS'].astype(str).str.strip().str.upper()
             
-            # Create status category
-            active_terms = ["ACTIVE", "ENROLLED", "ENROLLED / ACTIVE"]
-            nsf_terms = ["NSF", "ENROLLED / NSF PROBLEM"]
-            cancelled_terms = ["CANCELLED", "DROPPED", "PENDING CANCELLATION", "SUMMONS: PUSH OUT", "NEEDS ROL"]
+            # Create status category with more comprehensive terms
+            active_terms = ["ACTIVE", "ENROLLED", "ENROLLED / ACTIVE", "ENROLLED/ACTIVE"]
+            nsf_terms = ["NSF", "ENROLLED / NSF PROBLEM", "ENROLLED/NSF", "NSF PROBLEM"]
+            cancelled_terms = ["CANCELLED", "DROPPED", "PENDING CANCELLATION", "SUMMONS: PUSH OUT", "NEEDS ROL", "TERMINATED"]
             
             # Use vectorized operations for better performance
             df['CATEGORY'] = 'OTHER'  # default value
