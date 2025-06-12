@@ -1,5 +1,5 @@
 """
-Simple Commission Tab Module
+Basic Commission Tab Module
 """
 import streamlit as st
 import pandas as pd
@@ -25,71 +25,57 @@ def render_commission_tab(df_filtered, COLORS):
         # Combine the dataframes
         combined_df = pd.concat([even_df, odd_df], ignore_index=True)
         
-        # Clean the data
-        combined_df = combined_df.dropna(subset=['AgentName', 'PaymentID'])
+        # Clean the data - convert all to strings to avoid comparison issues
+        combined_df = combined_df.fillna("")
+        combined_df['AgentName'] = combined_df['AgentName'].astype(str)
+        combined_df['CustomerID'] = combined_df['CustomerID'].astype(str)
+        combined_df['PaymentID'] = combined_df['PaymentID'].astype(str)
+        combined_df['Status'] = combined_df['Status'].astype(str)
+        
+        # Remove rows with empty agent names
+        combined_df = combined_df[combined_df['AgentName'] != ""]
+        
+        # Convert dates to datetime
         combined_df['PaymentDate'] = pd.to_datetime(combined_df['PaymentDate'], errors='coerce')
         combined_df['ClearedDate'] = pd.to_datetime(combined_df['ClearedDate'], errors='coerce')
-        combined_df['Status'] = combined_df['Status'].astype(str)
         
         # Create payment status column
         combined_df['PaymentStatus'] = 'Other'
         combined_df.loc[combined_df['Status'].str.contains('Cleared', case=False, na=False), 'PaymentStatus'] = 'Cleared'
         combined_df.loc[combined_df['Status'].str.contains('NSF|Returned', case=False, na=False), 'PaymentStatus'] = 'NSF'
+        combined_df.loc[combined_df['Status'].str.contains('Pending', case=False, na=False), 'PaymentStatus'] = 'Pending'
         
         # Create tabs
-        tabs = st.tabs(["Agent Payments", "Recent Cleared Payments", "Customer History"])
+        tabs = st.tabs(["Agent View", "Payment Status", "Customer View"])
         
-        # Tab 1: Agent Payments
+        # Tab 1: Agent View
         with tabs[0]:
-            st.subheader("Agent Payment Summary")
+            st.subheader("Agent Payment Data")
             
-            # Filter options
-            col1, col2 = st.columns(2)
+            # Get list of agents (already converted to strings)
+            agents = list(combined_df['AgentName'].unique())
+            agents.sort()
             
-            with col1:
-                # Get list of agents
-                agents = sorted(combined_df['AgentName'].unique())
-                selected_agent = st.selectbox("Select Agent", agents)
+            # Agent selector
+            selected_agent = st.selectbox("Select Agent", agents)
             
-            with col2:
-                # Date range filter
-                date_range = st.selectbox(
-                    "Date Range",
-                    ["All Time", "Last 7 Days", "Last 14 Days", "Last 30 Days", "Last 90 Days"]
-                )
-                
-                today = datetime.now()
-                if date_range == "Last 7 Days":
-                    start_date = today - timedelta(days=7)
-                elif date_range == "Last 14 Days":
-                    start_date = today - timedelta(days=14)
-                elif date_range == "Last 30 Days":
-                    start_date = today - timedelta(days=30)
-                elif date_range == "Last 90 Days":
-                    start_date = today - timedelta(days=90)
-                else:
-                    start_date = datetime(2000, 1, 1)  # Very old date to include all
-            
-            # Filter data
+            # Filter data for selected agent
             agent_data = combined_df[combined_df['AgentName'] == selected_agent]
-            agent_data = agent_data[agent_data['PaymentDate'] >= start_date]
+            
+            # Count payments by status
+            cleared = len(agent_data[agent_data['PaymentStatus'] == 'Cleared'])
+            nsf = len(agent_data[agent_data['PaymentStatus'] == 'NSF'])
+            pending = len(agent_data[agent_data['PaymentStatus'] == 'Pending'])
+            total = len(agent_data)
             
             # Display metrics
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Total Payments", total)
+            col2.metric("Cleared", cleared)
+            col3.metric("NSF", nsf)
+            col4.metric("Pending", pending)
             
-            with col1:
-                total_payments = len(agent_data)
-                st.metric("Total Payments", str(total_payments))
-            
-            with col2:
-                cleared_payments = len(agent_data[agent_data['PaymentStatus'] == 'Cleared'])
-                st.metric("Cleared Payments", str(cleared_payments))
-            
-            with col3:
-                nsf_payments = len(agent_data[agent_data['PaymentStatus'] == 'NSF'])
-                st.metric("NSF Payments", str(nsf_payments))
-            
-            # Display payment status chart
+            # Show payment status distribution
             status_counts = agent_data['PaymentStatus'].value_counts().reset_index()
             status_counts.columns = ['Status', 'Count']
             
@@ -103,205 +89,171 @@ def render_commission_tab(df_filtered, COLORS):
                     color_discrete_map={
                         'Cleared': COLORS['light_green'],
                         'NSF': COLORS['danger'],
-                        'Other': COLORS['warning']
+                        'Pending': COLORS['warning'],
+                        'Other': COLORS['secondary']
                     }
                 )
                 st.plotly_chart(fig, use_container_width=True, key="agent_status_pie")
             
-            # Display customer table
-            st.subheader("Customer Payment Details")
+            # Show customer list for this agent
+            st.subheader("Customers")
             
-            # Group by customer
-            customer_data = agent_data.groupby('CustomerID').agg(
-                TotalPayments=('PaymentID', 'count'),
-                ClearedPayments=('PaymentStatus', lambda x: (x == 'Cleared').sum()),
-                NSFPayments=('PaymentStatus', lambda x: (x == 'NSF').sum()),
-                FirstPayment=('PaymentDate', 'min'),
-                LastPayment=('PaymentDate', 'max')
-            ).reset_index()
+            # Get unique customers
+            customers = agent_data['CustomerID'].unique()
+            customer_counts = []
             
-            # Format dates
-            customer_data['FirstPayment'] = customer_data['FirstPayment'].dt.strftime('%Y-%m-%d')
-            customer_data['LastPayment'] = customer_data['LastPayment'].dt.strftime('%Y-%m-%d')
+            for customer in customers:
+                customer_data = agent_data[agent_data['CustomerID'] == customer]
+                customer_counts.append({
+                    'CustomerID': customer,
+                    'Total': len(customer_data),
+                    'Cleared': len(customer_data[customer_data['PaymentStatus'] == 'Cleared']),
+                    'NSF': len(customer_data[customer_data['PaymentStatus'] == 'NSF']),
+                    'Pending': len(customer_data[customer_data['PaymentStatus'] == 'Pending'])
+                })
             
-            # Rename columns
-            customer_data.columns = ['Customer ID', 'Total Payments', 'Cleared', 'NSF', 'First Payment', 'Last Payment']
+            # Convert to dataframe
+            if customer_counts:
+                customer_df = pd.DataFrame(customer_counts)
+                st.dataframe(customer_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("No customers found for this agent")
             
-            # Display table
-            st.dataframe(customer_data, use_container_width=True, hide_index=True)
-            
-            # Display all payments
+            # Show all payments
             st.subheader("All Payments")
             
-            # Format dates
+            # Format for display
             display_data = agent_data[['CustomerID', 'PaymentID', 'PaymentStatus', 'PaymentDate', 'ClearedDate']].copy()
+            
+            # Convert dates to strings
             display_data['PaymentDate'] = display_data['PaymentDate'].dt.strftime('%Y-%m-%d')
             display_data['ClearedDate'] = display_data['ClearedDate'].dt.strftime('%Y-%m-%d')
             
-            # Rename columns
-            display_data.columns = ['Customer ID', 'Payment ID', 'Status', 'Payment Date', 'Cleared Date']
+            # Fill NaN with empty string
+            display_data = display_data.fillna("")
             
-            # Sort by payment date (newest first)
-            display_data = display_data.sort_values('Payment Date', ascending=False)
+            # Sort by payment date
+            if 'PaymentDate' in display_data.columns:
+                display_data = display_data.sort_values('PaymentDate', ascending=False)
             
-            # Display table
             st.dataframe(display_data, use_container_width=True, hide_index=True)
         
-        # Tab 2: Recent Cleared Payments
+        # Tab 2: Payment Status
         with tabs[1]:
-            st.subheader("Recent Cleared Payments")
+            st.subheader("Payment Status Analysis")
             
-            # Filter for cleared payments
-            cleared_payments = combined_df[combined_df['PaymentStatus'] == 'Cleared'].copy()
+            # Status filter
+            status_options = ["All", "Cleared", "NSF", "Pending"]
+            selected_status = st.selectbox("Filter by Status", status_options)
             
-            # Date filter
-            col1, col2 = st.columns(2)
+            # Date range filter
+            date_options = ["All Time", "Last 7 Days", "Last 14 Days", "Last 30 Days"]
+            selected_date = st.selectbox("Date Range", date_options)
             
-            with col1:
-                time_period = st.selectbox(
-                    "Time Period",
-                    ["Last 7 Days", "Last 14 Days", "Last 30 Days", "All Cleared"],
-                    key="cleared_time_period"
-                )
-                
-                today = datetime.now()
-                if time_period == "Last 7 Days":
-                    cutoff_date = today - timedelta(days=7)
-                elif time_period == "Last 14 Days":
-                    cutoff_date = today - timedelta(days=14)
-                elif time_period == "Last 30 Days":
-                    cutoff_date = today - timedelta(days=30)
-                else:
-                    cutoff_date = datetime(2000, 1, 1)  # Very old date
-                
-                filtered_cleared = cleared_payments[cleared_payments['ClearedDate'] >= cutoff_date]
+            # Apply filters
+            if selected_status == "All":
+                status_filtered = combined_df
+            else:
+                status_filtered = combined_df[combined_df['PaymentStatus'] == selected_status]
             
-            with col2:
-                # Calculate commission date (7 days after cleared date)
-                filtered_cleared['CommissionDate'] = filtered_cleared['ClearedDate'] + pd.Timedelta(days=7)
-                
-                # Filter by commission date
-                commission_filter = st.selectbox(
-                    "Commission Status",
-                    ["All", "Due Now", "Future"]
-                )
-                
-                if commission_filter == "Due Now":
-                    filtered_cleared = filtered_cleared[filtered_cleared['CommissionDate'] <= today]
-                elif commission_filter == "Future":
-                    filtered_cleared = filtered_cleared[filtered_cleared['CommissionDate'] > today]
+            # Apply date filter
+            today = datetime.now()
+            if selected_date == "Last 7 Days":
+                cutoff = today - timedelta(days=7)
+                date_filtered = status_filtered[status_filtered['PaymentDate'] >= cutoff]
+            elif selected_date == "Last 14 Days":
+                cutoff = today - timedelta(days=14)
+                date_filtered = status_filtered[status_filtered['PaymentDate'] >= cutoff]
+            elif selected_date == "Last 30 Days":
+                cutoff = today - timedelta(days=30)
+                date_filtered = status_filtered[status_filtered['PaymentDate'] >= cutoff]
+            else:
+                date_filtered = status_filtered
             
             # Display metrics
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                total_cleared = len(filtered_cleared)
-                st.metric("Total Cleared Payments", str(total_cleared))
-            
-            with col2:
-                commission_amount = total_cleared * 10  # Assuming $10 per cleared payment
-                st.metric("Commission Amount", f"${commission_amount}")
+            total_filtered = len(date_filtered)
+            st.metric("Total Filtered Payments", total_filtered)
             
             # Group by agent
-            agent_cleared = filtered_cleared.groupby('AgentName').size().reset_index(name='Count')
-            agent_cleared = agent_cleared.sort_values('Count', ascending=False)
+            agent_counts = date_filtered.groupby('AgentName').size().reset_index()
+            agent_counts.columns = ['Agent', 'Count']
+            agent_counts = agent_counts.sort_values('Count', ascending=False)
             
-            # Create bar chart
-            if not agent_cleared.empty:
+            # Show bar chart
+            if not agent_counts.empty:
                 fig = px.bar(
-                    agent_cleared,
-                    x='AgentName',
+                    agent_counts,
+                    x='Agent',
                     y='Count',
-                    title='Cleared Payments by Agent',
+                    title=f"{selected_status} Payments by Agent ({selected_date})",
                     color_discrete_sequence=[COLORS['primary']]
                 )
-                st.plotly_chart(fig, use_container_width=True, key="cleared_by_agent")
+                st.plotly_chart(fig, use_container_width=True, key="status_by_agent")
             
-            # Display cleared payments table
-            st.subheader("Cleared Payments Detail")
+            # Show payment details
+            st.subheader("Payment Details")
             
-            # Format dates
-            display_cleared = filtered_cleared[['AgentName', 'CustomerID', 'PaymentID', 'PaymentDate', 'ClearedDate', 'CommissionDate']].copy()
-            display_cleared['PaymentDate'] = display_cleared['PaymentDate'].dt.strftime('%Y-%m-%d')
-            display_cleared['ClearedDate'] = display_cleared['ClearedDate'].dt.strftime('%Y-%m-%d')
-            display_cleared['CommissionDate'] = display_cleared['CommissionDate'].dt.strftime('%Y-%m-%d')
+            # Format for display
+            display_filtered = date_filtered[['AgentName', 'CustomerID', 'PaymentID', 'PaymentStatus', 'PaymentDate', 'ClearedDate']].copy()
             
-            # Rename columns
-            display_cleared.columns = ['Agent', 'Customer ID', 'Payment ID', 'Payment Date', 'Cleared Date', 'Commission Date']
+            # Convert dates to strings
+            display_filtered['PaymentDate'] = display_filtered['PaymentDate'].dt.strftime('%Y-%m-%d')
+            display_filtered['ClearedDate'] = display_filtered['ClearedDate'].dt.strftime('%Y-%m-%d')
             
-            # Sort by cleared date (newest first)
-            display_cleared = display_cleared.sort_values('Cleared Date', ascending=False)
+            # Fill NaN with empty string
+            display_filtered = display_filtered.fillna("")
             
-            # Display table
-            st.dataframe(display_cleared, use_container_width=True, hide_index=True)
+            # Sort by payment date
+            if 'PaymentDate' in display_filtered.columns:
+                display_filtered = display_filtered.sort_values('PaymentDate', ascending=False)
+            
+            st.dataframe(display_filtered, use_container_width=True, hide_index=True)
         
-        # Tab 3: Customer History
+        # Tab 3: Customer View
         with tabs[2]:
             st.subheader("Customer Payment History")
             
-            # Customer filter
-            customers = sorted(combined_df['CustomerID'].unique())
+            # Get list of customers (already converted to strings)
+            customers = list(combined_df['CustomerID'].unique())
+            customers.sort()
+            
+            # Customer selector
             selected_customer = st.selectbox("Select Customer", customers)
             
-            # Filter data
+            # Filter data for selected customer
             customer_data = combined_df[combined_df['CustomerID'] == selected_customer]
             
+            # Count payments by status
+            cleared = len(customer_data[customer_data['PaymentStatus'] == 'Cleared'])
+            nsf = len(customer_data[customer_data['PaymentStatus'] == 'NSF'])
+            pending = len(customer_data[customer_data['PaymentStatus'] == 'Pending'])
+            total = len(customer_data)
+            
             # Display metrics
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Total Payments", total)
+            col2.metric("Cleared", cleared)
+            col3.metric("NSF", nsf)
+            col4.metric("Pending", pending)
             
-            with col1:
-                total_payments = len(customer_data)
-                st.metric("Total Payments", str(total_payments))
-            
-            with col2:
-                cleared_payments = len(customer_data[customer_data['PaymentStatus'] == 'Cleared'])
-                st.metric("Cleared Payments", str(cleared_payments))
-            
-            with col3:
-                success_rate = (cleared_payments / total_payments * 100) if total_payments > 0 else 0
-                st.metric("Success Rate", f"{success_rate:.1f}%")
-            
-            # Display payment history
+            # Show payment history
             st.subheader("Payment History")
             
-            # Format dates
+            # Format for display
             display_history = customer_data[['AgentName', 'PaymentID', 'PaymentStatus', 'PaymentDate', 'ClearedDate']].copy()
+            
+            # Convert dates to strings
             display_history['PaymentDate'] = display_history['PaymentDate'].dt.strftime('%Y-%m-%d')
             display_history['ClearedDate'] = display_history['ClearedDate'].dt.strftime('%Y-%m-%d')
             
-            # Rename columns
-            display_history.columns = ['Agent', 'Payment ID', 'Status', 'Payment Date', 'Cleared Date']
+            # Fill NaN with empty string
+            display_history = display_history.fillna("")
             
-            # Sort by payment date (newest first)
-            display_history = display_history.sort_values('Payment Date', ascending=False)
+            # Sort by payment date
+            if 'PaymentDate' in display_history.columns:
+                display_history = display_history.sort_values('PaymentDate', ascending=False)
             
-            # Display table
             st.dataframe(display_history, use_container_width=True, hide_index=True)
-            
-            # Payment timeline
-            if len(customer_data) > 1:
-                st.subheader("Payment Timeline")
-                
-                # Create timeline data
-                timeline_data = customer_data[['PaymentDate', 'PaymentStatus']].copy()
-                timeline_data = timeline_data.sort_values('PaymentDate')
-                
-                # Create line chart
-                fig = px.line(
-                    timeline_data,
-                    x='PaymentDate',
-                    y=[1] * len(timeline_data),  # Constant value for line
-                    color='PaymentStatus',
-                    markers=True,
-                    title=f"Payment Timeline for Customer {selected_customer}",
-                    color_discrete_map={
-                        'Cleared': COLORS['light_green'],
-                        'NSF': COLORS['danger'],
-                        'Other': COLORS['warning']
-                    }
-                )
-                fig.update_layout(yaxis_visible=False, yaxis_showticklabels=False)
-                st.plotly_chart(fig, use_container_width=True, key="customer_timeline")
     
     except Exception as e:
         st.error(f"Error: {str(e)}")
