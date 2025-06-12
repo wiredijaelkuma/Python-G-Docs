@@ -14,12 +14,17 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
     
     try:
         # Check if ENROLLED_DATE exists in the dataframe
-        if 'ENROLLED_DATE' not in df_filtered.columns:
-            st.error("ENROLLED_DATE column not found in the data.")
+        date_column = None
+        if 'ENROLLED_DATE' in df_filtered.columns:
+            date_column = 'ENROLLED_DATE'
+        elif 'ENROLLED DATE' in df_filtered.columns:
+            date_column = 'ENROLLED DATE'
+        else:
+            st.error("Enrollment date column not found in the data.")
             return
             
-        # Extract year and month from ENROLLED_DATE
-        df_filtered['Year_Month'] = df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')
+        # Extract year and month from enrollment date
+        df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m')
         
         # Get unique year-months for dropdown
         year_months = sorted(df_filtered['Year_Month'].unique(), reverse=True)
@@ -40,6 +45,9 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             
         # Display monthly metrics
         st.subheader(f"Key Metrics for {selected_month}")
+        
+        # Check if CUSTOMER_ID exists, otherwise use index
+        id_column = 'CUSTOMER_ID' if 'CUSTOMER_ID' in monthly_data.columns else 'CUSTOMER ID'
         
         # Calculate metrics
         total_enrollments = len(monthly_data)
@@ -69,7 +77,7 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         
         # Group by agent
         agent_performance = monthly_data.groupby('AGENT').agg(
-            Enrollments=('CUSTOMER ID', 'count'),
+            Enrollments=(id_column, 'count'),
             Active=('CATEGORY', lambda x: (x == 'ACTIVE').sum()),
             Cancelled=('CATEGORY', lambda x: (x == 'CANCELLED').sum())
         ).reset_index()
@@ -113,8 +121,8 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         # Daily enrollment trend for the month
         st.subheader("Daily Enrollment Trend")
         
-        # Extract day from ENROLLED_DATE
-        monthly_data['Day'] = monthly_data['ENROLLED_DATE'].dt.day
+        # Extract day from enrollment date
+        monthly_data['Day'] = monthly_data[date_column].dt.day
         
         # Group by day
         daily_counts = monthly_data.groupby('Day').size().reset_index()
@@ -139,7 +147,7 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         
         # Group all data by year-month
         monthly_trends = df_filtered.groupby('Year_Month').agg(
-            Enrollments=('CUSTOMER ID', 'count'),
+            Enrollments=(id_column, 'count'),
             Active=('CATEGORY', lambda x: (x == 'ACTIVE').sum()),
             Cancelled=('CATEGORY', lambda x: (x == 'CANCELLED').sum())
         ).reset_index()

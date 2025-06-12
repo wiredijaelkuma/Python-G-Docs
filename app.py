@@ -171,7 +171,7 @@ def main():
 
     # --- Tab Navigation ---
     tabs = st.tabs([
-        "Home", "Performance", "Data Explorer", "Commission", "Monthly Analysis"
+        "Home", "Monthly Analysis", "Performance", "Data Explorer", "Commission"
     ])
     
     # Home/Landing Page Tab
@@ -184,8 +184,16 @@ def main():
             st.exception(traceback.format_exc())
             fallback_landing_page(df_filtered, COLORS)
     
-    # Performance Tab
+    # Monthly Analysis Tab
     with tabs[1]:
+        try:
+            render_monthly_analysis_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Monthly Analysis tab: {e}")
+            st.info("The Monthly Analysis tab provides detailed metrics and trends by month.")
+    
+    # Performance Tab
+    with tabs[2]:
         try:
             render_performance_tab(df_filtered, COLORS)
         except Exception as e:
@@ -193,7 +201,7 @@ def main():
             fallback_performance(df_filtered, COLORS)
         
     # Data Explorer Tab
-    with tabs[2]:
+    with tabs[3]:
         try:
             render_data_explorer(df_filtered, COLORS)
         except Exception as e:
@@ -201,20 +209,12 @@ def main():
             fallback_data_explorer(df_filtered)
             
     # Commission Tab
-    with tabs[3]:
+    with tabs[4]:
         try:
             render_commission_tab(df_filtered, COLORS)
         except Exception as e:
             st.error(f"Error rendering Commission tab: {e}")
             st.info("The Commission tab displays agent performance metrics and payment trends.")
-            
-    # Monthly Analysis Tab
-    with tabs[4]:
-        try:
-            render_monthly_analysis_tab(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Monthly Analysis tab: {e}")
-            st.info("The Monthly Analysis tab provides detailed metrics and trends by month.")
 
 def fallback_landing_page(df_filtered, COLORS):
     import plotly.express as px
