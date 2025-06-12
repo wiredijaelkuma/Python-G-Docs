@@ -112,15 +112,37 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             selected_month_display = "All Months"
         else:
             selected_month = month_display_map[selected_display]
-            monthly_data = df_filtered[df_filtered['Year_Month'] == selected_month]
+            # Use the unfiltered data for the selected month
+            monthly_data = df_all[df_all['Year_Month'] == selected_month]
             selected_month_display = selected_display
         
         # Apply source filter if needed
-        if 'SOURCE_SHEET' in df_filtered.columns and not all_sources and sources:
+        if 'SOURCE_SHEET' in monthly_data.columns and not all_sources and sources:
             monthly_data = monthly_data[monthly_data['SOURCE_SHEET'].isin(sources)]
+            
+        # Apply status filters from the main app
+        if 'CATEGORY' in monthly_data.columns:
+            # Get status filters from session state if available
+            status_filter = []
+            if 'df' in st.session_state:
+                # Try to infer status filters from the filtered data
+                if 'CATEGORY' in df_filtered.columns:
+                    status_filter = df_filtered['CATEGORY'].unique().tolist()
+            
+            # Only apply if we have status filters
+            if status_filter:
+                monthly_data = monthly_data[monthly_data['CATEGORY'].isin(status_filter)]
         
         if monthly_data.empty:
-            st.info(f"No data available for {selected_month_display}.")
+            st.warning(f"No data available for {selected_month_display}. This may be due to filtering.")
+            
+            # Show debug info
+            with st.expander("Troubleshooting Information"):
+                st.write(f"Selected month: {selected_month_display}")
+                if selected_display != "All Months":
+                    st.write(f"Raw data for this month: {len(df_all[df_all['Year_Month'] == selected_month])} records")
+                    st.write(f"Filtered data for this month: {len(df_filtered[df_filtered['Year_Month'] == selected_month])} records")
+                st.write("Try adjusting the filters in the sidebar or selecting a different month.")
             return
             
         # Display monthly metrics
