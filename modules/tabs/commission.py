@@ -1,11 +1,15 @@
 """
-Ultra-minimal Commission Tab
+Commission Dashboard Tab
 """
 import streamlit as st
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
+import numpy as np
 
 def render_commission_tab(df_filtered, COLORS):
-    """Render the commission tab"""
+    """Render the enhanced commission dashboard tab"""
     st.header("Commission Dashboard")
     
     try:
@@ -15,112 +19,320 @@ def render_commission_tab(df_filtered, COLORS):
         # Create a clean dataframe with just the data we need
         data = []
         
-        # Process even columns (0-5)
+        # Process even columns (0-5, 10)
         for i in range(len(df)):
             if pd.notna(df.iloc[i, 1]) and df.iloc[i, 1] != "":  # Check if agent name exists
-                data.append({
+                row_data = {
                     'CustomerID': str(df.iloc[i, 0]),
                     'AgentName': str(df.iloc[i, 1]),
                     'PaymentID': str(df.iloc[i, 2]),
                     'Status': str(df.iloc[i, 3]),
                     'PaymentDate': str(df.iloc[i, 4]),
-                    'ClearedDate': str(df.iloc[i, 5])
-                })
+                    'ClearedDate': str(df.iloc[i, 10]) if i < len(df) and pd.notna(df.iloc[i, 10]) else ""
+                }
+                data.append(row_data)
         
-        # Process odd columns (6-11)
+        # Process odd columns (5-10, 11)
         for i in range(len(df)):
             if pd.notna(df.iloc[i, 7]) and df.iloc[i, 7] != "":  # Check if agent name exists
-                data.append({
-                    'CustomerID': str(df.iloc[i, 6]),
+                row_data = {
+                    'CustomerID': str(df.iloc[i, 5]),
                     'AgentName': str(df.iloc[i, 7]),
                     'PaymentID': str(df.iloc[i, 8]),
                     'Status': str(df.iloc[i, 9]),
                     'PaymentDate': str(df.iloc[i, 10]),
-                    'ClearedDate': str(df.iloc[i, 11])
-                })
+                    'ClearedDate': str(df.iloc[i, 11]) if i < len(df) and pd.notna(df.iloc[i, 11]) else ""
+                }
+                data.append(row_data)
         
         # Convert to dataframe
         payments_df = pd.DataFrame(data)
         
-        # Create tabs
-        tabs = st.tabs(["Agent Summary", "Recent Cleared Payments"])
+        # Parse dates
+        for date_col in ['PaymentDate', 'ClearedDate']:
+            try:
+                # Convert date strings to datetime objects where possible
+                payments_df[date_col] = pd.to_datetime(payments_df[date_col], errors='coerce')
+            except:
+                pass
         
-        # Tab 1: Agent Summary
+        # Create tabs
+        tabs = st.tabs(["Dashboard Overview", "Agent Performance", "Payment Analysis", "Raw Data"])
+        
+        # Get unique agent names (manually to avoid sorting issues)
+        agent_names = []
+        for agent in payments_df['AgentName']:
+            if agent and agent not in agent_names and agent != "nan":
+                agent_names.append(agent)
+        
+        # Tab 1: Dashboard Overview
         with tabs[0]:
-            st.subheader("Agent Payment Summary")
+            st.subheader("Commission Dashboard Overview")
             
-            # Get list of agents without sorting
-            agents = list(set([a for a in payments_df['AgentName'] if a]))
+            # Calculate key metrics
+            total_payments = len(payments_df)
+            cleared_payments = payments_df[payments_df['Status'].str.contains('Cleared', na=False)].shape[0]
+            nsf_payments = payments_df[payments_df['Status'].str.contains('NSF|Returned', na=False, regex=True)].shape[0]
+            pending_payments = payments_df[payments_df['Status'].str.contains('Pending', na=False)].shape[0]
+            
+            # Display metrics
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Total Payments", total_payments)
+            col2.metric("Cleared", cleared_payments)
+            col3.metric("NSF/Returned", nsf_payments)
+            col4.metric("Pending", pending_payments)
+            
+            # Payment Status Distribution
+            st.subheader("Payment Status Distribution")
+            status_counts = payments_df['Status'].value_counts().reset_index()
+            status_counts.columns = ['Status', 'Count']
+            
+            fig = px.pie(
+                status_counts, 
+                values='Count', 
+                names='Status',
+                color_discrete_sequence=[COLORS['primary'], COLORS['danger'], COLORS['warning'], COLORS['accent']]
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Payment Trends Over Time
+            st.subheader("Payment Trends Over Time")
+            
+            # Group by payment date
+            if 'PaymentDate' in payments_df.columns:
+                # Extract just the date part and count payments by date
+                payments_df['PaymentDateOnly'] = payments_df['PaymentDate'].dt.date
+                date_counts = payments_df.groupby('PaymentDateOnly').size().reset_index()
+                date_counts.columns = ['Date', 'Count']
+                
+                # Sort by date
+                date_counts = date_counts.sort_values('Date')
+                
+                # Create line chart
+                fig = px.line(
+                    date_counts, 
+                    x='Date', 
+                    y='Count',
+                    title='Daily Payment Volume',
+                    markers=True,
+                    color_discrete_sequence=[COLORS['primary']]
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            
+        # Tab 2: Agent Performance
+        with tabs[1]:
+            st.subheader("Agent Performance")
             
             # Agent selector
-            selected_agent = st.selectbox("Select Agent", agents)
+            selected_agent = st.selectbox("Select Agent", agent_names)
             
             # Filter data for selected agent
             agent_data = payments_df[payments_df['AgentName'] == selected_agent]
             
-            # Get unique customer IDs for this agent
-            customer_ids = list(set([c for c in agent_data['CustomerID'] if c]))
-            
-            # Create summary for each customer
-            customer_summary = []
-            for cid in customer_ids:
-                customer_payments = agent_data[agent_data['CustomerID'] == cid]
+            if not agent_data.empty:
+                # Calculate agent metrics
+                total_agent_payments = len(agent_data)
+                agent_cleared = agent_data[agent_data['Status'].str.contains('Cleared', na=False)].shape[0]
+                agent_nsf = agent_data[agent_data['Status'].str.contains('NSF|Returned', na=False, regex=True)].shape[0]
+                agent_pending = agent_data[agent_data['Status'].str.contains('Pending', na=False)].shape[0]
                 
-                # Count payment statuses
-                cleared = sum('Cleared' in str(s) for s in customer_payments['Status'])
-                nsf = sum(('NSF' in str(s) or 'Returned' in str(s)) for s in customer_payments['Status'])
-                pending = sum('Pending' in str(s) for s in customer_payments['Status'])
-                
-                customer_summary.append({
-                    'CustomerID': cid,
-                    'TotalPayments': len(customer_payments),
-                    'Cleared': cleared,
-                    'NSF': nsf,
-                    'Pending': pending
-                })
-            
-            # Convert to dataframe
-            if customer_summary:
-                summary_df = pd.DataFrame(customer_summary)
-                st.dataframe(summary_df, use_container_width=True)
-                
-                # Show overall stats
-                st.subheader(f"Overall Stats for {selected_agent}")
-                
+                # Display agent metrics
                 col1, col2, col3, col4 = st.columns(4)
-                col1.metric("Total Customers", len(customer_ids))
-                col2.metric("Total Payments", len(agent_data))
-                col3.metric("Cleared Payments", sum(summary_df['Cleared']))
-                col4.metric("NSF Payments", sum(summary_df['NSF']))
+                col1.metric("Total Payments", total_agent_payments)
+                col2.metric("Cleared", agent_cleared)
+                col3.metric("NSF/Returned", agent_nsf)
+                col4.metric("Pending", agent_pending)
+                
+                # Calculate success rate
+                if total_agent_payments > 0:
+                    success_rate = (agent_cleared / total_agent_payments) * 100
+                    nsf_rate = (agent_nsf / total_agent_payments) * 100
+                else:
+                    success_rate = 0
+                    nsf_rate = 0
+                
+                # Display success rate gauge
+                st.subheader(f"Success Rate: {success_rate:.1f}%")
+                
+                # Create gauge chart for success rate
+                fig = go.Figure(go.Indicator(
+                    mode = "gauge+number",
+                    value = success_rate,
+                    domain = {'x': [0, 1], 'y': [0, 1]},
+                    title = {'text': "Success Rate"},
+                    gauge = {
+                        'axis': {'range': [0, 100]},
+                        'bar': {'color': COLORS['primary']},
+                        'steps': [
+                            {'range': [0, 50], 'color': COLORS['danger']},
+                            {'range': [50, 75], 'color': COLORS['warning']},
+                            {'range': [75, 100], 'color': COLORS['accent']}
+                        ],
+                        'threshold': {
+                            'line': {'color': "black", 'width': 4},
+                            'thickness': 0.75,
+                            'value': success_rate
+                        }
+                    }
+                ))
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Customer performance for this agent
+                st.subheader("Customer Performance")
+                
+                # Group by customer ID
+                customer_performance = agent_data.groupby('CustomerID').agg(
+                    TotalPayments=('PaymentID', 'count'),
+                    Cleared=('Status', lambda x: (x.str.contains('Cleared', na=False)).sum()),
+                    NSF=('Status', lambda x: (x.str.contains('NSF|Returned', na=False, regex=True)).sum()),
+                    Pending=('Status', lambda x: (x.str.contains('Pending', na=False)).sum())
+                ).reset_index()
+                
+                # Calculate success rate for each customer
+                customer_performance['SuccessRate'] = (customer_performance['Cleared'] / customer_performance['TotalPayments'] * 100).round(1)
+                
+                # Display customer performance
+                st.dataframe(customer_performance, use_container_width=True)
+                
+                # Payment trend over time for this agent
+                st.subheader("Payment Trend")
+                
+                if 'PaymentDateOnly' in agent_data.columns:
+                    # Group by date and status
+                    agent_date_status = agent_data.groupby(['PaymentDateOnly', 'Status']).size().reset_index()
+                    agent_date_status.columns = ['Date', 'Status', 'Count']
+                    
+                    # Create line chart by status
+                    fig = px.line(
+                        agent_date_status, 
+                        x='Date', 
+                        y='Count',
+                        color='Status',
+                        title=f'Daily Payment Volume for {selected_agent}',
+                        markers=True,
+                        color_discrete_sequence=[COLORS['accent'], COLORS['danger'], COLORS['warning']]
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info(f"No data found for agent: {selected_agent}")
         
-        # Tab 2: Recent Cleared Payments
-        with tabs[1]:
-            st.subheader("Recent Cleared Payments")
+        # Tab 3: Payment Analysis
+        with tabs[2]:
+            st.subheader("Payment Analysis")
             
-            # Filter for cleared payments only
-            cleared_payments = payments_df[[('Cleared' in str(s)) for s in payments_df['Status']]]
+            # Status filter
+            status_options = ['All'] + list(payments_df['Status'].unique())
+            selected_status = st.selectbox("Filter by Status", status_options)
             
-            # Display the table
-            st.dataframe(cleared_payments, use_container_width=True)
+            # Filter data based on selection
+            if selected_status == 'All':
+                filtered_payments = payments_df
+            else:
+                filtered_payments = payments_df[payments_df['Status'] == selected_status]
             
-            # Agent summary
-            st.subheader("Agent Summary")
+            # Top agents by payment volume
+            st.subheader("Top Agents by Payment Volume")
             
-            # Count cleared payments by agent
-            agent_counts = {}
-            for agent in set(cleared_payments['AgentName']):
-                agent_counts[agent] = sum(cleared_payments['AgentName'] == agent)
+            # Group by agent
+            agent_counts = filtered_payments.groupby('AgentName').size().reset_index()
+            agent_counts.columns = ['Agent', 'Count']
             
-            # Convert to dataframe
-            agent_summary = pd.DataFrame([
-                {'Agent': agent, 'Cleared Payments': count}
-                for agent, count in agent_counts.items()
-            ])
+            # Sort by count descending
+            agent_counts = agent_counts.sort_values('Count', ascending=False)
             
-            # Display agent summary
-            st.dataframe(agent_summary, use_container_width=True)
+            # Create bar chart
+            fig = px.bar(
+                agent_counts.head(10), 
+                x='Agent', 
+                y='Count',
+                title='Top 10 Agents by Payment Volume',
+                color_discrete_sequence=[COLORS['primary']]
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Payment status by agent
+            st.subheader("Payment Status by Agent")
+            
+            # Group by agent and status
+            agent_status = payments_df.groupby(['AgentName', 'Status']).size().reset_index()
+            agent_status.columns = ['Agent', 'Status', 'Count']
+            
+            # Create stacked bar chart
+            fig = px.bar(
+                agent_status, 
+                x='Agent', 
+                y='Count',
+                color='Status',
+                title='Payment Status Distribution by Agent',
+                color_discrete_sequence=[COLORS['primary'], COLORS['danger'], COLORS['warning'], COLORS['accent']]
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Payment processing time analysis (for cleared payments)
+            st.subheader("Payment Processing Time Analysis")
+            
+            # Filter for cleared payments with both dates
+            cleared_with_dates = payments_df[
+                (payments_df['Status'].str.contains('Cleared', na=False)) & 
+                (payments_df['PaymentDate'].notna()) & 
+                (payments_df['ClearedDate'].notna())
+            ]
+            
+            if not cleared_with_dates.empty:
+                # Calculate processing time in days
+                cleared_with_dates['ProcessingDays'] = (cleared_with_dates['ClearedDate'] - cleared_with_dates['PaymentDate']).dt.days
+                
+                # Filter out negative or unreasonable values
+                cleared_with_dates = cleared_with_dates[cleared_with_dates['ProcessingDays'] >= 0]
+                
+                # Create histogram
+                fig = px.histogram(
+                    cleared_with_dates,
+                    x='ProcessingDays',
+                    title='Payment Processing Time (Days)',
+                    color_discrete_sequence=[COLORS['primary']]
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Average processing time by agent
+                st.subheader("Average Processing Time by Agent")
+                
+                # Group by agent
+                agent_processing = cleared_with_dates.groupby('AgentName')['ProcessingDays'].mean().reset_index()
+                agent_processing.columns = ['Agent', 'AvgProcessingDays']
+                agent_processing['AvgProcessingDays'] = agent_processing['AvgProcessingDays'].round(1)
+                
+                # Sort by average processing days
+                agent_processing = agent_processing.sort_values('AvgProcessingDays')
+                
+                # Create bar chart
+                fig = px.bar(
+                    agent_processing,
+                    x='Agent',
+                    y='AvgProcessingDays',
+                    title='Average Processing Time by Agent (Days)',
+                    color_discrete_sequence=[COLORS['primary']]
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Not enough data to analyze processing times.")
+        
+        # Tab 4: Raw Data
+        with tabs[3]:
+            st.subheader("Raw Payment Data")
+            
+            # Display the raw data
+            st.dataframe(payments_df, use_container_width=True)
+            
+            # Download option
+            csv = payments_df.to_csv(index=False)
+            st.download_button(
+                label="Download Data as CSV",
+                data=csv,
+                file_name="commission_data.csv",
+                mime="text/csv",
+            )
     
     except Exception as e:
         st.error(f"Error: {str(e)}")
