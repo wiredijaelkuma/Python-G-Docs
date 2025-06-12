@@ -12,10 +12,8 @@ from modules.ui_components import display_metrics, create_header
 from modules.tabs.landing_page import render_landing_page
 from modules.tabs.overview import render_overview_tab
 from modules.tabs.performance import render_performance_tab
-from modules.tabs.agents import render_agents_tab
-from modules.tabs.risk_analysis import render_risk_analysis
 from modules.tabs.data_explorer import render_data_explorer
-from modules.tabs.drop_rate import render_drop_rate_tab
+from modules.tabs.commission import render_commission_tab
 
 # --- Set page configuration first (must be the first Streamlit command) ---
 st.set_page_config(
@@ -77,7 +75,7 @@ def main():
 
     # --- Banner ---
     try:
-        st.image(os.path.join(ASSETS_DIR, "banner.png"), use_column_width=True)
+        st.image(os.path.join(ASSETS_DIR, "banner.png"), use_container_width=True)
     except:
         st.title("Pepe's Power Dashboard")
 
@@ -172,8 +170,7 @@ def main():
 
     # --- Tab Navigation ---
     tabs = st.tabs([
-        "Home", "Overview", "Performance", "Agents", 
-        "Drop Rate", "Risk Analysis", "Data Explorer"
+        "Home", "Performance", "Data Explorer", "Commission"
     ])
     
     # Home/Landing Page Tab
@@ -186,53 +183,29 @@ def main():
             st.exception(traceback.format_exc())
             fallback_landing_page(df_filtered, COLORS)
     
-    # Overview Tab
-    with tabs[1]:
-        try:
-            render_overview_tab(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Overview tab: {e}")
-            fallback_overview(df_filtered, COLORS)
-        
     # Performance Tab
-    with tabs[2]:
+    with tabs[1]:
         try:
             render_performance_tab(df_filtered, COLORS)
         except Exception as e:
             st.error(f"Error rendering Performance tab: {e}")
             fallback_performance(df_filtered, COLORS)
         
-    # Agents Tab
-    with tabs[3]:
-        try:
-            render_agents_tab(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Agents tab: {e}")
-            fallback_agents(df_filtered, COLORS)
-        
-    # Drop Rate Tab
-    with tabs[4]:
-        try:
-            render_drop_rate_tab(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Drop Rate tab: {e}")
-            fallback_drop_rate(df_filtered, COLORS)
-        
-    # Risk Analysis Tab
-    with tabs[5]:
-        try:
-            render_risk_analysis(df_filtered, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Risk Analysis tab: {e}")
-            fallback_risk_analysis(df_filtered, COLORS)
-        
     # Data Explorer Tab
-    with tabs[6]:
+    with tabs[2]:
         try:
             render_data_explorer(df_filtered, COLORS)
         except Exception as e:
             st.error(f"Error rendering Data Explorer tab: {e}")
             fallback_data_explorer(df_filtered)
+            
+    # Commission Tab
+    with tabs[3]:
+        try:
+            render_commission_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Commission tab: {e}")
+            st.info("The Commission tab displays agent performance metrics and payment trends.")
 
 def fallback_landing_page(df_filtered, COLORS):
     import plotly.express as px
@@ -279,25 +252,6 @@ def fallback_landing_page(df_filtered, COLORS):
     else:
         st.warning("Enrollment date data not available or no data matches the current filters")
 
-def fallback_overview(df_filtered, COLORS):
-    import plotly.express as px
-    
-    st.subheader("Status Distribution")
-    if 'CATEGORY' in df_filtered.columns:
-        fig = px.pie(
-            df_filtered['CATEGORY'].value_counts().reset_index(),
-            values='count',
-            names='CATEGORY',
-            color='CATEGORY',
-            color_discrete_map={
-                'ACTIVE': COLORS['med_green'],
-                'NSF': COLORS['warning'],
-                'CANCELLED': COLORS['danger'],
-                'OTHER': COLORS['dark_accent']
-            }
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
 def fallback_performance(df_filtered, COLORS):
     import plotly.express as px
     
@@ -315,34 +269,9 @@ def fallback_performance(df_filtered, COLORS):
         )
         st.plotly_chart(fig, use_container_width=True)
 
-def fallback_agents(df_filtered, COLORS):
-    st.subheader("Agent Performance")
-    if 'AGENT' in df_filtered.columns:
-        agent_counts = df_filtered['AGENT'].value_counts().head(10).reset_index()
-        agent_counts.columns = ['Agent', 'Enrollments']
-        st.dataframe(agent_counts)
-
-def fallback_drop_rate(df_filtered, COLORS):
-    st.subheader("Drop Rate Analysis")
-    if 'CATEGORY' in df_filtered.columns and 'ENROLLED_DATE' in df_filtered.columns:
-        # Calculate overall drop rate
-        total = len(df_filtered)
-        cancelled = len(df_filtered[df_filtered['CATEGORY'] == 'CANCELLED'])
-        drop_rate = (cancelled / total * 100) if total > 0 else 0
-        
-        st.metric("Overall Drop Rate", f"{drop_rate:.1f}%")
-
-def fallback_risk_analysis(df_filtered, COLORS):
-    st.subheader("Risk Analysis")
-    if 'CATEGORY' in df_filtered.columns:
-        risk_data = df_filtered['CATEGORY'].value_counts(normalize=True).reset_index()
-        risk_data.columns = ['Status', 'Percentage']
-        risk_data['Percentage'] = risk_data['Percentage'] * 100
-        st.dataframe(risk_data)
-
 def fallback_data_explorer(df_filtered):
     st.subheader("Data Explorer")
-    st.dataframe(df_filtered.head(100))
+    st.dataframe(df_filtered.head(100), use_container_width=True)
 
 if __name__ == "__main__":
     main()

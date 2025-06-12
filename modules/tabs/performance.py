@@ -11,124 +11,10 @@ def render_performance_tab(df, COLORS):
     st.subheader("Performance Metrics")
     
     # Create tabs for different performance views
-    perf_tabs = st.tabs(["Monthly Trends", "Daily Performance", "Conversion Metrics"])
-    
-    # Monthly Trends Tab
-    with perf_tabs[0]:
-        if 'ENROLLED_DATE' in df.columns:
-            # Group by month and calculate metrics
-            df['Month'] = df['ENROLLED_DATE'].dt.strftime('%Y-%m')
-            monthly_data = df.groupby('Month').size().reset_index()
-            monthly_data.columns = ['Month', 'Total']
-            
-            # Add status breakdowns if available
-            if 'CATEGORY' in df.columns:
-                # Active counts
-                active_counts = df[df['CATEGORY'] == 'ACTIVE'].groupby('Month').size()
-                monthly_data['Active'] = active_counts.reindex(monthly_data['Month']).fillna(0)
-                
-                # Cancelled counts
-                cancelled_counts = df[df['CATEGORY'] == 'CANCELLED'].groupby('Month').size()
-                monthly_data['Cancelled'] = cancelled_counts.reindex(monthly_data['Month']).fillna(0)
-                
-                # NSF counts
-                nsf_counts = df[df['CATEGORY'] == 'NSF'].groupby('Month').size()
-                monthly_data['NSF'] = nsf_counts.reindex(monthly_data['Month']).fillna(0)
-                
-                # Calculate rates
-                monthly_data['Active_Rate'] = (monthly_data['Active'] / monthly_data['Total'] * 100).round(1)
-                monthly_data['Cancel_Rate'] = (monthly_data['Cancelled'] / monthly_data['Total'] * 100).round(1)
-                monthly_data['NSF_Rate'] = (monthly_data['NSF'] / monthly_data['Total'] * 100).round(1)
-            
-            # Create the chart
-            fig = go.Figure()
-            
-            # Add bars for total enrollments
-            fig.add_trace(go.Bar(
-                x=monthly_data['Month'],
-                y=monthly_data['Total'],
-                name='Total Enrollments',
-                marker_color=COLORS['primary']
-            ))
-            
-            # Add lines for rates if available
-            if 'Active_Rate' in monthly_data.columns:
-                fig.add_trace(go.Scatter(
-                    x=monthly_data['Month'],
-                    y=monthly_data['Active_Rate'],
-                    name='Active Rate (%)',
-                    mode='lines+markers',
-                    marker=dict(color=COLORS['med_green']),
-                    yaxis='y2'
-                ))
-                
-                fig.add_trace(go.Scatter(
-                    x=monthly_data['Month'],
-                    y=monthly_data['Cancel_Rate'],
-                    name='Cancel Rate (%)',
-                    mode='lines+markers',
-                    marker=dict(color=COLORS['danger']),
-                    yaxis='y2'
-                ))
-            
-            # Update layout with secondary y-axis
-            fig.update_layout(
-                title='Monthly Enrollment Trends',
-                xaxis_title='Month',
-                yaxis_title='Number of Enrollments',
-                yaxis2=dict(
-                    title='Rate (%)',
-                    overlaying='y',
-                    side='right',
-                    range=[0, 100]
-                ),
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                )
-            )
-            
-            st.plotly_chart(fig, use_container_width=True, key="monthly_trends_chart")
-            
-            # Show the data table
-            with st.expander("Show Monthly Data"):
-                st.dataframe(monthly_data, use_container_width=True)
-            
-            # Month-over-Month Analysis
-            st.subheader("Month-over-Month Performance")
-            
-            # Calculate MoM changes
-            if len(monthly_data) > 1:
-                mom_data = monthly_data.copy()
-                mom_data['Prev_Total'] = mom_data['Total'].shift(1)
-                mom_data['MoM_Change'] = mom_data['Total'] - mom_data['Prev_Total']
-                mom_data['MoM_Pct_Change'] = (mom_data['MoM_Change'] / mom_data['Prev_Total'] * 100).round(1)
-                
-                # Filter out the first row with NaN values
-                mom_data = mom_data.dropna()
-                
-                if not mom_data.empty:
-                    # Create MoM change chart
-                    fig = px.bar(
-                        mom_data,
-                        x='Month',
-                        y='MoM_Pct_Change',
-                        title='Month-over-Month Growth Rate (%)',
-                        color='MoM_Pct_Change',
-                        color_continuous_scale=px.colors.diverging.RdBu,
-                        text='MoM_Pct_Change'
-                    )
-                    fig.update_traces(texttemplate='%{text}%', textposition='outside')
-                    fig.update_layout(yaxis_title="MoM Change (%)")
-                    st.plotly_chart(fig, use_container_width=True, key="mom_change_chart")
-        else:
-            st.warning("Enrollment date data not available")
+    perf_tabs = st.tabs(["Daily Performance", "Agent Performance", "Stick Rate", "Risk Analysis"])
     
     # Daily Performance Tab
-    with perf_tabs[1]:
+    with perf_tabs[0]:
         if 'ENROLLED_DATE' in df.columns:
             # Group by day of week
             df['DayOfWeek'] = df['ENROLLED_DATE'].dt.day_name()
@@ -232,239 +118,359 @@ def render_performance_tab(df, COLORS):
         else:
             st.warning("Enrollment date data not available")
     
-    # Conversion Metrics Tab
-    with perf_tabs[2]:
-        st.subheader("Conversion Metrics")
+    # Agent Performance Tab
+    with perf_tabs[1]:
+        # Check if agent data is available
+        if 'AGENT' not in df.columns or df.empty:
+            st.warning("Agent data not available or no data matches the current filters")
+            return
         
-        # Check if we have the necessary columns
-        if 'LEAD_DATE' in df.columns and 'ENROLLED_DATE' in df.columns:
-            # Calculate conversion time
-            df['CONVERSION_DAYS'] = (df['ENROLLED_DATE'] - df['LEAD_DATE']).dt.days
+        # Calculate agent metrics
+        agent_data = df.groupby('AGENT').size().reset_index()
+        agent_data.columns = ['Agent', 'Total']
+        
+        if agent_data.empty:
+            st.warning("No agent data available for the selected filters")
+            return
+        
+        # Sort by total enrollments
+        agent_data = agent_data.sort_values('Total', ascending=False)
+        
+        # Add status breakdowns if available
+        if 'CATEGORY' in df.columns:
+            # Active counts
+            active_counts = df[df['CATEGORY'] == 'ACTIVE'].groupby('AGENT').size()
+            agent_data['Active'] = active_counts.reindex(agent_data['Agent']).fillna(0)
             
-            # Filter out negative values or extremely large values
-            conversion_df = df[(df['CONVERSION_DAYS'] >= 0) & (df['CONVERSION_DAYS'] <= 90)]
+            # Cancelled counts
+            cancelled_counts = df[df['CATEGORY'] == 'CANCELLED'].groupby('AGENT').size()
+            agent_data['Cancelled'] = cancelled_counts.reindex(agent_data['Agent']).fillna(0)
             
-            # Calculate average conversion time
-            avg_conversion = conversion_df['CONVERSION_DAYS'].mean()
-            median_conversion = conversion_df['CONVERSION_DAYS'].median()
+            # NSF counts
+            nsf_counts = df[df['CATEGORY'] == 'NSF'].groupby('AGENT').size()
+            agent_data['NSF'] = nsf_counts.reindex(agent_data['Agent']).fillna(0)
             
-            # Display metrics
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Average Days to Convert", f"{avg_conversion:.1f}")
-            with col2:
-                st.metric("Median Days to Convert", f"{median_conversion:.1f}")
-            
-            # Create histogram
-            fig = px.histogram(
-                conversion_df,
-                x='CONVERSION_DAYS',
-                nbins=30,
-                title='Distribution of Lead-to-Enrollment Conversion Time',
-                color_discrete_sequence=[COLORS['primary']]
+            # Calculate rates - ensure all values are converted to float first
+            agent_data['Active_Rate'] = (agent_data['Active'].astype(float) / agent_data['Total'].astype(float) * 100).round(1)
+            agent_data['Cancel_Rate'] = (agent_data['Cancelled'].astype(float) / agent_data['Total'].astype(float) * 100).round(1)
+            agent_data['NSF_Rate'] = (agent_data['NSF'].astype(float) / agent_data['Total'].astype(float) * 100).round(1)
+        
+        # Display top agents
+        st.subheader("Top Performing Agents")
+        
+        if len(agent_data) > 0:
+            top_agents = agent_data.head(10) if len(agent_data) >= 10 else agent_data
+            fig = px.bar(
+                top_agents,
+                x='Agent',
+                y='Total',
+                title='Top Agents by Total Enrollments',
+                color='Total',
+                color_continuous_scale=px.colors.sequential.Purp
             )
-            fig.update_layout(xaxis_title="Days to Convert", yaxis_title="Count")
-            st.plotly_chart(fig, use_container_width=True, key="conversion_histogram")
+            st.plotly_chart(fig, use_container_width=True, key="top_agents_chart")
             
-            # Show conversion rates by month if available
-            if 'MONTH_YEAR' in df.columns:
-                st.subheader("Monthly Conversion Rates")
-                
-                # Group by month and calculate metrics
-                monthly_leads = df.groupby('MONTH_YEAR').size()
-                monthly_conversions = df[df['CONVERSION_DAYS'].notna()].groupby('MONTH_YEAR').size()
-                
-                conversion_data = pd.DataFrame({
-                    'Month': monthly_leads.index,
-                    'Leads': monthly_leads.values,
-                    'Conversions': monthly_conversions.reindex(monthly_leads.index, fill_value=0).values
-                })
-                
-                conversion_data['Conversion_Rate'] = (conversion_data['Conversions'] / conversion_data['Leads'] * 100).round(1)
-                
-                # Create chart
-                fig = px.line(
-                    conversion_data,
-                    x='Month',
-                    y='Conversion_Rate',
-                    markers=True,
-                    title='Monthly Lead-to-Enrollment Conversion Rate (%)',
-                    color_discrete_sequence=[COLORS['med_green']]
-                )
-                fig.update_layout(yaxis_title="Conversion Rate (%)")
-                st.plotly_chart(fig, use_container_width=True, key="monthly_conversion_chart")
-                
-                # Show the data table
-                with st.expander("Show Monthly Conversion Data"):
-                    st.dataframe(conversion_data, use_container_width=True)
-            
-            # Conversion by source if available
-            if 'SOURCE_SHEET' in df.columns:
-                st.subheader("Conversion by Source")
-                
-                # Calculate conversion rates by source
-                source_leads = df.groupby('SOURCE_SHEET').size()
-                source_conversions = df[df['CONVERSION_DAYS'].notna()].groupby('SOURCE_SHEET').size()
-                
-                source_data = pd.DataFrame({
-                    'Source': source_leads.index,
-                    'Leads': source_leads.values,
-                    'Conversions': source_conversions.reindex(source_leads.index, fill_value=0).values
-                })
-                
-                source_data['Conversion_Rate'] = (source_data['Conversions'] / source_data['Leads'] * 100).round(1)
-                
-                # Sort by conversion rate
-                source_data = source_data.sort_values('Conversion_Rate', ascending=False)
-                
-                # Filter to sources with significant volume
-                min_leads = 10  # Minimum leads to be included
-                qualified_sources = source_data[source_data['Leads'] >= min_leads].copy()
-                
-                # Create chart
-                fig = px.bar(
-                    qualified_sources,
-                    x='Source',
-                    y='Conversion_Rate',
-                    title=f'Conversion Rate by Source (min {min_leads} leads)',
-                    color='Conversion_Rate',
-                    color_continuous_scale=px.colors.sequential.Blues,
-                    text='Conversion_Rate'
-                )
-                fig.update_traces(texttemplate='%{text}%', textposition='outside')
-                fig.update_layout(yaxis_title="Conversion Rate (%)")
-                st.plotly_chart(fig, use_container_width=True, key="source_conversion_chart")
-                
-                # Show the data table
-                with st.expander("Show Source Conversion Data"):
-                    st.dataframe(qualified_sources, use_container_width=True)
-            
-            # Conversion by agent if available
-            if 'AGENT' in df.columns:
-                st.subheader("Conversion by Agent")
-                
-                # Calculate conversion rates by agent
-                agent_leads = df.groupby('AGENT').size()
-                agent_conversions = df[df['CONVERSION_DAYS'].notna()].groupby('AGENT').size()
-                
-                agent_data = pd.DataFrame({
-                    'Agent': agent_leads.index,
-                    'Leads': agent_leads.values,
-                    'Conversions': agent_conversions.reindex(agent_leads.index, fill_value=0).values
-                })
-                
-                agent_data['Conversion_Rate'] = (agent_data['Conversions'] / agent_data['Leads'] * 100).round(1)
-                agent_data['Avg_Days_to_Convert'] = df.groupby('AGENT')['CONVERSION_DAYS'].mean().reindex(agent_leads.index).round(1)
-                
-                # Sort by conversion rate
-                agent_data = agent_data.sort_values('Conversion_Rate', ascending=False)
+            # Display agent success rates if available
+            if 'Active_Rate' in agent_data.columns:
+                st.subheader("Agent Success Rates")
                 
                 # Filter to agents with significant volume
-                min_leads = 5  # Minimum leads to be included
-                qualified_agents = agent_data[agent_data['Leads'] >= min_leads].copy()
+                min_enrollments = 3  # Minimum enrollments to be included
+                qualified_agents = agent_data[agent_data['Total'] >= min_enrollments].copy()
                 
-                # Create chart
-                fig = px.bar(
-                    qualified_agents.head(10),
-                    x='Agent',
-                    y='Conversion_Rate',
-                    title=f'Top 10 Agents by Conversion Rate (min {min_leads} leads)',
-                    color='Conversion_Rate',
-                    color_continuous_scale=px.colors.sequential.Blues,
-                    text='Conversion_Rate'
-                )
-                fig.update_traces(texttemplate='%{text}%', textposition='outside')
-                fig.update_layout(yaxis_title="Conversion Rate (%)")
-                st.plotly_chart(fig, use_container_width=True, key="agent_conversion_chart")
-                
-                # Show the data table
-                with st.expander("Show Agent Conversion Data"):
-                    st.dataframe(qualified_agents, use_container_width=True)
-                
-                # Show average conversion time by agent
-                st.subheader("Average Conversion Time by Agent")
-                
-                # Filter to agents with conversion data
-                agents_with_conversion = qualified_agents[qualified_agents['Avg_Days_to_Convert'].notna()].copy()
-                
-                # Sort by conversion time (ascending is better)
-                agents_with_conversion = agents_with_conversion.sort_values('Avg_Days_to_Convert')
-                
-                # Create chart
-                fig = px.bar(
-                    agents_with_conversion.head(10),
-                    x='Agent',
-                    y='Avg_Days_to_Convert',
-                    title=f'Top 10 Agents by Fastest Conversion Time (min {min_leads} leads)',
-                    color='Avg_Days_to_Convert',
-                    color_continuous_scale=px.colors.sequential.Blues_r,  # Reversed so darker is better (lower)
-                    text='Avg_Days_to_Convert'
-                )
-                fig.update_traces(texttemplate='%{text} days', textposition='outside')
-                fig.update_layout(yaxis_title="Average Days to Convert")
-                st.plotly_chart(fig, use_container_width=True, key="agent_conversion_time_chart")
-        else:
-            st.warning("Lead date or enrollment date data not available for conversion metrics")
-            
-            # Check if we can show any conversion-related metrics
-            if 'CATEGORY' in df.columns:
-                st.subheader("Status Distribution")
-                
-                # Create status distribution chart
-                status_counts = df['CATEGORY'].value_counts().reset_index()
-                status_counts.columns = ['Status', 'Count']
-                
-                # Calculate percentages
-                status_counts['Percentage'] = (status_counts['Count'] / status_counts['Count'].sum() * 100).round(1)
-                
-                fig = px.pie(
-                    status_counts,
-                    values='Count',
-                    names='Status',
-                    title='Contract Status Distribution',
-                    color='Status',
-                    color_discrete_map={
-                        'ACTIVE': COLORS['med_green'],
-                        'NSF': COLORS['warning'],
-                        'CANCELLED': COLORS['danger'],
-                        'OTHER': COLORS['dark_accent']
-                    }
-                )
-                fig.update_traces(textinfo='percent+label')
-                st.plotly_chart(fig, use_container_width=True, key="status_distribution_chart")
-                
-                # If we have agent data, show performance by agent
-                if 'AGENT' in df.columns:
-                    st.subheader("Performance by Agent")
+                if not qualified_agents.empty:
+                    # Sort by active rate
+                    qualified_agents = qualified_agents.sort_values('Active_Rate', ascending=False)
                     
-                    # Calculate agent metrics
-                    agent_data = df.groupby('AGENT').size().reset_index()
-                    agent_data.columns = ['Agent', 'Total']
-                    
-                    # Active counts
-                    active_counts = df[df['CATEGORY'] == 'ACTIVE'].groupby('AGENT').size()
-                    agent_data['Active'] = active_counts.reindex(agent_data['Agent']).fillna(0)
-                    
-                    # Calculate success rate
-                    agent_data['Success_Rate'] = (agent_data['Active'] / agent_data['Total'] * 100).round(1)
-                    
-                    # Sort by success rate
-                    agent_data = agent_data.sort_values('Success_Rate', ascending=False)
-                    
-                    # Filter to agents with significant volume
-                    min_contracts = 5  # Minimum contracts to be included
-                    qualified_agents = agent_data[agent_data['Total'] >= min_contracts].copy()
-                    
-                    # Create chart
+                    top_success_agents = qualified_agents.head(10) if len(qualified_agents) >= 10 else qualified_agents
                     fig = px.bar(
-                        qualified_agents.head(10),
+                        top_success_agents,
                         x='Agent',
-                        y='Success_Rate',
-                        title=f'Top 10 Agents by Success Rate (min {min_contracts} contracts)',
-                        color='Success_Rate',
+                        y='Active_Rate',
+                        title=f'Top Agents by Success Rate (min {min_enrollments} enrollments)',
+                        color='Active_Rate',
                         color_continuous_scale=px.colors.sequential.Greens,
-                        text='Success_Rate'
+                        text='Active_Rate'
                     )
                     fig.update_traces(texttemplate='%{text}%', textposition='outside')
-                    fig.update_layout(yaxis_title="Success Rate (%)")
-                    st.plotly_chart(fig, use_container_width=True, key="agent_success_rate_chart")
+                    fig.update_layout(yaxis_title="Active Rate (%)")
+                    st.plotly_chart(fig, use_container_width=True, key="agent_success_rates_chart")
+                    
+                    # Show agents with highest cancellation rates
+                    st.subheader("Agents with Highest Cancellation Rates")
+                    
+                    # Sort by cancellation rate
+                    cancel_agents = qualified_agents.sort_values('Cancel_Rate', ascending=False)
+                    
+                    top_cancel_agents = cancel_agents.head(10) if len(cancel_agents) >= 10 else cancel_agents
+                    fig = px.bar(
+                        top_cancel_agents,
+                        x='Agent',
+                        y='Cancel_Rate',
+                        title=f'Agents with Highest Cancellation Rates (min {min_enrollments} enrollments)',
+                        color='Cancel_Rate',
+                        color_continuous_scale=px.colors.sequential.Reds,
+                        text='Cancel_Rate'
+                    )
+                    fig.update_traces(texttemplate='%{text}%', textposition='outside')
+                    fig.update_layout(yaxis_title="Cancellation Rate (%)")
+                    st.plotly_chart(fig, use_container_width=True, key="agent_cancel_rates_chart")
+                else:
+                    st.info(f"No agents with at least {min_enrollments} enrollments found")
+                
+                # Show the data table with all agent metrics
+                with st.expander("Show All Agent Metrics"):
+                    # Convert all numeric columns to float to avoid type issues
+                    for col in agent_data.columns:
+                        if col != 'Agent':
+                            agent_data[col] = agent_data[col].astype(float)
+                    st.dataframe(agent_data, use_container_width=True)
+        else:
+            st.info("No agent data available to display")
+    
+    # Stick Rate Tab (formerly Drop Rate)
+    with perf_tabs[2]:
+        st.subheader("Stick Rate Analysis")
+        
+        # Check if we have the necessary data
+        if 'CATEGORY' not in df.columns or 'ENROLLED_DATE' not in df.columns or df.empty:
+            st.warning("Required data (status categories and enrollment dates) not available for stick rate analysis")
+            return
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            # Calculate overall stick rate
+            total_contracts = len(df)
+            active_contracts = len(df[df['CATEGORY'] == 'ACTIVE'])
+            overall_stick_rate = (active_contracts / total_contracts * 100) if total_contracts > 0 else 0
+            
+            # Calculate monthly stick rates
+            df['Month'] = df['ENROLLED_DATE'].dt.strftime('%Y-%m')
+            monthly_total = df.groupby('Month').size()
+            monthly_active = df[df['CATEGORY'] == 'ACTIVE'].groupby('Month').size()
+            
+            stick_rate_data = pd.DataFrame({
+                'Month': monthly_total.index,
+                'Total': monthly_total.values,
+                'Active': monthly_active.reindex(monthly_total.index, fill_value=0).values
+            })
+            
+            stick_rate_data['Stick_Rate'] = (stick_rate_data['Active'] / stick_rate_data['Total'] * 100).round(1)
+            
+            # Create the chart
+            fig = px.line(
+                stick_rate_data, 
+                x='Month', 
+                y='Stick_Rate',
+                markers=True,
+                title='Monthly Stick Rate (%)',
+                color_discrete_sequence=[COLORS['med_green']]
+            )
+            fig.update_layout(yaxis_title="Stick Rate (%)")
+            
+            # Add a horizontal line for the overall average
+            if not stick_rate_data.empty:
+                fig.add_shape(
+                    type="line",
+                    x0=stick_rate_data['Month'].iloc[0],
+                    y0=overall_stick_rate,
+                    x1=stick_rate_data['Month'].iloc[-1],
+                    y1=overall_stick_rate,
+                    line=dict(
+                        color="green",
+                        width=1,
+                        dash="dash",
+                    )
+                )
+                
+                # Add annotation for the average line
+                fig.add_annotation(
+                    x=stick_rate_data['Month'].iloc[-1],
+                    y=overall_stick_rate,
+                    text=f"Overall Avg: {overall_stick_rate:.1f}%",
+                    showarrow=True,
+                    arrowhead=1,
+                    ax=50,
+                    ay=0
+                )
+            
+            st.plotly_chart(fig, use_container_width=True, key="monthly_stick_rate_chart")
+        
+        with col2:
+            # Display key metrics
+            st.metric("Overall Stick Rate", f"{overall_stick_rate:.1f}%")
+            
+            # Calculate recent stick rate (last 30 days)
+            today = datetime.now()
+            thirty_days_ago = today - timedelta(days=30)
+            
+            recent_df = df[df['ENROLLED_DATE'] >= thirty_days_ago]
+            recent_total = len(recent_df)
+            recent_active = len(recent_df[recent_df['CATEGORY'] == 'ACTIVE'])
+            recent_stick_rate = (recent_active / recent_total * 100) if recent_total > 0 else 0
+            
+            # Calculate the delta
+            delta = recent_stick_rate - overall_stick_rate
+            
+            st.metric(
+                "Last 30 Days Stick Rate", 
+                f"{recent_stick_rate:.1f}%",
+                delta=f"{delta:.1f}%"
+            )
+            
+            # Show active counts
+            st.metric("Total Active", active_contracts)
+            st.metric("Last 30 Days Active", recent_active)
+            
+            # Show the stick rate data table
+            with st.expander("Show Monthly Stick Rate Data"):
+                st.dataframe(stick_rate_data, use_container_width=True)
+        
+        # Source analysis
+        if 'SOURCE_SHEET' in df.columns:
+            st.subheader("Stick Rate by Source")
+            
+            # Calculate source stick rates
+            source_totals = df.groupby('SOURCE_SHEET').size()
+            source_active = df[df['CATEGORY'] == 'ACTIVE'].groupby('SOURCE_SHEET').size()
+            
+            source_data = pd.DataFrame({
+                'Source': source_totals.index,
+                'Total': source_totals.values,
+                'Active': source_active.reindex(source_totals.index, fill_value=0).values
+            })
+            
+            # Calculate stick rate
+            source_data['Stick_Rate'] = (source_data['Active'].astype(float) / source_data['Total'].astype(float) * 100).round(1)
+            
+            # Sort by stick rate
+            source_data = source_data.sort_values('Stick_Rate', ascending=False)
+            
+            fig = px.bar(
+                source_data,
+                x='Source',
+                y='Stick_Rate',
+                title='Stick Rate by Source',
+                color='Stick_Rate',
+                color_continuous_scale=px.colors.sequential.Greens,
+                text='Stick_Rate'
+            )
+            fig.update_traces(texttemplate='%{text}%', textposition='outside')
+            fig.update_layout(yaxis_title="Stick Rate (%)")
+            st.plotly_chart(fig, use_container_width=True, key="source_stick_rate_chart")
+            
+            # Show the data table
+            with st.expander("Show Source Stick Rate Data"):
+                st.dataframe(source_data, use_container_width=True)
+    
+    # Risk Analysis Tab
+    with perf_tabs[3]:
+        st.subheader("Risk Analysis")
+        
+        # Check if agent data is available
+        if 'AGENT' not in df.columns or df.empty or 'CATEGORY' not in df.columns:
+            st.warning("Agent and category data required for risk analysis")
+            return
+        
+        # Calculate agent risk metrics
+        agent_data = df.groupby('AGENT').size().reset_index()
+        agent_data.columns = ['Agent', 'Total']
+        
+        if agent_data.empty:
+            st.warning("No agent data available for the selected filters")
+            return
+        
+        # Add status breakdowns
+        active_counts = df[df['CATEGORY'] == 'ACTIVE'].groupby('AGENT').size()
+        agent_data['Active'] = active_counts.reindex(agent_data['Agent']).fillna(0)
+        
+        cancelled_counts = df[df['CATEGORY'] == 'CANCELLED'].groupby('AGENT').size()
+        agent_data['Cancelled'] = cancelled_counts.reindex(agent_data['Agent']).fillna(0)
+        
+        nsf_counts = df[df['CATEGORY'] == 'NSF'].groupby('AGENT').size()
+        agent_data['NSF'] = nsf_counts.reindex(agent_data['Agent']).fillna(0)
+        
+        # Calculate risk score (higher is riskier)
+        agent_data['Risk_Score'] = ((agent_data['Cancelled'].astype(float) * 1.0 + 
+                                    agent_data['NSF'].astype(float) * 0.5) / 
+                                    agent_data['Total'].astype(float) * 100).round(1)
+        
+        # Sort by risk score
+        agent_data = agent_data.sort_values('Risk_Score', ascending=False)
+        
+        # Display high risk agents
+        st.subheader("High Risk Agents")
+        
+        if len(agent_data) > 0:
+            # Filter to agents with significant volume
+            min_enrollments = 3  # Minimum enrollments to be included
+            qualified_agents = agent_data[agent_data['Total'] >= min_enrollments].copy()
+            
+            if not qualified_agents.empty:
+                top_risk_agents = qualified_agents.head(10) if len(qualified_agents) >= 10 else qualified_agents
+                fig = px.bar(
+                    top_risk_agents,
+                    x='Agent',
+                    y='Risk_Score',
+                    title=f'Highest Risk Agents (min {min_enrollments} enrollments)',
+                    color='Risk_Score',
+                    color_continuous_scale=px.colors.sequential.Reds,
+                    text='Risk_Score'
+                )
+                fig.update_traces(texttemplate='%{text}', textposition='outside')
+                fig.update_layout(yaxis_title="Risk Score")
+                st.plotly_chart(fig, use_container_width=True, key="agent_risk_chart")
+                
+                # Show the data table with all agent metrics
+                with st.expander("Show All Agent Risk Data"):
+                    # Convert all numeric columns to float to avoid type issues
+                    for col in agent_data.columns:
+                        if col != 'Agent':
+                            agent_data[col] = agent_data[col].astype(float)
+                    st.dataframe(agent_data, use_container_width=True)
+            else:
+                st.info(f"No agents with at least {min_enrollments} enrollments found")
+        else:
+            st.info("No agent data available to display")
+        
+        # Source risk analysis
+        if 'SOURCE_SHEET' in df.columns:
+            st.subheader("Risk Analysis by Source")
+            
+            # Calculate source risk metrics
+            source_totals = df.groupby('SOURCE_SHEET').size()
+            source_cancelled = df[df['CATEGORY'] == 'CANCELLED'].groupby('SOURCE_SHEET').size()
+            source_nsf = df[df['CATEGORY'] == 'NSF'].groupby('SOURCE_SHEET').size()
+            
+            source_data = pd.DataFrame({
+                'Source': source_totals.index,
+                'Total': source_totals.values,
+                'Cancelled': source_cancelled.reindex(source_totals.index, fill_value=0).values,
+                'NSF': source_nsf.reindex(source_totals.index, fill_value=0).values
+            })
+            
+            # Calculate risk score
+            source_data['Risk_Score'] = ((source_data['Cancelled'].astype(float) * 1.0 + 
+                                        source_data['NSF'].astype(float) * 0.5) / 
+                                        source_data['Total'].astype(float) * 100).round(1)
+            
+            # Sort by risk score
+            source_data = source_data.sort_values('Risk_Score', ascending=False)
+            
+            fig = px.bar(
+                source_data,
+                x='Source',
+                y='Risk_Score',
+                title='Risk Score by Source',
+                color='Risk_Score',
+                color_continuous_scale=px.colors.sequential.Reds,
+                text='Risk_Score'
+            )
+            fig.update_traces(texttemplate='%{text}', textposition='outside')
+            fig.update_layout(yaxis_title="Risk Score")
+            st.plotly_chart(fig, use_container_width=True, key="source_risk_chart")
+            
+            # Show the data table
+            with st.expander("Show Source Risk Data"):
+                st.dataframe(source_data, use_container_width=True)

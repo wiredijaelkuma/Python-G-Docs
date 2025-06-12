@@ -1,6 +1,7 @@
 # modules/utils.py
 import streamlit as st
 import pandas as pd
+from datetime import timedelta
 
 @st.cache_data(ttl=3600)
 def load_csv_data(file_path="processed_combined_data.csv"):
@@ -75,6 +76,24 @@ def load_css():
         }
         /* Ensure tables display properly */
         .dataframe-container {
+            width: 100% !important;
+        }
+        /* Fix expander to take full width */
+        .streamlit-expanderHeader {
+            width: 100% !important;
+        }
+        .streamlit-expanderContent {
+            width: 100% !important;
+        }
+        /* Make sure expander content takes full width */
+        .st-expander {
+            width: 100% !important;
+        }
+        .st-expander > div {
+            width: 100% !important;
+        }
+        /* Fix for plotly charts in expanders */
+        .st-expander .stPlotlyChart {
             width: 100% !important;
         }
         </style>
