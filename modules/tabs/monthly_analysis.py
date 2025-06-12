@@ -12,14 +12,28 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
     """Render the monthly analysis tab"""
     st.header("Monthly Performance Analysis")
     
+    # Debug information about the input data
+    with st.expander("Data Information"):
+        st.write("Input data shape:", df_filtered.shape)
+        st.write("Input data columns:", df_filtered.columns.tolist())
+        if 'ENROLLED_DATE' in df_filtered.columns:
+            min_date = df_filtered['ENROLLED_DATE'].min()
+            max_date = df_filtered['ENROLLED_DATE'].max()
+            st.write(f"Date range: {min_date} to {max_date}")
+            
+            # Show unique months in the data
+            months = df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m').unique()
+            st.write("Available months in filtered data:", sorted(months))
+    
     # Create a copy of the dataframe without date filters
     # This ensures we can see all months regardless of the sidebar date filter
     import pandas as pd
     from datetime import datetime, date, timedelta
     
-    # Get the original unfiltered dataframe
-    if 'df' in st.session_state:
-        df_all = st.session_state['df'].copy()
+    # Get the original unfiltered dataframe by loading directly from CSV
+    try:
+        from modules.utils import load_csv_data
+        df_all, _ = load_csv_data("processed_combined_data.csv")
         
         # Convert date columns if needed
         date_col = None
@@ -33,7 +47,20 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
                 df_all[date_col] = pd.to_datetime(df_all[date_col])
             except:
                 pass
-    else:
+                
+        # Show debug info about the full dataset
+        with st.expander("Full Dataset Information"):
+            st.write("Full data shape:", df_all.shape)
+            if date_col in df_all.columns:
+                min_date = df_all[date_col].min()
+                max_date = df_all[date_col].max()
+                st.write(f"Full date range: {min_date} to {max_date}")
+                
+                # Show unique months in the full data
+                months = df_all[date_col].dt.strftime('%Y-%m').unique()
+                st.write("All available months:", sorted(months))
+    except Exception as e:
+        st.warning(f"Could not load full dataset: {str(e)}")
         df_all = df_filtered.copy()
     
     # Debug information
