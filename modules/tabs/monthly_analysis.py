@@ -51,9 +51,9 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         # Source sheet selector
         with col2:
             if 'SOURCE_SHEET' in df_filtered.columns:
-                all_sources = st.checkbox("All Sources", True)
+                all_sources = st.checkbox("All Sources", True, key="monthly_all_sources")
                 if not all_sources:
-                    sources = st.multiselect("Select Sources", df_filtered['SOURCE_SHEET'].unique())
+                    sources = st.multiselect("Select Sources", df_filtered['SOURCE_SHEET'].unique(), key="monthly_sources")
                 else:
                     sources = df_filtered['SOURCE_SHEET'].unique().tolist()
             else:
