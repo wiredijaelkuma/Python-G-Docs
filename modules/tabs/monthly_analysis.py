@@ -36,17 +36,36 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         # Extract year and month from enrollment date
         df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m')
         
-        # Get unique year-months for dropdown
+        # Create a more readable month format (e.g., "June 2025" instead of "2025-06")
+        df_filtered['Month_Display'] = df_filtered[date_column].dt.strftime('%B %Y')
+        
+        # Get unique year-months and their display names
         year_months = sorted(df_filtered['Year_Month'].unique(), reverse=True)
         
         if not year_months:
             st.warning("No enrollment date data available.")
             return
             
+        # Create a mapping from display name to actual year-month value
+        month_display_map = {}
+        for ym in year_months:
+            # Find a row with this year-month
+            sample_row = df_filtered[df_filtered['Year_Month'] == ym].iloc[0]
+            display_name = sample_row['Month_Display']
+            month_display_map[display_name] = ym
+            
+        # Get display names in sorted order
+        month_display_names = sorted(month_display_map.keys(), 
+                                    key=lambda x: pd.to_datetime(x, format='%B %Y'), 
+                                    reverse=True)
+        
+        # Add option for all months
+        month_display_names = ["All Months"] + month_display_names
+            
         # Month selector
         col1, col2 = st.columns([1, 1])
         with col1:
-            selected_month = st.selectbox("Select Month", year_months)
+            selected_display = st.selectbox("Select Month", month_display_names)
         
         # Source sheet selector
         with col2:
@@ -61,18 +80,24 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
                 sources = []
         
         # Filter data for selected month
-        monthly_data = df_filtered[df_filtered['Year_Month'] == selected_month]
+        if selected_display == "All Months":
+            monthly_data = df_filtered.copy()
+            selected_month_display = "All Months"
+        else:
+            selected_month = month_display_map[selected_display]
+            monthly_data = df_filtered[df_filtered['Year_Month'] == selected_month]
+            selected_month_display = selected_display
         
         # Apply source filter if needed
         if 'SOURCE_SHEET' in df_filtered.columns and not all_sources and sources:
             monthly_data = monthly_data[monthly_data['SOURCE_SHEET'].isin(sources)]
         
         if monthly_data.empty:
-            st.info(f"No data available for {selected_month}.")
+            st.info(f"No data available for {selected_month_display}.")
             return
             
         # Display monthly metrics
-        st.subheader(f"Key Metrics for {selected_month}")
+        st.subheader(f"Key Metrics for {selected_month_display}")
         
         # Check if CUSTOMER_ID exists, otherwise use index
         id_column = 'CUSTOMER_ID' if 'CUSTOMER_ID' in monthly_data.columns else 'CUSTOMER ID'
@@ -125,7 +150,7 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             agent_performance,
             x='AGENT',
             y='Enrollments',
-            title=f'Enrollments by Agent for {selected_month}',
+            title=f'Enrollments by Agent for {selected_month_display}',
             color_discrete_sequence=[COLORS['primary']]
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -140,7 +165,7 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             status_counts,
             values='Count',
             names='Status',
-            title=f'Status Distribution for {selected_month}',
+            title=f'Status Distribution for {selected_month_display}',
             color_discrete_sequence=[COLORS['primary'], COLORS['accent'], COLORS['warning'], COLORS['danger']]
         )
         fig.update_traces(textposition='inside', textinfo='percent+label')
@@ -149,26 +174,30 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         # Daily enrollment trend for the month
         st.subheader("Daily Enrollment Trend")
         
-        # Extract day from enrollment date
-        monthly_data['Day'] = monthly_data[date_column].dt.day
+        # Only show daily trend if not "All Months"
+        if selected_display != "All Months":
+            # Extract day from enrollment date
+            monthly_data['Day'] = monthly_data[date_column].dt.day
         
-        # Group by day
-        daily_counts = monthly_data.groupby('Day').size().reset_index()
-        daily_counts.columns = ['Day', 'Count']
-        
-        # Sort by day
-        daily_counts = daily_counts.sort_values('Day')
-        
-        # Create line chart
-        fig = px.line(
-            daily_counts,
-            x='Day',
-            y='Count',
-            title=f'Daily Enrollments for {selected_month}',
-            markers=True,
-            color_discrete_sequence=[COLORS['primary']]
-        )
-        st.plotly_chart(fig, use_container_width=True)
+            # Group by day
+            daily_counts = monthly_data.groupby('Day').size().reset_index()
+            daily_counts.columns = ['Day', 'Count']
+            
+            # Sort by day
+            daily_counts = daily_counts.sort_values('Day')
+            
+            # Create line chart
+            fig = px.line(
+                daily_counts,
+                x='Day',
+                y='Count',
+                title=f'Daily Enrollments for {selected_month_display}',
+                markers=True,
+                color_discrete_sequence=[COLORS['primary']]
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Daily trend is only available when a specific month is selected.")
         
         # Month-over-month comparison
         st.subheader("Month-over-Month Comparison")
