@@ -134,7 +134,7 @@ def render_commission_tab(df_filtered, COLORS):
                     labels={'ExpectedCount': 'Number of Expected Payments', 'AgentName': 'Agent'},
                     color_discrete_sequence=[COLORS['primary']]
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key="expected_payments_chart")
                 
                 # Display table of expected payments
                 st.subheader("Expected Payments Detail")
@@ -212,7 +212,7 @@ def render_commission_tab(df_filtered, COLORS):
                 },
                 barmode='group'
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="agent_performance_chart")
         
         # Customer Lifespan Tab
         with comm_tabs[2]:
