@@ -88,6 +88,21 @@ def main():
             load_err = None
         else:
             df, load_err = load_csv_data("processed_combined_data.csv")
+            
+        # Convert date columns to datetime
+        if load_err is None:
+            # Handle both possible date column names
+            date_col = None
+            if 'ENROLLED_DATE' in df.columns:
+                date_col = 'ENROLLED_DATE'
+            elif 'ENROLLED DATE' in df.columns:
+                date_col = 'ENROLLED DATE'
+                
+            if date_col:
+                try:
+                    df[date_col] = pd.to_datetime(df[date_col])
+                except:
+                    st.warning(f"Could not convert {date_col} to datetime format.")
         
     if load_err:
         st.error(f"🚨 Data Load Error: {load_err}")

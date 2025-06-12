@@ -12,7 +12,17 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
     """Render the monthly analysis tab"""
     st.header("Monthly Performance Analysis")
     
+    # Debug information
+    with st.expander("Debug Information"):
+        st.write("Available columns:", df_filtered.columns.tolist())
+        if 'SOURCE_SHEET' in df_filtered.columns:
+            st.write("Available sources:", df_filtered['SOURCE_SHEET'].unique().tolist())
+        st.write("Data shape:", df_filtered.shape)
+    
     try:
+        # Display info about data source
+        st.info("This tab analyzes data from the processed_combined_data.csv file. Make sure this file includes all your data sources.")
+        
         # Check if ENROLLED_DATE exists in the dataframe
         date_column = None
         if 'ENROLLED_DATE' in df_filtered.columns:
@@ -34,10 +44,28 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             return
             
         # Month selector
-        selected_month = st.selectbox("Select Month", year_months)
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            selected_month = st.selectbox("Select Month", year_months)
+        
+        # Source sheet selector
+        with col2:
+            if 'SOURCE_SHEET' in df_filtered.columns:
+                all_sources = st.checkbox("All Sources", True)
+                if not all_sources:
+                    sources = st.multiselect("Select Sources", df_filtered['SOURCE_SHEET'].unique())
+                else:
+                    sources = df_filtered['SOURCE_SHEET'].unique().tolist()
+            else:
+                all_sources = True
+                sources = []
         
         # Filter data for selected month
         monthly_data = df_filtered[df_filtered['Year_Month'] == selected_month]
+        
+        # Apply source filter if needed
+        if 'SOURCE_SHEET' in df_filtered.columns and not all_sources and sources:
+            monthly_data = monthly_data[monthly_data['SOURCE_SHEET'].isin(sources)]
         
         if monthly_data.empty:
             st.info(f"No data available for {selected_month}.")
