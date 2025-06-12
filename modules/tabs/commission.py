@@ -1,5 +1,5 @@
 """
-Commission Tab Module - Analyzes agent commission data
+Commission Tab Module - Analyzes agent commission data and payment forecasting
 """
 import streamlit as st
 import pandas as pd
@@ -14,16 +14,16 @@ def process_commission_data(file_path="comissions.csv"):
         
         # Extract even and odd columns
         even_df = df.iloc[:, 0:6].copy()
-        even_df.columns = ['AgentID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate']
+        even_df.columns = ['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate']
         
         odd_df = df.iloc[:, 6:12].copy()
-        odd_df.columns = ['AgentID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate']
+        odd_df.columns = ['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate']
         
         # Combine the dataframes
         combined_df = pd.concat([even_df, odd_df], ignore_index=True)
         
-        # Remove rows where AgentID is empty
-        combined_df = combined_df[combined_df['AgentID'].notna() & (combined_df['AgentID'] != "")]
+        # Remove rows where CustomerID is empty
+        combined_df = combined_df[combined_df['CustomerID'].notna() & (combined_df['CustomerID'] != "")]
         
         # Convert dates to datetime
         combined_df['PaymentDate'] = pd.to_datetime(combined_df['PaymentDate'], errors='coerce')
@@ -31,8 +31,19 @@ def process_commission_data(file_path="comissions.csv"):
         
         # Create a payment status column
         combined_df['PaymentStatus'] = combined_df['Status'].apply(
-            lambda x: 'Cleared' if 'Cleared' in str(x) else 'NSF' if 'NSF' in str(x) or 'Returned' in str(x) else 'Other'
+            lambda x: 'Cleared' if 'Cleared' in str(x) else 'NSF' if 'NSF' in str(x) or 'Returned' in str(x) else 'Pending'
         )
+        
+        # Calculate expected payment date (7 days after cleared date)
+        combined_df['ExpectedPaymentDate'] = None
+        cleared_mask = combined_df['PaymentStatus'] == 'Cleared'
+        combined_df.loc[cleared_mask, 'ExpectedPaymentDate'] = combined_df.loc[cleared_mask, 'ClearedDate'] + timedelta(days=7)
+        
+        # Calculate days since payment
+        combined_df['DaysSincePayment'] = (datetime.now() - combined_df['PaymentDate']).dt.days
+        
+        # Calculate days until expected payment
+        combined_df['DaysUntilPayment'] = (combined_df['ExpectedPaymentDate'] - datetime.now()).dt.days
         
         return combined_df
     except Exception as e:
@@ -52,11 +63,11 @@ def render_commission_tab(df_filtered, COLORS):
             return
         
         # Create tabs for different views
-        comm_tabs = st.tabs(["Cleared Payments", "ID Lifespan", "Agent Summary"])
+        comm_tabs = st.tabs(["Expected Payments", "Agent Performance", "Customer Lifespan"])
         
-        # Cleared Payments Tab
+        # Expected Payments Tab
         with comm_tabs[0]:
-            st.subheader("Cleared Payments to be Paid")
+            st.subheader("Expected Commission Payments")
             
             # Filter for only cleared payments
             cleared_df = commission_df[commission_df['PaymentStatus'] == 'Cleared'].copy()
@@ -65,32 +76,32 @@ def render_commission_tab(df_filtered, COLORS):
             col1, col2 = st.columns(2)
             
             with col1:
-                time_period = st.selectbox(
-                    "Time Period",
-                    ["Last Week", "Last 2 Weeks", "Last Month", "Last 3 Months", "All Time"],
-                    index=1
+                payment_window = st.selectbox(
+                    "Payment Window",
+                    ["Next 7 Days", "Next 14 Days", "Next 30 Days", "All Expected"],
+                    index=0
                 )
                 
-                # Calculate date range
+                # Filter by expected payment date
                 today = datetime.now().date()
-                if time_period == "Last Week":
-                    start_date = today - timedelta(days=7)
-                elif time_period == "Last 2 Weeks":
-                    start_date = today - timedelta(days=14)
-                elif time_period == "Last Month":
-                    start_date = today - timedelta(days=30)
-                elif time_period == "Last 3 Months":
-                    start_date = today - timedelta(days=90)
+                if payment_window == "Next 7 Days":
+                    end_date = today + timedelta(days=7)
+                elif payment_window == "Next 14 Days":
+                    end_date = today + timedelta(days=14)
+                elif payment_window == "Next 30 Days":
+                    end_date = today + timedelta(days=30)
                 else:
-                    start_date = cleared_df['PaymentDate'].min().date() if not cleared_df.empty else today
+                    end_date = cleared_df['ExpectedPaymentDate'].max().date() if not cleared_df.empty else today
                 
-                # Filter by date
-                filtered_cleared = cleared_df[cleared_df['PaymentDate'].dt.date >= start_date] if not cleared_df.empty else cleared_df
+                # Filter by expected payment date
+                expected_payments = cleared_df[
+                    (cleared_df['ExpectedPaymentDate'].dt.date >= today) & 
+                    (cleared_df['ExpectedPaymentDate'].dt.date <= end_date)
+                ] if not cleared_df.empty else cleared_df
             
             with col2:
                 # Agent filter
                 if not cleared_df.empty:
-                    # Convert any NaN values to strings before sorting
                     agents = cleared_df['AgentName'].fillna("Unknown").unique().tolist()
                     agents = sorted([str(a) for a in agents if a])
                 else:
@@ -102,43 +113,44 @@ def render_commission_tab(df_filtered, COLORS):
                     default=agents
                 )
                 
-                if selected_agents and not filtered_cleared.empty:
-                    filtered_cleared = filtered_cleared[filtered_cleared['AgentName'].isin(selected_agents)]
+                if selected_agents and not expected_payments.empty:
+                    expected_payments = expected_payments[expected_payments['AgentName'].isin(selected_agents)]
             
             # Display metrics
-            total_cleared = len(filtered_cleared)
-            total_amount = total_cleared  # Assuming each cleared payment is worth 1 unit
+            total_expected = len(expected_payments)
             
             col1, col2 = st.columns(2)
             with col1:
-                st.metric("Total Cleared Payments", f"{total_cleared:,}")
+                st.metric("Total Expected Payments", f"{total_expected:,}")
             with col2:
-                st.metric("Total Commission Amount", f"${total_amount:,}")
+                # Assuming $10 per commission
+                st.metric("Total Commission Value", f"${total_expected * 10:,}")
             
-            if not filtered_cleared.empty:
+            if not expected_payments.empty:
                 # Group by agent
-                agent_cleared = filtered_cleared.groupby('AgentName').size().reset_index(name='ClearedCount')
-                agent_cleared = agent_cleared.sort_values('ClearedCount', ascending=False)
+                agent_expected = expected_payments.groupby('AgentName').size().reset_index(name='ExpectedCount')
+                agent_expected = agent_expected.sort_values('ExpectedCount', ascending=False)
                 
                 # Create bar chart
                 fig = px.bar(
-                    agent_cleared,
+                    agent_expected,
                     x='AgentName',
-                    y='ClearedCount',
-                    title='Cleared Payments by Agent',
-                    labels={'ClearedCount': 'Number of Cleared Payments', 'AgentName': 'Agent'},
-                    color_discrete_sequence=[COLORS['light_green']]
+                    y='ExpectedCount',
+                    title='Expected Payments by Agent',
+                    labels={'ExpectedCount': 'Number of Expected Payments', 'AgentName': 'Agent'},
+                    color_discrete_sequence=[COLORS['primary']]
                 )
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Display table of cleared payments
-                st.subheader("Cleared Payments Detail")
-                display_cols = ['AgentID', 'AgentName', 'PaymentID', 'PaymentDate', 'ClearedDate']
-                display_df = filtered_cleared[display_cols].copy()
+                # Display table of expected payments
+                st.subheader("Expected Payments Detail")
+                display_cols = ['CustomerID', 'AgentName', 'PaymentID', 'PaymentDate', 'ClearedDate', 'ExpectedPaymentDate', 'DaysUntilPayment']
+                display_df = expected_payments[display_cols].copy()
                 
                 # Format dates
                 display_df['PaymentDate'] = display_df['PaymentDate'].dt.strftime('%Y-%m-%d')
                 display_df['ClearedDate'] = display_df['ClearedDate'].dt.strftime('%Y-%m-%d')
+                display_df['ExpectedPaymentDate'] = display_df['ExpectedPaymentDate'].dt.strftime('%Y-%m-%d')
                 
                 # Show table
                 st.dataframe(display_df, use_container_width=True, hide_index=True)
@@ -146,168 +158,49 @@ def render_commission_tab(df_filtered, COLORS):
                 # Download button
                 csv = display_df.to_csv(index=False)
                 st.download_button(
-                    label="Download Cleared Payments",
+                    label="Download Expected Payments",
                     data=csv,
-                    file_name="cleared_payments.csv",
+                    file_name="expected_payments.csv",
                     mime="text/csv",
                 )
             else:
-                st.info("No cleared payments found for the selected time period.")
+                st.info("No expected payments found for the selected time period.")
         
-        # ID Lifespan Tab
+        # Agent Performance Tab
         with comm_tabs[1]:
-            st.subheader("Customer ID Lifespan")
+            st.subheader("Agent Performance")
             
             if not commission_df.empty:
-                # Group by AgentID to get payment history
-                id_stats = commission_df.groupby('AgentID').agg(
-                    FirstPayment=('PaymentDate', 'min'),
-                    LastPayment=('PaymentDate', 'max'),
-                    TotalPayments=('PaymentID', 'count'),
-                    ClearedPayments=('PaymentStatus', lambda x: (x == 'Cleared').sum()),
-                    NSFPayments=('PaymentStatus', lambda x: (x == 'NSF').sum()),
-                    Agent=('AgentName', 'first')
-                ).reset_index()
-                
-                # Fill NaN values in Agent column
-                id_stats['Agent'] = id_stats['Agent'].fillna("Unknown")
-                
-                # Calculate lifespan in days
-                id_stats['Lifespan'] = (id_stats['LastPayment'] - id_stats['FirstPayment']).dt.days
-                id_stats['Lifespan'] = id_stats['Lifespan'].fillna(0).astype(int)
-                
-                # Calculate success rate
-                id_stats['SuccessRate'] = (id_stats['ClearedPayments'] / id_stats['TotalPayments'] * 100).round(1)
-                
-                # Sort by lifespan
-                id_stats = id_stats.sort_values('Lifespan', ascending=False)
-                
-                # Filter controls
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    min_payments = st.slider("Minimum Number of Payments", 1, 
-                                            max(1, int(id_stats['TotalPayments'].max())), 1)
-                    filtered_ids = id_stats[id_stats['TotalPayments'] >= min_payments]
-                
-                with col2:
-                    # Convert any NaN values to strings before sorting
-                    agents = [str(a) for a in filtered_ids['Agent'].unique() if pd.notna(a)]
-                    agents.sort()
-                    
-                    selected_agents = st.multiselect(
-                        "Filter by Agent",
-                        agents,
-                        default=[],
-                        key="id_lifespan_agents"
-                    )
-                    
-                    if selected_agents:
-                        filtered_ids = filtered_ids[filtered_ids['Agent'].isin(selected_agents)]
-                
-                # Display metrics
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Total Unique IDs", f"{len(filtered_ids):,}")
-                with col2:
-                    avg_lifespan = filtered_ids['Lifespan'].mean()
-                    st.metric("Average Lifespan (days)", f"{avg_lifespan:.1f}")
-                with col3:
-                    avg_success = filtered_ids['SuccessRate'].mean()
-                    st.metric("Average Success Rate", f"{avg_success:.1f}%")
-                
-                if not filtered_ids.empty:
-                    # Create scatter plot of lifespan vs success rate
-                    fig = px.scatter(
-                        filtered_ids,
-                        x='Lifespan',
-                        y='SuccessRate',
-                        size='TotalPayments',
-                        color='Agent',
-                        hover_name='AgentID',
-                        title='ID Lifespan vs Success Rate',
-                        labels={
-                            'Lifespan': 'Lifespan (days)',
-                            'SuccessRate': 'Success Rate (%)',
-                            'TotalPayments': 'Total Payments'
-                        }
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Display table
-                    st.subheader("ID Lifespan Details")
-                    display_cols = ['AgentID', 'Agent', 'FirstPayment', 'LastPayment', 
-                                    'Lifespan', 'TotalPayments', 'ClearedPayments', 'NSFPayments', 'SuccessRate']
-                    display_df = filtered_ids[display_cols].copy()
-                    
-                    # Format dates
-                    display_df['FirstPayment'] = display_df['FirstPayment'].dt.strftime('%Y-%m-%d')
-                    display_df['LastPayment'] = display_df['LastPayment'].dt.strftime('%Y-%m-%d')
-                    
-                    # Show table
-                    st.dataframe(display_df, use_container_width=True, hide_index=True)
-                else:
-                    st.info("No data available with the current filters.")
-            else:
-                st.info("No data available to analyze ID lifespan.")
-        
-        # Agent Summary Tab
-        with comm_tabs[2]:
-            st.subheader("Agent Commission Summary")
-            
-            # Time period filter
-            time_period = st.selectbox(
-                "Time Period",
-                ["Last Week", "Last 2 Weeks", "Last Month", "Last 3 Months", "All Time"],
-                index=2,
-                key="agent_summary_period"
-            )
-            
-            # Calculate date range
-            today = datetime.now().date()
-            if time_period == "Last Week":
-                start_date = today - timedelta(days=7)
-            elif time_period == "Last 2 Weeks":
-                start_date = today - timedelta(days=14)
-            elif time_period == "Last Month":
-                start_date = today - timedelta(days=30)
-            elif time_period == "Last 3 Months":
-                start_date = today - timedelta(days=90)
-            else:
-                start_date = commission_df['PaymentDate'].min().date() if not commission_df.empty else today
-            
-            # Filter by date
-            filtered_data = commission_df[commission_df['PaymentDate'].dt.date >= start_date] if not commission_df.empty else commission_df
-            
-            if not filtered_data.empty:
-                # Fill NaN values in AgentName column
-                filtered_data['AgentName'] = filtered_data['AgentName'].fillna("Unknown")
-                
                 # Group by agent
-                agent_summary = filtered_data.groupby('AgentName').agg(
+                agent_stats = commission_df.groupby('AgentName').agg(
                     TotalPayments=('PaymentID', 'count'),
                     ClearedPayments=('PaymentStatus', lambda x: (x == 'Cleared').sum()),
                     NSFPayments=('PaymentStatus', lambda x: (x == 'NSF').sum()),
-                    UniqueIDs=('AgentID', 'nunique')
+                    PendingPayments=('PaymentStatus', lambda x: (x == 'Pending').sum()),
+                    UniqueCustomers=('CustomerID', 'nunique')
                 ).reset_index()
+                
+                # Fill NaN values
+                agent_stats = agent_stats.fillna(0)
                 
                 # Calculate rates
-                agent_summary['ClearRate'] = (agent_summary['ClearedPayments'] / agent_summary['TotalPayments'] * 100).round(1)
-                agent_summary['CommissionAmount'] = agent_summary['ClearedPayments']  # Assuming $1 per cleared payment
+                agent_stats['ClearRate'] = (agent_stats['ClearedPayments'] / agent_stats['TotalPayments'] * 100).round(1)
+                agent_stats['AvgPaymentsPerCustomer'] = (agent_stats['TotalPayments'] / agent_stats['UniqueCustomers']).round(1)
                 
                 # Sort by cleared payments
-                agent_summary = agent_summary.sort_values('ClearedPayments', ascending=False)
+                agent_stats = agent_stats.sort_values('ClearedPayments', ascending=False)
                 
                 # Display table
                 st.dataframe(
-                    agent_summary.rename(columns={
+                    agent_stats.rename(columns={
                         'AgentName': 'Agent',
                         'TotalPayments': 'Total Payments',
                         'ClearedPayments': 'Cleared',
                         'NSFPayments': 'NSF',
-                        'UniqueIDs': 'Unique IDs',
+                        'PendingPayments': 'Pending',
+                        'UniqueCustomers': 'Unique Customers',
                         'ClearRate': 'Clear Rate (%)',
-                        'CommissionAmount': 'Commission ($)'
+                        'AvgPaymentsPerCustomer': 'Avg Payments/Customer'
                     }),
                     use_container_width=True,
                     hide_index=True
@@ -315,9 +208,9 @@ def render_commission_tab(df_filtered, COLORS):
                 
                 # Create bar chart comparing cleared vs NSF
                 fig = px.bar(
-                    agent_summary,
+                    agent_stats,
                     x='AgentName',
-                    y=['ClearedPayments', 'NSFPayments'],
+                    y=['ClearedPayments', 'NSFPayments', 'PendingPayments'],
                     title='Payment Status by Agent',
                     labels={
                         'value': 'Number of Payments',
@@ -326,22 +219,138 @@ def render_commission_tab(df_filtered, COLORS):
                     },
                     color_discrete_map={
                         'ClearedPayments': COLORS['light_green'],
-                        'NSFPayments': COLORS['danger']
+                        'NSFPayments': COLORS['danger'],
+                        'PendingPayments': COLORS['warning']
                     },
                     barmode='group'
                 )
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Download button
-                csv = agent_summary.to_csv(index=False)
-                st.download_button(
-                    label="Download Agent Summary",
-                    data=csv,
-                    file_name="agent_summary.csv",
-                    mime="text/csv",
+                # Customer acquisition chart
+                customer_counts = commission_df.drop_duplicates(['AgentName', 'CustomerID']).groupby('AgentName').size().reset_index(name='CustomerCount')
+                customer_counts = customer_counts.sort_values('CustomerCount', ascending=False)
+                
+                fig2 = px.bar(
+                    customer_counts,
+                    x='AgentName',
+                    y='CustomerCount',
+                    title='Unique Customers by Agent',
+                    labels={'CustomerCount': 'Number of Unique Customers', 'AgentName': 'Agent'},
+                    color_discrete_sequence=[COLORS['secondary']]
                 )
+                st.plotly_chart(fig2, use_container_width=True)
             else:
-                st.info("No data available for the selected time period.")
+                st.info("No data available for agent performance analysis.")
+        
+        # Customer Lifespan Tab
+        with comm_tabs[2]:
+            st.subheader("Customer Lifespan Analysis")
+            
+            if not commission_df.empty:
+                # Group by CustomerID to get payment history
+                customer_stats = commission_df.groupby('CustomerID').agg(
+                    FirstPayment=('PaymentDate', 'min'),
+                    LastPayment=('PaymentDate', 'max'),
+                    TotalPayments=('PaymentID', 'count'),
+                    ClearedPayments=('PaymentStatus', lambda x: (x == 'Cleared').sum()),
+                    NSFPayments=('PaymentStatus', lambda x: (x == 'NSF').sum()),
+                    Agent=('AgentName', 'first')
+                ).reset_index()
+                
+                # Fill NaN values
+                customer_stats['Agent'] = customer_stats['Agent'].fillna("Unknown")
+                
+                # Calculate lifespan in days
+                customer_stats['Lifespan'] = (customer_stats['LastPayment'] - customer_stats['FirstPayment']).dt.days
+                customer_stats['Lifespan'] = customer_stats['Lifespan'].fillna(0).astype(int)
+                
+                # Calculate success rate
+                customer_stats['SuccessRate'] = (customer_stats['ClearedPayments'] / customer_stats['TotalPayments'] * 100).round(1)
+                
+                # Identify nurtured IDs (3+ payments with 50%+ success rate)
+                customer_stats['Nurtured'] = (customer_stats['TotalPayments'] >= 3) & (customer_stats['SuccessRate'] >= 50)
+                
+                # Filter controls
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    min_payments = st.slider("Minimum Number of Payments", 1, 
+                                            max(1, int(customer_stats['TotalPayments'].max())), 1)
+                    filtered_customers = customer_stats[customer_stats['TotalPayments'] >= min_payments]
+                
+                with col2:
+                    show_nurtured = st.checkbox("Show Only Nurtured Customers", value=False)
+                    if show_nurtured:
+                        filtered_customers = filtered_customers[filtered_customers['Nurtured']]
+                
+                # Agent filter
+                agents = sorted([str(a) for a in filtered_customers['Agent'].unique() if pd.notna(a)])
+                selected_agents = st.multiselect(
+                    "Filter by Agent",
+                    agents,
+                    default=[],
+                    key="customer_lifespan_agents"
+                )
+                
+                if selected_agents:
+                    filtered_customers = filtered_customers[filtered_customers['Agent'].isin(selected_agents)]
+                
+                # Display metrics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Total Customers", f"{len(filtered_customers):,}")
+                with col2:
+                    avg_lifespan = filtered_customers['Lifespan'].mean()
+                    st.metric("Average Lifespan (days)", f"{avg_lifespan:.1f}")
+                with col3:
+                    nurtured_count = filtered_customers['Nurtured'].sum()
+                    st.metric("Nurtured Customers", f"{nurtured_count:,}")
+                
+                if not filtered_customers.empty:
+                    # Create scatter plot of lifespan vs success rate
+                    fig = px.scatter(
+                        filtered_customers,
+                        x='Lifespan',
+                        y='SuccessRate',
+                        size='TotalPayments',
+                        color='Agent',
+                        hover_name='CustomerID',
+                        title='Customer Lifespan vs Success Rate',
+                        labels={
+                            'Lifespan': 'Lifespan (days)',
+                            'SuccessRate': 'Success Rate (%)',
+                            'TotalPayments': 'Total Payments'
+                        },
+                        color_discrete_sequence=px.colors.qualitative.Plotly
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Display table
+                    st.subheader("Customer Lifespan Details")
+                    display_cols = ['CustomerID', 'Agent', 'FirstPayment', 'LastPayment', 
+                                    'Lifespan', 'TotalPayments', 'ClearedPayments', 'NSFPayments', 
+                                    'SuccessRate', 'Nurtured']
+                    display_df = filtered_customers[display_cols].copy()
+                    
+                    # Format dates
+                    display_df['FirstPayment'] = display_df['FirstPayment'].dt.strftime('%Y-%m-%d')
+                    display_df['LastPayment'] = display_df['LastPayment'].dt.strftime('%Y-%m-%d')
+                    
+                    # Show table
+                    st.dataframe(display_df, use_container_width=True, hide_index=True)
+                    
+                    # Download button
+                    csv = display_df.to_csv(index=False)
+                    st.download_button(
+                        label="Download Customer Data",
+                        data=csv,
+                        file_name="customer_lifespan.csv",
+                        mime="text/csv",
+                    )
+                else:
+                    st.info("No customers match the current filters.")
+            else:
+                st.info("No data available for customer lifespan analysis.")
     
     except Exception as e:
         st.error(f"Error in commission tab: {str(e)}")
