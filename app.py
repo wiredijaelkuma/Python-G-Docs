@@ -14,6 +14,7 @@ from modules.tabs.overview import render_overview_tab
 from modules.tabs.performance import render_performance_tab
 from modules.tabs.data_explorer import render_data_explorer
 from modules.tabs.commission import render_commission_tab
+from modules.tabs.monthly_analysis import render_monthly_analysis_tab
 
 # --- Set page configuration first (must be the first Streamlit command) ---
 st.set_page_config(
@@ -170,7 +171,7 @@ def main():
 
     # --- Tab Navigation ---
     tabs = st.tabs([
-        "Home", "Performance", "Data Explorer", "Commission"
+        "Home", "Performance", "Data Explorer", "Commission", "Monthly Analysis"
     ])
     
     # Home/Landing Page Tab
@@ -206,6 +207,14 @@ def main():
         except Exception as e:
             st.error(f"Error rendering Commission tab: {e}")
             st.info("The Commission tab displays agent performance metrics and payment trends.")
+            
+    # Monthly Analysis Tab
+    with tabs[4]:
+        try:
+            render_monthly_analysis_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Monthly Analysis tab: {e}")
+            st.info("The Monthly Analysis tab provides detailed metrics and trends by month.")
 
 def fallback_landing_page(df_filtered, COLORS):
     import plotly.express as px
