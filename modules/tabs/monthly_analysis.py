@@ -12,6 +12,30 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
     """Render the monthly analysis tab"""
     st.header("Monthly Performance Analysis")
     
+    # Create a copy of the dataframe without date filters
+    # This ensures we can see all months regardless of the sidebar date filter
+    import pandas as pd
+    from datetime import datetime, date, timedelta
+    
+    # Get the original unfiltered dataframe
+    if 'df' in st.session_state:
+        df_all = st.session_state['df'].copy()
+        
+        # Convert date columns if needed
+        date_col = None
+        if 'ENROLLED_DATE' in df_all.columns:
+            date_col = 'ENROLLED_DATE'
+        elif 'ENROLLED DATE' in df_all.columns:
+            date_col = 'ENROLLED DATE'
+            
+        if date_col and not pd.api.types.is_datetime64_any_dtype(df_all[date_col]):
+            try:
+                df_all[date_col] = pd.to_datetime(df_all[date_col])
+            except:
+                pass
+    else:
+        df_all = df_filtered.copy()
+    
     # Debug information
     with st.expander("Debug Information"):
         st.write("Available columns:", df_filtered.columns.tolist())
@@ -25,22 +49,23 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         
         # Check if ENROLLED_DATE exists in the dataframe
         date_column = None
-        if 'ENROLLED_DATE' in df_filtered.columns:
+        if 'ENROLLED_DATE' in df_all.columns:
             date_column = 'ENROLLED_DATE'
-        elif 'ENROLLED DATE' in df_filtered.columns:
+        elif 'ENROLLED DATE' in df_all.columns:
             date_column = 'ENROLLED DATE'
         else:
             st.error("Enrollment date column not found in the data.")
             return
             
-        # Extract year and month from enrollment date
-        df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m')
+        # Extract year and month from enrollment date for both dataframes
+        df_all['Year_Month'] = df_all[date_column].dt.strftime('%Y-%m')
+        df_all['Month_Display'] = df_all[date_column].dt.strftime('%B %Y')
         
-        # Create a more readable month format (e.g., "June 2025" instead of "2025-06")
+        df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m')
         df_filtered['Month_Display'] = df_filtered[date_column].dt.strftime('%B %Y')
         
-        # Get unique year-months and their display names
-        year_months = sorted(df_filtered['Year_Month'].unique(), reverse=True)
+        # Get unique year-months and their display names from the unfiltered data
+        year_months = sorted(df_all['Year_Month'].unique(), reverse=True)
         
         if not year_months:
             st.warning("No enrollment date data available.")
@@ -50,9 +75,11 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         month_display_map = {}
         for ym in year_months:
             # Find a row with this year-month
-            sample_row = df_filtered[df_filtered['Year_Month'] == ym].iloc[0]
-            display_name = sample_row['Month_Display']
-            month_display_map[display_name] = ym
+            rows = df_all[df_all['Year_Month'] == ym]
+            if not rows.empty:
+                sample_row = rows.iloc[0]
+                display_name = sample_row['Month_Display']
+                month_display_map[display_name] = ym
             
         # Get display names in sorted order
         month_display_names = sorted(month_display_map.keys(), 

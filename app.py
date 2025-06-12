@@ -158,8 +158,14 @@ def main():
     mask = pd.Series(True, index=df.index)
     
     # Apply date filter - only if ENROLLED_DATE exists
+    date_col = None
     if 'ENROLLED_DATE' in df.columns:
-        mask &= df['ENROLLED_DATE'].notna() & (df['ENROLLED_DATE'].dt.date >= start) & (df['ENROLLED_DATE'].dt.date <= end)
+        date_col = 'ENROLLED_DATE'
+    elif 'ENROLLED DATE' in df.columns:
+        date_col = 'ENROLLED DATE'
+        
+    if date_col:
+        mask &= df[date_col].notna() & (df[date_col].dt.date >= start) & (df[date_col].dt.date <= end)
     
     # Apply status filter - only if CATEGORY exists
     status_filter = []
