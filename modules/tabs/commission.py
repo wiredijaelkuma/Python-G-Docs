@@ -82,6 +82,83 @@ def render_commission_tab(df_filtered, COLORS):
             col3.metric("NSF/Returned", nsf_payments)
             col4.metric("Pending", pending_payments)
             
+            # Recent Cleared Payments (Last 14 Days)
+            st.subheader("Cleared Payments in Last 14 Days")
+            
+            # Get current date and date 14 days ago
+            from datetime import datetime, timedelta
+            today = datetime.now().date()
+            fourteen_days_ago = today - timedelta(days=14)
+            
+            # Filter for cleared payments in the last 14 days
+            recent_cleared = payments_df[
+                (payments_df['Status'].str.contains('Cleared', na=False)) & 
+                (payments_df['ClearedDate'].notna()) & 
+                (payments_df['ClearedDate'].dt.date >= fourteen_days_ago)
+            ]
+            
+            if not recent_cleared.empty:
+                # Sort by cleared date
+                recent_cleared = recent_cleared.sort_values('ClearedDate')
+                
+                # Group by agent and count payments
+                agent_payment_counts = recent_cleared.groupby('AgentName').size().reset_index()
+                agent_payment_counts.columns = ['Agent', 'PaymentCount']
+                agent_payment_counts = agent_payment_counts.sort_values('PaymentCount', ascending=False)
+                
+                # Create columns for display
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    # Add payment number to each agent's payments
+                    agent_payment_numbers = {}
+                    for agent in recent_cleared['AgentName'].unique():
+                        agent_payments = recent_cleared[recent_cleared['AgentName'] == agent].sort_values('ClearedDate')
+                        agent_payments['PaymentNumber'] = range(1, len(agent_payments) + 1)
+                        agent_payment_numbers[agent] = agent_payments
+                    
+                    # Combine all agent payments with numbers
+                    numbered_payments = pd.concat(agent_payment_numbers.values())
+                    
+                    # Select columns to display
+                    display_df = numbered_payments[['AgentName', 'PaymentNumber', 'PaymentID', 'ClearedDate', 'PaymentDate']].copy()
+                    display_df.columns = ['Agent', 'Payment #', 'Payment ID', 'Cleared Date', 'Payment Date']
+                    
+                    # Format dates
+                    display_df['Cleared Date'] = display_df['Cleared Date'].dt.strftime('%Y-%m-%d')
+                    display_df['Payment Date'] = display_df['Payment Date'].dt.strftime('%Y-%m-%d')
+                    
+                    # Display the table
+                    st.dataframe(display_df, use_container_width=True)
+                
+                with col2:
+                    # Display agent payment counts
+                    st.subheader("Payments by Agent")
+                    st.dataframe(agent_payment_counts, use_container_width=True)
+                    
+                    # Calculate when agents need to be paid
+                    st.subheader("Payment Due")
+                    
+                    # Group by agent and get earliest cleared date
+                    agent_earliest_payment = recent_cleared.groupby('AgentName')['ClearedDate'].min().reset_index()
+                    agent_earliest_payment.columns = ['Agent', 'First Cleared Date']
+                    
+                    # Calculate payment due date (7 days after first cleared payment)
+                    agent_earliest_payment['Payment Due Date'] = agent_earliest_payment['First Cleared Date'] + timedelta(days=7)
+                    agent_earliest_payment['Days Until Due'] = (agent_earliest_payment['Payment Due Date'] - datetime.now()).dt.days
+                    
+                    # Format for display
+                    agent_earliest_payment['First Cleared Date'] = agent_earliest_payment['First Cleared Date'].dt.strftime('%Y-%m-%d')
+                    agent_earliest_payment['Payment Due Date'] = agent_earliest_payment['Payment Due Date'].dt.strftime('%Y-%m-%d')
+                    
+                    # Sort by days until due
+                    agent_earliest_payment = agent_earliest_payment.sort_values('Days Until Due')
+                    
+                    # Display the table
+                    st.dataframe(agent_earliest_payment[['Agent', 'Payment Due Date', 'Days Until Due']], use_container_width=True)
+            else:
+                st.info("No cleared payments in the last 14 days.")
+            
             # Payment Status Distribution
             st.subheader("Payment Status Distribution")
             status_counts = payments_df['Status'].value_counts().reset_index()
