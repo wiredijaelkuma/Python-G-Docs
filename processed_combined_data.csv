@@ -4,7 +4,7 @@ CUSTOMER ID,AGENT,ENROLLED DATE,STATUS,SOURCE_SHEET,CATEGORY
 1106614388,Amanda O'Banion,2025-06-11,Active,PAC,ACTIVE
 1107325628,Israel Pelcastre,2025-06-11,Active,PAC,ACTIVE
 1106356516,Bryan Garcia,2025-06-10,Active,PAC,ACTIVE
-1106107849,Heidi Elizondo,2025-06-09,Pending Cancellation,PAC,CANCELLED
+1106107849,Heidi Elizondo,2025-06-09,Dropped,PAC,CANCELLED
 1105980267,Israel Pelcastre,2025-06-09,Active,PAC,ACTIVE
 1096236626,David Zepeda,2025-06-09,Active,PAC,ACTIVE
 1105819162,Israel Pelcastre,2025-06-05,Active,PAC,ACTIVE
@@ -389,6 +389,8 @@ CID191239,Israel Pelcastre,2025-05-30,Active,MLG,ACTIVE
 CID196068,Israel Pelcastre,2025-05-29,Active,MLG,ACTIVE
 CID135605,Richard Hernandez,2025-05-29,Active,MLG,ACTIVE
 CID123505,Richard Hernandez,2025-05-28,Active,MLG,ACTIVE
+CID138303,Israel Pelcastre,2025-05-29,Pending Cancellation,MLG,CANCELLED
+David Saffold,Vanessa Glass,2025-06-14,Active,ELP,ACTIVE
 Charlene Wood,Vanessa Glass,2025-06-13,Active,ELP,ACTIVE
 Brian Christian,David Zepeda,2025-06-10,Active,ELP,ACTIVE
 Julieta Pimentel,David Zepeda,2025-06-09,Active,ELP,ACTIVE
