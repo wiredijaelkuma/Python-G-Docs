@@ -1,4 +1,5 @@
 CUSTOMER ID,AGENT,ENROLLED DATE,STATUS,SOURCE_SHEET,CATEGORY
+1107295889,Bryan Garcia,2025-06-16,Active,PAC,ACTIVE
 11074822662,Amanda O'Banion,2025-06-12,Active,PAC,ACTIVE
 1107351514,Vanessa Hernandez,2025-06-11,Active,PAC,ACTIVE
 1106614388,Amanda O'Banion,2025-06-11,Active,PAC,ACTIVE
@@ -486,15 +487,3 @@ John Doromal,Israel Pelcastre,2025-02-05,Cancelled,ELP,CANCELLED
 Billy Ray Hudson Jr,Mike Solis,2025-02-05,Cancelled,ELP,CANCELLED
 Carol E. Hamby,Andy Wade,2025-02-04,Cancelled,ELP,CANCELLED
 Tracy Halley,Miriam Guizar,2025-02-04,Cancelled,ELP,CANCELLED
-1107355815,Vivian Garza,2025-06-11,Active,Cordoba,ACTIVE
-1106623139,Vanessa Hernandez,2025-06-10,Active,Cordoba,ACTIVE
-1106274869,Karen Gonzalez,2025-06-09,Active,Cordoba,ACTIVE
-1106077885,Vivian Garza,2025-06-09,Active,Cordoba,ACTIVE
-1105738880,Vivian Garza,2025-06-05,Active,Cordoba,ACTIVE
-1104378721,David Zepeda,2025-06-03,Cancelled,Cordoba,CANCELLED
-1103691841,Vanessa Hernandez,2025-06-02,Active,Cordoba,ACTIVE
-1103051609,Vanessa Hernandez,2025-05-29,Active,Cordoba,ACTIVE
-1099465573,Vanessa Hernandez,2025-05-22,Active,Cordoba,ACTIVE
-1092762950,Bryan Garcia,2025-05-21,Active,Cordoba,ACTIVE
-1094921592,Bryan Garcia,2025-05-09,Active,Cordoba,ACTIVE
-1094899616,Richard Hernandez,2025-05-09,Active,Cordoba,ACTIVE
