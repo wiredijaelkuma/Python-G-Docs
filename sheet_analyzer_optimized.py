@@ -55,10 +55,32 @@ def fetch_and_combine_data(gspread_client, spreadsheet_title, raw_sheet_names_li
         for sheet_name in raw_sheet_names_list:
             try:
                 worksheet = sheet_gspread_obj.worksheet(sheet_name)
-                records = worksheet.get_all_records(empty2zero=False, head=1, default_blank="")
                 
-                if records:
-                    df = pd.DataFrame(records)
+                # Get all values including headers
+                all_values = worksheet.get_all_values()
+                
+                if len(all_values) > 1:  # At least headers and one row
+                    # Get headers from first row
+                    headers = all_values[0]
+                    
+                    # Fix duplicate/empty headers by adding column numbers
+                    fixed_headers = []
+                    header_counts = {}
+                    
+                    for i, header in enumerate(headers):
+                        if header == "" or header is None:
+                            header = f"Column_{i+1}"
+                        
+                        if header in header_counts:
+                            header_counts[header] += 1
+                            header = f"{header}_{header_counts[header]}"
+                        else:
+                            header_counts[header] = 0
+                            
+                        fixed_headers.append(header)
+                    
+                    # Create DataFrame with fixed headers
+                    df = pd.DataFrame(all_values[1:], columns=fixed_headers)
                     df_processed = standardize_and_prepare_df(df.copy(), sheet_name)
                     df_processed['SOURCE_SHEET'] = sheet_name 
                     all_individual_dfs[sheet_name] = df_processed
