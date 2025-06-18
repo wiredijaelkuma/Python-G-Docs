@@ -18,6 +18,9 @@ def clean_dataframe(df, date_column):
         try:
             if not pd.api.types.is_datetime64_any_dtype(df_clean[date_column]):
                 df_clean[date_column] = pd.to_datetime(df_clean[date_column], errors='coerce')
+            
+            # Remove rows with NaN dates
+            df_clean = df_clean[df_clean[date_column].notna()]
         except Exception as e:
             st.warning(f"Date conversion error: {str(e)}")
     
@@ -63,18 +66,36 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             return
             
         # Extract year and month from enrollment date for both dataframes
-        # Ensure all values are strings to prevent type comparison issues
-        df_all['Year_Month'] = df_all[date_column].dt.strftime('%Y-%m').astype(str)
-        df_all['Month_Display'] = df_all[date_column].dt.strftime('%B %Y')
+        # Handle NaN values and ensure all values are strings
+        df_all['Year_Month'] = df_all[date_column].dt.strftime('%Y-%m').fillna('')
+        df_all['Month_Display'] = df_all[date_column].dt.strftime('%B %Y').fillna('')
         
-        df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m').astype(str)
-        df_filtered['Month_Display'] = df_filtered[date_column].dt.strftime('%B %Y')
+        # Remove rows with empty or NaN dates
+        df_all = df_all[df_all['Year_Month'] != '']
+        df_all = df_all[df_all['Year_Month'] != 'nan']
+        df_all = df_all[df_all['Year_Month'].notna()]
+        
+        # Do the same for filtered data
+        df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m').fillna('')
+        df_filtered['Month_Display'] = df_filtered[date_column].dt.strftime('%B %Y').fillna('')
+        
+        # Remove rows with empty or NaN dates
+        df_filtered = df_filtered[df_filtered['Year_Month'] != '']
+        df_filtered = df_filtered[df_filtered['Year_Month'] != 'nan']
+        df_filtered = df_filtered[df_filtered['Year_Month'].notna()]
         
         # Get unique year-months and their display names from the unfiltered data
-        # Convert to list and sort using a custom key function to ensure proper date ordering
-        year_months = sorted(df_all['Year_Month'].unique().tolist(), 
-                           key=lambda x: pd.to_datetime(x + '-01'), 
-                           reverse=True)
+        # Filter out NaN values first
+        valid_year_months = [ym for ym in df_all['Year_Month'].unique().tolist() if pd.notna(ym) and ym != 'nan' and ym != '']
+        
+        # Sort using a custom key function to ensure proper date ordering
+        try:
+            year_months = sorted(valid_year_months, 
+                               key=lambda x: pd.to_datetime(str(x) + '-01'), 
+                               reverse=True)
+        except Exception as e:
+            st.warning(f"Error sorting dates: {str(e)}. Using alphabetical sorting.")
+            year_months = sorted(valid_year_months, reverse=True)
         
         if not year_months:
             st.warning("No enrollment date data available.")
