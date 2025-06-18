@@ -8,6 +8,26 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
 
+def clean_dataframe(df, date_column):
+    """Clean and prepare dataframe for analysis"""
+    # Make a copy to avoid modifying the original
+    df_clean = df.copy()
+    
+    # Ensure date column is datetime
+    if date_column in df_clean.columns:
+        try:
+            if not pd.api.types.is_datetime64_any_dtype(df_clean[date_column]):
+                df_clean[date_column] = pd.to_datetime(df_clean[date_column], errors='coerce')
+        except Exception as e:
+            st.warning(f"Date conversion error: {str(e)}")
+    
+    # Handle missing values in critical columns
+    for col in ['CATEGORY', 'STATUS', 'AGENT']:
+        if col in df_clean.columns:
+            df_clean[col] = df_clean[col].fillna('Unknown')
+    
+    return df_clean
+
 def render_monthly_analysis_tab(df_filtered, COLORS):
     """Render the monthly analysis tab"""
     st.header("Monthly Performance Analysis")
@@ -17,15 +37,16 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         from modules.utils import load_csv_data
         df_all, _ = load_csv_data("processed_combined_data.csv")
         
-        # Convert date columns if needed
+        # Identify date column
         date_col = None
         if 'ENROLLED_DATE' in df_all.columns:
             date_col = 'ENROLLED_DATE'
         elif 'ENROLLED DATE' in df_all.columns:
             date_col = 'ENROLLED DATE'
             
-        if date_col and not pd.api.types.is_datetime64_any_dtype(df_all[date_col]):
-            df_all[date_col] = pd.to_datetime(df_all[date_col])
+        # Clean both dataframes
+        df_all = clean_dataframe(df_all, date_col)
+        df_filtered = clean_dataframe(df_filtered, date_col)
     except Exception as e:
         st.warning(f"Could not load full dataset: {str(e)}")
         df_all = df_filtered.copy()
@@ -42,14 +63,18 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             return
             
         # Extract year and month from enrollment date for both dataframes
-        df_all['Year_Month'] = df_all[date_column].dt.strftime('%Y-%m')
+        # Ensure all values are strings to prevent type comparison issues
+        df_all['Year_Month'] = df_all[date_column].dt.strftime('%Y-%m').astype(str)
         df_all['Month_Display'] = df_all[date_column].dt.strftime('%B %Y')
         
-        df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m')
+        df_filtered['Year_Month'] = df_filtered[date_column].dt.strftime('%Y-%m').astype(str)
         df_filtered['Month_Display'] = df_filtered[date_column].dt.strftime('%B %Y')
         
         # Get unique year-months and their display names from the unfiltered data
-        year_months = sorted(df_all['Year_Month'].unique(), reverse=True)
+        # Convert to list and sort using a custom key function to ensure proper date ordering
+        year_months = sorted(df_all['Year_Month'].unique().tolist(), 
+                           key=lambda x: pd.to_datetime(x + '-01'), 
+                           reverse=True)
         
         if not year_months:
             st.warning("No enrollment date data available.")
@@ -66,9 +91,14 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
                 month_display_map[display_name] = ym
             
         # Get display names in sorted order
-        month_display_names = sorted(month_display_map.keys(), 
-                                    key=lambda x: pd.to_datetime(x, format='%B %Y'), 
-                                    reverse=True)
+        try:
+            month_display_names = sorted(month_display_map.keys(), 
+                                        key=lambda x: pd.to_datetime(x, format='%B %Y'), 
+                                        reverse=True)
+        except Exception as e:
+            # Fallback sorting if datetime conversion fails
+            st.warning(f"Date sorting issue: {str(e)}. Using alphabetical sorting instead.")
+            month_display_names = sorted(month_display_map.keys(), reverse=True)
         
         # Add option for all months
         month_display_names = ["All Data"] + month_display_names
@@ -255,8 +285,14 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             # Calculate stick rate
             monthly_trends['Stick Rate'] = (monthly_trends['Active'] / monthly_trends['Enrollments'] * 100).round(1)
             
-            # Sort by year-month
-            monthly_trends = monthly_trends.sort_values('Year_Month')
+            # Sort by year-month chronologically
+            try:
+                monthly_trends['Month_Sort'] = monthly_trends['Year_Month'].apply(lambda x: pd.to_datetime(str(x) + '-01'))
+                monthly_trends = monthly_trends.sort_values('Month_Sort')
+                monthly_trends = monthly_trends.drop('Month_Sort', axis=1)
+            except Exception as e:
+                st.warning(f"Could not sort months chronologically: {str(e)}. Using alphabetical sorting.")
+                monthly_trends = monthly_trends.sort_values('Year_Month')
             
             # Create line chart for enrollments trend
             fig = px.line(
@@ -383,6 +419,14 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             # Monthly trend chart
             st.subheader(f"Monthly Performance for {selected_agent}")
             
+            # Ensure Month column is properly sorted chronologically
+            try:
+                agent_monthly['Month_Sort'] = agent_monthly['Month'].apply(lambda x: pd.to_datetime(x + '-01'))
+                agent_monthly = agent_monthly.sort_values('Month_Sort')
+                agent_monthly = agent_monthly.drop('Month_Sort', axis=1)
+            except Exception as e:
+                st.warning(f"Could not sort months chronologically: {str(e)}. Using default sorting.")
+            
             fig = px.line(
                 agent_monthly,
                 x='Month',
@@ -415,8 +459,17 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             status_monthly = df_all.groupby([df_all[date_column].dt.strftime('%Y-%m'), 'STATUS']).size().reset_index()
             status_monthly.columns = ['Month', 'Status', 'Count']
             
-            # Sort by month
-            status_monthly = status_monthly.sort_values('Month')
+            # Ensure Month column is string type
+            status_monthly['Month'] = status_monthly['Month'].astype(str)
+            
+            # Sort by month chronologically
+            try:
+                status_monthly['Month_Sort'] = status_monthly['Month'].apply(lambda x: pd.to_datetime(x + '-01'))
+                status_monthly = status_monthly.sort_values('Month_Sort')
+                status_monthly = status_monthly.drop('Month_Sort', axis=1)
+            except Exception as e:
+                st.warning(f"Could not sort months chronologically: {str(e)}. Using alphabetical sorting.")
+                status_monthly = status_monthly.sort_values('Month')
             
             # Status trend chart
             fig = px.line(
@@ -433,8 +486,17 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
             category_monthly = df_all.groupby([df_all[date_column].dt.strftime('%Y-%m'), 'CATEGORY']).size().reset_index()
             category_monthly.columns = ['Month', 'Category', 'Count']
             
-            # Sort by month
-            category_monthly = category_monthly.sort_values('Month')
+            # Ensure Month column is string type
+            category_monthly['Month'] = category_monthly['Month'].astype(str)
+            
+            # Sort by month chronologically
+            try:
+                category_monthly['Month_Sort'] = category_monthly['Month'].apply(lambda x: pd.to_datetime(x + '-01'))
+                category_monthly = category_monthly.sort_values('Month_Sort')
+                category_monthly = category_monthly.drop('Month_Sort', axis=1)
+            except Exception as e:
+                st.warning(f"Could not sort months chronologically: {str(e)}. Using alphabetical sorting.")
+                category_monthly = category_monthly.sort_values('Month')
             
             # Category trend chart
             fig = px.line(

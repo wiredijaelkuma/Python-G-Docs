@@ -211,7 +211,38 @@ def main():
             render_monthly_analysis_tab(df_filtered, COLORS)
         except Exception as e:
             st.error(f"Error rendering Monthly Analysis tab: {e}")
-            st.info("The Monthly Analysis tab provides detailed metrics and trends by month.")
+            import traceback
+            st.exception(traceback.format_exc())
+            
+            # Provide a simple fallback monthly analysis
+            st.subheader("Monthly Analysis (Fallback View)")
+            if 'ENROLLED_DATE' in df_filtered.columns:
+                try:
+                    # Convert to string to avoid type comparison issues
+                    df_filtered['Year_Month'] = df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')
+                    
+                    # Group by month
+                    monthly_counts = df_filtered.groupby('Year_Month').size().reset_index()
+                    monthly_counts.columns = ['Month', 'Count']
+                    
+                    # Sort by month
+                    monthly_counts = monthly_counts.sort_values('Month')
+                    
+                    # Create simple bar chart
+                    import plotly.express as px
+                    fig = px.bar(
+                        monthly_counts,
+                        x='Month',
+                        y='Count',
+                        title='Monthly Enrollment Count',
+                        color_discrete_sequence=[COLORS['primary']]
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as fallback_error:
+                    st.error(f"Could not create fallback view: {fallback_error}")
+                    st.info("The Monthly Analysis tab provides detailed metrics and trends by month.")
+            else:
+                st.info("The Monthly Analysis tab provides detailed metrics and trends by month.")
     
     # Performance Tab
     with tabs[2]:

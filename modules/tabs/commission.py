@@ -34,13 +34,13 @@ def render_commission_tab(df_filtered, COLORS):
         
         # Process odd columns (5-10, 11)
         for i in range(len(df)):
-            if pd.notna(df.iloc[i, 7]) and df.iloc[i, 7] != "":  # Check if agent name exists
+            if pd.notna(df.iloc[i, 6]) and df.iloc[i, 6] != "":  # Check if agent name exists
                 row_data = {
                     'CustomerID': str(df.iloc[i, 5]),
-                    'AgentName': str(df.iloc[i, 7]),
-                    'PaymentID': str(df.iloc[i, 8]),
-                    'Status': str(df.iloc[i, 9]),
-                    'PaymentDate': str(df.iloc[i, 10]),
+                    'AgentName': str(df.iloc[i, 6]),
+                    'PaymentID': str(df.iloc[i, 7]),
+                    'Status': str(df.iloc[i, 8]),
+                    'PaymentDate': str(df.iloc[i, 9]),
                     'ClearedDate': str(df.iloc[i, 11]) if i < len(df) and pd.notna(df.iloc[i, 11]) else ""
                 }
                 data.append(row_data)
@@ -48,13 +48,28 @@ def render_commission_tab(df_filtered, COLORS):
         # Convert to dataframe
         payments_df = pd.DataFrame(data)
         
+        # Clean and validate data
+        payments_df = payments_df[payments_df['AgentName'].notna() & (payments_df['AgentName'] != "") & (payments_df['AgentName'] != "nan")]
+        payments_df['CustomerID'] = payments_df['CustomerID'].replace('nan', '')
+        payments_df['PaymentID'] = payments_df['PaymentID'].replace('nan', '')
+        payments_df['Status'] = payments_df['Status'].fillna('Unknown')
+        
+        # Remove any duplicate payment IDs
+        payments_df = payments_df.drop_duplicates(subset=['PaymentID'], keep='first')
+        
         # Parse dates
         for date_col in ['PaymentDate', 'ClearedDate']:
             try:
                 # Convert date strings to datetime objects where possible
-                payments_df[date_col] = pd.to_datetime(payments_df[date_col], errors='coerce')
-            except:
-                pass
+                # Handle the format "Month DD YYYY" (e.g., "June 11 2025")
+                payments_df[date_col] = pd.to_datetime(payments_df[date_col], format='%B %d %Y', errors='coerce')
+            except Exception as e:
+                st.warning(f"Error parsing {date_col}: {str(e)}")
+                # Try alternative parsing as fallback
+                try:
+                    payments_df[date_col] = pd.to_datetime(payments_df[date_col], errors='coerce')
+                except:
+                    pass
         
         # Create tabs
         tabs = st.tabs(["Dashboard Overview", "Agent Performance", "Payment Analysis", "Raw Data"])
@@ -62,8 +77,17 @@ def render_commission_tab(df_filtered, COLORS):
         # Get unique agent names (manually to avoid sorting issues)
         agent_names = []
         for agent in payments_df['AgentName']:
-            if agent and agent not in agent_names and agent != "nan":
-                agent_names.append(agent)
+            if agent and agent not in agent_names and agent != "nan" and agent != "None" and pd.notna(agent):
+                # Ensure agent name is a valid string
+                try:
+                    agent_str = str(agent).strip()
+                    if agent_str and agent_str not in agent_names:
+                        agent_names.append(agent_str)
+                except:
+                    pass
+                    
+        # Sort agent names alphabetically
+        agent_names.sort()
         
         # Tab 1: Dashboard Overview
         with tabs[0]:
@@ -398,6 +422,41 @@ def render_commission_tab(df_filtered, COLORS):
         # Tab 4: Raw Data
         with tabs[3]:
             st.subheader("Raw Payment Data")
+            
+            # Add data inspection tools
+            with st.expander("Data Inspection Tools"):
+                st.subheader("Data Quality Check")
+                
+                # Check for missing values
+                missing_values = payments_df.isna().sum()
+                st.write("Missing Values by Column:")
+                st.write(missing_values)
+                
+                # Check for invalid dates
+                invalid_payment_dates = payments_df[payments_df['PaymentDate'].isna()].shape[0]
+                st.write(f"Invalid Payment Dates: {invalid_payment_dates}")
+                
+                # Show sample of original CSV
+                st.subheader("Original CSV Sample")
+                st.dataframe(df.head(5), use_container_width=True)
+                
+                # Show column mapping
+                st.subheader("Column Mapping")
+                st.write("Even columns (0-5, 10):")
+                st.write("- Column 0 → CustomerID")
+                st.write("- Column 1 → AgentName")
+                st.write("- Column 2 → PaymentID")
+                st.write("- Column 3 → Status")
+                st.write("- Column 4 → PaymentDate")
+                st.write("- Column 10 → ClearedDate")
+                
+                st.write("Odd columns (5-11):")
+                st.write("- Column 5 → CustomerID")
+                st.write("- Column 6 → AgentName")
+                st.write("- Column 7 → PaymentID")
+                st.write("- Column 8 → Status")
+                st.write("- Column 9 → PaymentDate")
+                st.write("- Column 11 → ClearedDate")
             
             # Display the raw data
             st.dataframe(payments_df, use_container_width=True)
