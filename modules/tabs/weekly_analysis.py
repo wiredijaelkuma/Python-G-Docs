@@ -35,9 +35,9 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
         with tabs[0]:
             st.subheader("Weekly Enrollment Summary")
             
-            # Group by week
+            # Group by week - use index for counting since customer name column varies
             weekly_data = df.groupby(['Week_Start', 'Week_Label']).agg({
-                'CUSTOMER_NAME': 'count',
+                df.columns[0]: 'count',  # Use first column for counting
                 'CATEGORY': lambda x: (x == 'ACTIVE').sum()
             }).reset_index()
             
