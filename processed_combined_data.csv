@@ -1,522 +1,114 @@
-CUSTOMER_ID,CUSTOMER_NAME,SUBMITTED_DATE,ENROLLED_DEBT,ASSIGNED_TO,STAGE,STATUS,SOURCE_SHEET,ENROLLED_DATE,CATEGORY,AGENT_NAME,ENROLLMENT_DATE,DAYS_ENROLLED,CUSTOMER ID,AGENT,ENROLLED DATE
-1107789349.0,"Wilson, Justin",06/16/2025 9:04 am,"$9,842.84",David Zepeda,Cordoba Servicing,Waiting For First Payment,Cordoba,2025-06-16 09:04:00,OTHER,,,,,,
-1107355815.0,"Hanson, Kimberly",06/11/2025 1:22 pm,"$28,007.00",Vivian Garza,Cordoba Servicing,Waiting For First Payment,Cordoba,,OTHER,,,,,,
-1106623139.0,"Mills, Aaron",06/10/2025 3:28 pm,"$7,294.00",Vanessa Hernandez,Cordoba Servicing,Waiting For First Payment,Cordoba,,OTHER,,,,,,
-1106250083.0,"Mckenzie, Timothy",06/09/2025 4:22 pm,"$13,927.00",Karen Gonzalez,Cordoba Servicing,Waiting For First Payment,Cordoba,,OTHER,,,,,,
-1106077885.0,"MCGee, Dennis",06/09/2025 10:15 am,"$18,055.00",Vivian Garza,Cordoba Servicing,Waiting For First Payment,Cordoba,2025-06-09 10:15:00,OTHER,,,,,,
-1105738880.0,"Serna, Olga",06/05/2025 2:49 pm,"$25,252.00",Vivian Garza,Cordoba Servicing,Waiting For First Payment,Cordoba,,OTHER,,,,,,
-1105756872.0,"Eldridge, Richard",06/05/2025 1:57 pm,"$60,285.00",David Zepeda,Cordoba Cancelled,Cancelled,Cordoba,,CANCELLED,,,,,,
-1104366095.0,"Weis, Mary",06/03/2025 10:10 am,"$51,319.00",David Zepeda,Cordoba Servicing,Waiting For First Payment,Cordoba,2025-06-03 10:10:00,OTHER,,,,,,
-1103691841.0,"Carroll, John",06/02/2025 3:52 pm,"$20,747.00",Vanessa Hernandez,Cordoba Servicing,Waiting For First Payment,Cordoba,,OTHER,,,,,,
-1103051609.0,"Perez, Susan",05/29/2025 12:45 pm,"$14,836.37",Vanessa Hernandez,Cordoba Servicing,Waiting For First Payment,Cordoba,,OTHER,,,,,,
-1103030933.0,"Brock, Terry",05/29/2025 11:09 am,"$24,192.00",Christopher McCracken,Cordoba Servicing,Active,Cordoba,2025-05-29 11:09:00,ACTIVE,,,,,,
-1100114301.0,"Holcomb, Steven",05/23/2025 9:27 am,"$23,833.00",Israel Pelcastre,Cordoba Servicing,Active,Cordoba,2025-05-23 09:27:00,ACTIVE,,,,,,
-1099465573.0,"Torres, Joie",05/22/2025 9:00 am,"$20,252.00",Vanessa Hernandez,Cordoba Servicing,Waiting For First Payment,Cordoba,2025-05-22 09:00:00,OTHER,,,,,,
-1092762950.0,"Sanders, Kent",05/21/2025 8:39 am,"$16,674.00",Bryan Garcia,Cordoba Cancelled,Cancelled,Cordoba,2025-05-21 08:39:00,CANCELLED,,,,,,
-1098567555.0,"Glover, Lorenzo",05/15/2025 12:49 pm,"$18,759.00",Christopher McCracken,Cordoba Cancelled,Cancelled,Cordoba,,CANCELLED,,,,,,
-1096357270.0,"Whitworth, Dana",05/14/2025 2:37 pm,"$10,307.00",Christopher McCracken,Cordoba Servicing,Active,Cordoba,,ACTIVE,,,,,,
-1090662554.0,"McGann, Susan",05/14/2025 1:40 pm,"$22,766.00",Christopher McCracken,Cordoba Cancelled,Cancelled,Cordoba,,CANCELLED,,,,,,
-1094921592.0,"Renner, Dorothy",05/09/2025 2:38 pm,"$8,139.00",Bryan Garcia,Cordoba Servicing,Pending Affiliate Cancellation,Cordoba,,CANCELLED,,,,,,
-1094899616.0,"Ballard, Latoya",05/09/2025 2:30 pm,"$39,158.00",Richard Hernandez,Cordoba Servicing,Active,Cordoba,,ACTIVE,,,,,,
-1091937266.0,"Siaga-Jenkins, Priscila",05/02/2025 3:07 pm,"$13,869.35",Christopher McCracken,Cordoba Servicing,Active,Cordoba,,ACTIVE,,,,,,
-1089448998.0,"Christou, Sotiris",,"$12,111.00",Christopher McCracken,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1105925675.0,"Gulley, Angela",,"$10,703.00",Vivian Garza,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1090812219.0,"Piatnitsky, Andrei",,"$30,903.00",Christopher McCracken,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1104583486.0,"Hamrick, Marvin",,"$14,823.00",Vanessa Hernandez,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1094691909.0,"Maddox-Wilson, Donna",,"$14,531.00",Christopher McCracken,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1103252359.0,"Banks Whitley, Phyllis",,"$6,690.00",Bryan Garcia,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1098641090.0,"Marshall, Natalie",,"$7,889.00",Heidi Elizondo,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1108165324.0,"Perrine, William",,"$59,567.00",Salvador Flores,Cordoba Underwriting,Returned,Cordoba,,OTHER,,,,,,
-1108985513.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Miguel Flores,06/17/2025,2 Days,,,
-1107295889.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,06/16/2025,3 Days,,,
-1107482662.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,06/12/2025,7 Days,,,
-1088677980.0,,,,,,Pending Cancellation,PAC,,CANCELLED,Bianca Rodriguez,06/12/2025,,,,
-1106614388.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,06/11/2025,8 Days,,,
-1107351514.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,06/11/2025,8 Days,,,
-1107325628.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,06/11/2025,8 Days,,,
-1106356516.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,06/10/2025,9 Days,,,
-1096236626.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,06/09/2025,10 Days,,,
-1105980267.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,06/09/2025,10 Days,,,
-1106107849.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,06/09/2025,4 Days,,,
-1105819162.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,06/05/2025,14 Days,,,
-1105676108.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,06/05/2025,14 Days,,,
-1105340612.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,06/04/2025,7 Days,,,
-1103707348.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,06/02/2025,17 Days,,,
-1103500704.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,05/30/2025,20 Days,,,
-1103448613.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,05/30/2025,20 Days,,,
-1103033462.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,05/29/2025,21 Days,,,
-1102483428.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,05/29/2025,21 Days,,,
-1102247095.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/28/2025,22 Days,,,
-1102662902.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/28/2025,8 Days,,,
-1102247885.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,05/28/2025,22 Days,,,
-1102430151.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/28/2025,22 Days,,,
-1102282910.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,05/28/2025,6 Days,,,
-1102301487.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,05/28/2025,22 Days,,,
-1102056859.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/27/2025,23 Days,,,
-1101188968.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/27/2025,23 Days,,,
-1052649304.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/23/2025,0 Days,,,
-1094901000.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/23/2025,10 Days,,,
-1101121447.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/23/2025,27 Days,,,
-1100633908.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/22/2025,28 Days,,,
-1100571389.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,05/22/2025,8 Days,,,
-1100343173.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/22/2025,28 Days,,,
-1100530864.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,05/22/2025,20 Days,,,
-1100536692.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,05/22/2025,28 Days,,,
-1100242214.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,05/21/2025,29 Days,,,
-1100286549.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/21/2025,15 Days,,,
-1100023800.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,05/21/2025,29 Days,,,
-1092581255.0,,,,,,Dropped,PAC,,CANCELLED,Bianca Rodriguez,05/21/2025,19 Days,,,
-1100248915.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/21/2025,22 Days,,,
-1099499940.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/20/2025,30 Days,,,
-1099506391.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/20/2025,13 Days,,,
-1099530650.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/20/2025,30 Days,,,
-1099525412.0,,,,,,Pending Cancellation,PAC,,CANCELLED,David Zepeda,05/20/2025,30 Days,,,
-1099163354.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/19/2025,30 Days,,,
-1099093530.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Israel Pelcastre,05/19/2025,31 Days,,,
-1099335802.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/19/2025,30 Days,,,
-1099359044.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Bianca Rodriguez,05/19/2025,31 Days,,,
-1099004203.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,05/19/2025,11 Days,,,
-1099099006.0,,,,,,Dropped,PAC,,CANCELLED,Bianca Rodriguez,05/19/2025,4 Days,,,
-1099250253.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,05/19/2025,14 Days,,,
-1099277741.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Bianca Rodriguez,05/19/2025,31 Days,,,
-1098654567.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,05/16/2025,32 Days,,,
-1098952756.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Bianca Rodriguez,05/16/2025,34 Days,,,
-1098964497.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/16/2025,26 Days,,,
-1098975432.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/16/2025,34 Days,,,
-1098973898.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/16/2025,19 Days,,,
-1098976401.0,,,,,,Pending Cancellation,PAC,,CANCELLED,Bianca Rodriguez,05/16/2025,34 Days,,,
-1098968513.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/16/2025,4 Days,,,
-1098963917.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,05/16/2025,33 Days,,,
-1098580120.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/15/2025,20 Days,,,
-1098572049.0,,,,,,Dropped,PAC,,CANCELLED,Bianca Rodriguez,05/15/2025,34 Days,,,
-1098472228.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/15/2025,6 Days,,,
-1098450190.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,05/15/2025,35 Days,,,
-1098583405.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Bianca Rodriguez,05/15/2025,35 Days,,,
-1098567284.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/15/2025,35 Days,,,
-1098567229.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/15/2025,18 Days,,,
-1098532955.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/15/2025,6 Days,,,
-1098544337.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Bianca Rodriguez,05/15/2025,35 Days,,,
-1098584523.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,05/15/2025,33 Days,,,
-1098495298.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Bianca Rodriguez,05/15/2025,35 Days,,,
-1097528602.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Vanessa Hernandez,05/14/2025,36 Days,,,
-1086649318.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/14/2025,13 Days,,,
-1094530589.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/14/2025,7 Days,,,
-1095074029.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,05/13/2025,37 Days,,,
-1096246781.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/13/2025,37 Days,,,
-1095008124.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/12/2025,38 Days,,,
-1095110408.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,05/12/2025,8 Days,,,
-1095164815.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/12/2025,16 Days,,,
-1084345210.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,05/09/2025,41 Days,,,
-1094885869.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,05/09/2025,39 Days,,,
-1073288740.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,05/09/2025,41 Days,,,
-1094899846.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/09/2025,41 Days,,,
-1094935587.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/09/2025,41 Days,,,
-1093009444.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/09/2025,41 Days,,,
-1094538483.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,05/08/2025,34 Days,,,
-1094525730.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/08/2025,42 Days,,,
-1085348988.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/08/2025,41 Days,,,
-1094510328.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,05/08/2025,42 Days,,,
-1094546901.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/08/2025,41 Days,,,
-1094694872.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,05/08/2025,13 Days,,,
-1093538610.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/07/2025,35 Days,,,
-1093521518.0,,,,,,Dropped,PAC,,CANCELLED,Bianca Rodriguez,05/07/2025,7 Days,,,
-1093182022.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/07/2025,42 Days,,,
-1093308921.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/07/2025,14 Days,,,
-1092934320.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,05/07/2025,42 Days,,,
-1092872410.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/07/2025,43 Days,,,
-1092816275.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/06/2025,44 Days,,,
-1092707322.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,05/06/2025,34 Days,,,
-1092689406.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/06/2025,44 Days,,,
-1092640902.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,05/06/2025,44 Days,,,
-1092408166.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bianca Rodriguez,05/06/2025,44 Days,,,
-1092387952.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,05/05/2025,45 Days,,,
-1092419733.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,05/05/2025,9 Days,,,
-1092506543.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,05/05/2025,44 Days,,,
-1092526742.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,05/05/2025,45 Days,,,
-1092564350.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/05/2025,23 Days,,,
-1092570606.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,05/05/2025,45 Days,,,
-1092611854.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,05/05/2025,18 Days,,,
-1091996953.0,,,,,,Dropped,PAC,,CANCELLED,Bianca Rodriguez,05/02/2025,38 Days,,,
-1091931883.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bianca Rodriguez,05/02/2025,48 Days,,,
-1092043058.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,05/02/2025,48 Days,,,
-1092040126.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,05/02/2025,47 Days,,,
-1092142953.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/02/2025,40 Days,,,
-1091945442.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,05/02/2025,28 Days,,,
-1091360515.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,05/01/2025,49 Days,,,
-1091761397.0,,,,,,Enrolled / NSF Problem,PAC,,NSF,Vanessa Hernandez,05/01/2025,49 Days,,,
-1086346226.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,04/30/2025,27 Days,,,
-1090977951.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,04/30/2025,50 Days,,,
-1090741458.0,,,,,,Dropped,PAC,,CANCELLED,Bianca Rodriguez,04/30/2025,7 Days,,,
-1090748289.0,,,,,,Pending Cancellation,PAC,,CANCELLED,Israel Pelcastre,04/30/2025,50 Days,,,
-1090748814.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,04/30/2025,20 Days,,,
-1090828019.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/30/2025,19 Days,,,
-1090167350.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bianca Rodriguez,04/29/2025,51 Days,,,
-1085453004.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,04/29/2025,51 Days,,,
-1089872630.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,04/29/2025,51 Days,,,
-1089480218.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/29/2025,8 Days,,,
-1089589436.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,04/29/2025,51 Days,,,
-1089942988.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bianca Rodriguez,04/29/2025,51 Days,,,
-1090021049.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,04/29/2025,51 Days,,,
-1090152804.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/29/2025,15 Days,,,
-1086817444.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,04/29/2025,51 Days,,,
-1088870744.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,04/28/2025,52 Days,,,
-1089052063.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,04/28/2025,52 Days,,,
-1089265463.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,04/28/2025,44 Days,,,
-1089411166.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,04/28/2025,52 Days,,,
-1088860648.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bianca Rodriguez,04/25/2025,55 Days,,,
-1088823981.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,04/25/2025,55 Days,,,
-1088700229.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bianca Rodriguez,04/24/2025,56 Days,,,
-1087694137.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,04/24/2025,56 Days,,,
-1071775102.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,04/24/2025,56 Days,,,
-1088685159.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/24/2025,46 Days,,,
-1087440333.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,04/23/2025,57 Days,,,
-1087405074.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,04/23/2025,57 Days,,,
-1086946807.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,04/22/2025,6 Days,,,
-1086961829.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,04/22/2025,48 Days,,,
-1087020435.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,04/22/2025,31 Days,,,
-1087011445.0,,,,,,Dropped,PAC,,CANCELLED,Bianca Rodriguez,04/22/2025,48 Days,,,
-1085158905.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/21/2025,23 Days,,,
-1086480380.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,04/21/2025,57 Days,,,
-1086458564.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,04/21/2025,36 Days,,,
-1086605994.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/21/2025,23 Days,,,
-1086482818.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/21/2025,16 Days,,,
-1086186359.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/17/2025,27 Days,,,
-1086187939.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,04/17/2025,27 Days,,,
-1086191408.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,04/17/2025,61 Days,,,
-1086233119.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,04/17/2025,53 Days,,,
-1086226042.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/17/2025,62 Days,,,
-1086239992.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,04/17/2025,48 Days,,,
-1086228807.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,04/17/2025,63 Days,,,
-1085242998.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,04/16/2025,41 Days,,,
-1085282085.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,04/16/2025,28 Days,,,
-1085312902.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,04/16/2025,14 Days,,,
-1085328215.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/16/2025,49 Days,,,
-1085313877.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,04/16/2025,64 Days,,,
-1085239239.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,04/15/2025,28 Days,,,
-1085165186.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,04/15/2025,29 Days,,,
-1084393995.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/15/2025,17 Days,,,
-1084873960.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Miguel Flores,04/14/2025,66 Days,,,
-1084772358.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,04/14/2025,15 Days,,,
-1084689465.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/14/2025,56 Days,,,
-1056504476.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/14/2025,23 Days,,,
-1076854961.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,04/10/2025,62 Days,,,
-1084112057.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,04/10/2025,70 Days,,,
-1084274301.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,04/10/2025,22 Days,,,
-1084216756.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,04/10/2025,34 Days,,,
-1083964544.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,04/09/2025,71 Days,,,
-1083266561.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/09/2025,14 Days,,,
-1078797832.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/08/2025,9 Days,,,
-1082796307.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,04/08/2025,72 Days,,,
-1082023810.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,04/08/2025,6 Days,,,
-1083092135.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,04/08/2025,31 Days,,,
-1083103495.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,04/08/2025,27 Days,,,
-1083105412.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/08/2025,52 Days,,,
-1083262423.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,04/08/2025,36 Days,,,
-1081169126.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,04/07/2025,73 Days,,,
-1080873163.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,04/07/2025,65 Days,,,
-1080724806.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,04/07/2025,46 Days,,,
-1082511774.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,04/07/2025,73 Days,,,
-1078799910.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/04/2025,68 Days,,,
-1078800567.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,04/04/2025,76 Days,,,
-1078797920.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,04/04/2025,66 Days,,,
-1078527392.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,04/02/2025,19 Days,,,
-1078579707.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,04/02/2025,78 Days,,,
-1077244493.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,04/01/2025,64 Days,,,
-1077182917.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Amanda O'Banion,04/01/2025,79 Days,,,
-1073488410.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/31/2025,44 Days,,,
-1077078435.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,03/31/2025,35 Days,,,
-1076714459.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,03/28/2025,47 Days,,,
-1076640274.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,03/27/2025,39 Days,,,
-1076568318.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,03/27/2025,1 Days,,,
-1076499155.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,03/27/2025,62 Days,,,
-1074947489.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Vanessa Hernandez,03/26/2025,85 Days,,,
-1075557231.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,03/26/2025,37 Days,,,
-1075721147.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/26/2025,26 Days,,,
-1075838395.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/26/2025,68 Days,,,
-1075493424.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,03/25/2025,86 Days,,,
-1075413970.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,03/25/2025,86 Days,,,
-1074940673.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,03/24/2025,14 Days,,,
-1074848161.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,03/24/2025,66 Days,,,
-1074604243.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/21/2025,41 Days,,,
-1074451847.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,03/21/2025,90 Days,,,
-1074630260.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,03/21/2025,90 Days,,,
-1072484974.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,03/20/2025,43 Days,,,
-1073424850.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,03/20/2025,91 Days,,,
-1074406306.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,03/20/2025,13 Days,,,
-1074391991.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,03/20/2025,6 Days,,,
-1074392141.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/20/2025,63 Days,,,
-1073599478.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,03/19/2025,63 Days,,,
-1073461269.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/19/2025,51 Days,,,
-1073465348.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,03/19/2025,92 Days,,,
-1073469168.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,03/19/2025,57 Days,,,
-1073485027.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,03/19/2025,92 Days,,,
-1073582796.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/19/2025,12 Days,,,
-1072490675.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,03/18/2025,93 Days,,,
-1072458647.0,,,,,,Dropped,PAC,,CANCELLED,Vanessa Hernandez,03/18/2025,63 Days,,,
-1072357810.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/17/2025,80 Days,,,
-1071689031.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/14/2025,56 Days,,,
-1071697734.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/14/2025,38 Days,,,
-1071909018.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,03/14/2025,35 Days,,,
-1071663495.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,03/13/2025,1 Days,,,
-1071533116.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,03/13/2025,98 Days,,,
-1037267546.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/12/2025,58 Days,,,
-1070257249.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/12/2025,29 Days,,,
-1070364034.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,03/12/2025,51 Days,,,
-1069476311.0,,,,,,Needs ROL,PAC,,CANCELLED,Israel Pelcastre,03/11/2025,90 Days,,,
-1069456628.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,03/11/2025,100 Days,,,
-1069376914.0,,,,,,Needs ROL,PAC,,CANCELLED,Heidi Elizondo,03/11/2025,90 Days,,,
-1068887608.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,03/11/2025,100 Days,,,
-1069323414.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,03/11/2025,100 Days,,,
-1047590291.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/11/2025,41 Days,,,
-1068817832.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/10/2025,72 Days,,,
-1055467238.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,03/10/2025,101 Days,,,
-1068434852.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/07/2025,27 Days,,,
-1055753708.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/06/2025,46 Days,,,
-1067557038.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/06/2025,57 Days,,,
-1061752974.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/06/2025,15 Days,,,
-1067104963.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,03/05/2025,28 Days,,,
-1067118453.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,03/05/2025,1 Days,,,
-1067207678.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,03/05/2025,106 Days,,,
-1067318563.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/05/2025,58 Days,,,
-1061237987.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,03/04/2025,7 Days,,,
-1061195215.0,,,,,,Pending Cancellation,PAC,,CANCELLED,Amanda O'Banion,03/04/2025,107 Days,,,
-1061108114.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/04/2025,43 Days,,,
-1055457527.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Miguel Flores,03/03/2025,108 Days,,,
-1056130308.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/03/2025,29 Days,,,
-1056190920.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,03/03/2025,25 Days,,,
-1056335355.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,03/03/2025,63 Days,,,
-1056288939.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,03/03/2025,57 Days,,,
-1056272260.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,03/03/2025,42 Days,,,
-1056252053.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,03/03/2025,8 Days,,,
-1056326110.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,03/03/2025,18 Days,,,
-1055523815.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/28/2025,39 Days,,,
-1055669755.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/28/2025,26 Days,,,
-1055712536.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,02/28/2025,52 Days,,,
-1047918083.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,02/28/2025,111 Days,,,
-1054506588.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,02/27/2025,63 Days,,,
-1055306903.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/27/2025,20 Days,,,
-1054511439.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,02/26/2025,113 Days,,,
-1054330541.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,02/26/2025,29 Days,,,
-1054456859.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/26/2025,35 Days,,,
-1054472205.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,02/26/2025,63 Days,,,
-1054417400.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/26/2025,63 Days,,,
-1054380824.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/25/2025,36 Days,,,
-1053907084.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/24/2025,36 Days,,,
-1053958140.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,02/24/2025,115 Days,,,
-1053972166.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/24/2025,49 Days,,,
-1053825979.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/21/2025,6 Days,,,
-1053730702.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/21/2025,39 Days,,,
-1053764909.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/21/2025,69 Days,,,
-1052169282.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/20/2025,20 Days,,,
-1052826186.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/19/2025,5 Days,,,
-1052969252.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,02/19/2025,120 Days,,,
-1053084509.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/19/2025,15 Days,,,
-1052697525.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/18/2025,2 Days,,,
-1052718395.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,02/18/2025,121 Days,,,
-1052789787.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,02/18/2025,6 Days,,,
-1052777982.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/18/2025,84 Days,,,
-1051228949.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/17/2025,24 Days,,,
-1047982498.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/14/2025,18 Days,,,
-1047642955.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/14/2025,55 Days,,,
-1047851146.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/13/2025,76 Days,,,
-1047859267.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/13/2025,39 Days,,,
-1047866419.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/13/2025,11 Days,,,
-1047898491.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,02/13/2025,126 Days,,,
-1047686214.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,02/12/2025,127 Days,,,
-1047792567.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/12/2025,7 Days,,,
-1047825706.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/12/2025,75 Days,,,
-1047804507.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,02/12/2025,34 Days,,,
-1047802378.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Richard Hernandez,02/12/2025,127 Days,,,
-1047665834.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/11/2025,13 Days,,,
-1047678747.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/11/2025,41 Days,,,
-1045267963.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,02/10/2025,50 Days,,,
-1008180938.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/10/2025,29 Days,,,
-1045254117.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,02/07/2025,84 Days,,,
-1039491131.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,02/07/2025,132 Days,,,
-1039564292.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,02/06/2025,32 Days,,,
-1039557580.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,02/06/2025,32 Days,,,
-1038841896.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,02/06/2025,133 Days,,,
-1039398681.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,02/05/2025,134 Days,,,
-1038526674.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,02/04/2025,34 Days,,,
-1038637449.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/04/2025,14 Days,,,
-1038704393.0,,,,,,Dropped,PAC,,CANCELLED,Amanda O'Banion,02/04/2025,29 Days,,,
-1038708394.0,,,,,,Dropped,PAC,,CANCELLED,Bryan Garcia,02/04/2025,20 Days,,,
-1038809143.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/04/2025,14 Days,,,
-1038889419.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,02/04/2025,1 Days,,,
-1038853226.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Israel Pelcastre,02/04/2025,135 Days,,,
-1038483563.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/03/2025,65 Days,,,
-1038411103.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,02/03/2025,21 Days,,,
-1036859298.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Bryan Garcia,02/03/2025,136 Days,,,
-1035660123.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,01/31/2025,17 Days,,,
-1037900165.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/31/2025,68 Days,,,
-1037767399.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/30/2025,4 Days,,,
-1037794209.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/30/2025,39 Days,,,
-1037084912.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/29/2025,20 Days,,,
-1035829113.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,01/29/2025,8 Days,,,
-1035665525.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/27/2025,65 Days,,,
-1035639735.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,01/27/2025,143 Days,,,
-1035623372.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,01/27/2025,10 Days,,,
-1035611444.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,01/24/2025,123 Days,,,
-1035624889.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/24/2025,24 Days,,,
-1035631108.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/24/2025,69 Days,,,
-1034758564.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,01/23/2025,54 Days,,,
-1034741647.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,01/23/2025,32 Days,,,
-1034723811.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/22/2025,54 Days,,,
-1034420093.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,01/22/2025,83 Days,,,
-1034459782.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/22/2025,56 Days,,,
-1034390624.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/21/2025,48 Days,,,
-1034335168.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Miguel Flores,01/21/2025,149 Days,,,
-1034389593.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/21/2025,7 Days,,,
-1034293592.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Miguel Flores,01/20/2025,150 Days,,,
-1032722165.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/17/2025,68 Days,,,
-1032712897.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/17/2025,49 Days,,,
-1033424360.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/17/2025,49 Days,,,
-1033489723.0,,,,,,Dropped,PAC,,CANCELLED,Israel Pelcastre,01/17/2025,49 Days,,,
-1033604611.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,01/17/2025,39 Days,,,
-1031893595.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/16/2025,137 Days,,,
-1031612957.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/15/2025,27 Days,,,
-1031866576.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,01/14/2025,108 Days,,,
-1031605777.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,01/14/2025,63 Days,,,
-1031549401.0,,,,,,Dropped,PAC,,CANCELLED,Richard Hernandez,01/14/2025,84 Days,,,
-1031097461.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,01/09/2025,13 Days,,,
-1030864554.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Heidi Elizondo,01/08/2025,162 Days,,,
-1027242463.0,,,,,,Enrolled / Active,PAC,,ACTIVE,Miguel Flores,01/07/2025,163 Days,,,
-1027235277.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,01/07/2025,35 Days,,,
-1025886250.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,01/03/2025,17 Days,,,
-1025874224.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,01/03/2025,39 Days,,,
-1024604111.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,12/31/2024,50 Days,,,
-1022793766.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,12/20/2024,27 Days,,,
-1022302066.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,12/19/2024,11 Days,,,
-1021743050.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,12/18/2024,43 Days,,,
-1019588814.0,,,,,,Dropped,PAC,,CANCELLED,Heidi Elizondo,12/12/2024,40 Days,,,
-1019498865.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,12/11/2024,48 Days,,,
-1018932103.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,12/10/2024,191 Days,,,
-1015579219.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,12/05/2024,7 Days,,,
-1013860976.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,12/04/2024,197 Days,,,
-1012978389.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,11/27/2024,15 Days,,,
-1012197249.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,11/26/2024,8 Days,,,
-1012949037.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,11/26/2024,43 Days,,,
-1010293631.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,11/18/2024,24 Days,,,
-997712857.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,11/18/2024,213 Days,,,
-1009003406.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,11/15/2024,11 Days,,,
-1007521534.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,11/11/2024,220 Days,,,
-1002362984.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,11/08/2024,223 Days,,,
-1000934337.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,11/07/2024,77 Days,,,
-999521569.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,11/05/2024,106 Days,,,
-998880601.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,11/01/2024,39 Days,,,
-998504727.0,,,,,,Enrolled / Active,PAC,,ACTIVE,David Zepeda,10/31/2024,231 Days,,,
-997043607.0,,,,,,Dropped,PAC,,CANCELLED,David Zepeda,10/28/2024,42 Days,,,
-993639944.0,,,,,,Dropped,PAC,,CANCELLED,Miguel Flores,10/18/2024,49 Days,,,
-,,,,,,Active,MLG,2025-06-19 00:00:00,ACTIVE,,,,CID125426,Israel Pelcastre,6/19/2025
-,,,,,,Active,MLG,2025-06-19 00:00:00,ACTIVE,,,,CID153461,Israel Pelcastre,6/19/2025
-,,,,,,Active,MLG,2025-06-17 00:00:00,ACTIVE,,,,CID160974,Vanessa Glass,6/17/2025
-,,,,,,Active,MLG,2025-06-17 00:00:00,ACTIVE,,,,CID188650,Salvador Flores,6/17/2025
-,,,,,,Active,MLG,2025-06-11 00:00:00,ACTIVE,,,,CID173537,Vivian Garza,6/11/2025
-,,,,,,Active,MLG,2025-06-09 00:00:00,ACTIVE,,,,CID186988,Salvador Flores,6/9/2025
-,,,,,,Pending Cancellation,MLG,2025-06-09 00:00:00,CANCELLED,,,,CID166450,Israel Pelcastre,6/9/2025
-,,,,,,Active,MLG,2025-06-05 00:00:00,ACTIVE,,,,CID167916,Salvador Flores,6/5/2025
-,,,,,,Active,MLG,2025-06-02 00:00:00,ACTIVE,,,,CID124200,Vanessa Glass,6/2/2025
-,,,,,,Active,MLG,2025-05-30 00:00:00,ACTIVE,,,,CID147809,Vanessa Glass,5/30/2025
-,,,,,,Active,MLG,2025-05-30 00:00:00,ACTIVE,,,,CID163533,Israel Pelcastre,5/30/2025
-,,,,,,Active,MLG,2025-05-30 00:00:00,ACTIVE,,,,CID191239,Israel Pelcastre,5/30/2025
-,,,,,,Active,MLG,2025-05-29 00:00:00,ACTIVE,,,,CID196068,Israel Pelcastre,5/29/2025
-,,,,,,Active,MLG,2025-05-29 00:00:00,ACTIVE,,,,CID135605,Richard Hernandez,5/29/2025
-,,,,,,Active,MLG,2025-05-28 00:00:00,ACTIVE,,,,CID123505,Richard Hernandez,5/28/2025
-,,,,,,Pending Cancellation,MLG,2025-05-29 00:00:00,CANCELLED,,,,CID138303,Israel Pelcastre,5/29/2025
-,,,,,,Active,ELP,2025-06-17 00:00:00,ACTIVE,,,,Terry Blue,David Zepeda,6/17/2025
-,,,,,,Active,ELP,2025-06-14 00:00:00,ACTIVE,,,,David Saffold,Vanessa Glass,6/14/2025
-,,,,,,Active,ELP,2025-06-13 00:00:00,ACTIVE,,,,Charlene Wood,Vanessa Glass,6/13/2025
-,,,,,,Active,ELP,2025-06-10 00:00:00,ACTIVE,,,,Brian Christian,David Zepeda,6/10/2025
-,,,,,,Active,ELP,2025-06-09 00:00:00,ACTIVE,,,,Julieta Pimentel,David Zepeda,6/9/2025
-,,,,,,Active,ELP,2025-06-09 00:00:00,ACTIVE,,,,Jules Stfort,Richard Hernandez,6/9/2025
-,,,,,,Active,ELP,2025-06-09 00:00:00,ACTIVE,,,,Brandy Short,Vanessa Hernandez,6/9/2025
-,,,,,,Active,ELP,2025-06-09 00:00:00,ACTIVE,,,,Daniel Christianson,Vanessa Hernandez,6/9/2025
-,,,,,,Active,ELP,2025-06-09 00:00:00,ACTIVE,,,,Sandra Perez,Vanessa Hernandez,6/9/2025
-,,,,,,Active,ELP,2025-06-04 00:00:00,ACTIVE,,,,Elizabeth Ashe,Vanessa Glass,6/4/2025
-,,,,,,Active,ELP,2025-06-04 00:00:00,ACTIVE,,,,Jeffery Van Vleck,Vanessa Hernandez,6/4/2025
-,,,,,,Active,ELP,2025-06-03 00:00:00,ACTIVE,,,,James Hahn,David Zepeda,6/3/2025
-,,,,,,Active,ELP,2025-05-28 00:00:00,ACTIVE,,,,Robert Moore,Richard Hernandez,5/28/2025
-,,,,,,Cancelled,ELP,2025-05-27 00:00:00,CANCELLED,,,,Sandra Pare,David Zepeda,5/27/2025
-,,,,,,Active,ELP,2025-05-24 00:00:00,ACTIVE,,,,Clarence Hunt,Richard Hernandez,5/24/2025
-,,,,,,Active,ELP,2025-05-20 00:00:00,ACTIVE,,,,Gloria Diaz,Richard Hernandez,5/20/2025
-,,,,,,Cancelled,ELP,2025-05-16 00:00:00,CANCELLED,,,,Amanda Leon,Vanessa Hernandez,5/16/2025
-,,,,,,Active,ELP,2025-05-16 00:00:00,ACTIVE,,,,Brenda Westgate,Richard Hernandez,5/16/2025
-,,,,,,Active,ELP,2025-05-15 00:00:00,ACTIVE,,,,Nathan Willis,Vanessa Hernandez,5/15/2025
-,,,,,,Active,ELP,2025-05-15 00:00:00,ACTIVE,,,,Lenny Belgarde,Miriam Guizar,5/15/2025
-,,,,,,Active,ELP,2025-05-14 00:00:00,ACTIVE,,,,Roger McLennan,Vanessa Hernandez,5/14/2025
-,,,,,,Active,ELP,2025-05-14 00:00:00,ACTIVE,,,,Keyoni Graves,Bianca Rodriguez,5/14/2025
-,,,,,,Active,ELP,2025-05-14 00:00:00,ACTIVE,,,,Melissa Ketchell,Richard Hernandez,5/14/2025
-,,,,,,Active,ELP,2025-05-13 00:00:00,ACTIVE,,,,Mary Williams,Miriam Guizar,5/13/2025
-,,,,,,Active,ELP,2025-05-13 00:00:00,ACTIVE,,,,Dianna Isaacs,Vanessa Hernandez,5/13/2025
-,,,,,,Active,ELP,2025-05-09 00:00:00,ACTIVE,,,,Katherine L Chambers,Miriam Guizar,5/9/2025
-,,,,,,Active,ELP,2025-05-08 00:00:00,ACTIVE,,,,Tonika Barnes,Vanessa Hernandez,5/8/2025
-,,,,,,Active,ELP,2025-05-05 00:00:00,ACTIVE,,,,Joyce Lackey,Vanessa Hernandez,5/5/2025
-,,,,,,Active,ELP,2025-05-02 00:00:00,ACTIVE,,,,Cynthia Larsen,David Zepeda,5/2/2025
-,,,,,,Active,ELP,2025-04-30 00:00:00,ACTIVE,,,,Kenneth Wong,Richard Hernandez,4/30/2025
-,,,,,,Active,ELP,2025-04-30 00:00:00,ACTIVE,,,,Frederick Jones,Richard Hernandez,4/30/2025
-,,,,,,Active,ELP,2025-04-28 00:00:00,ACTIVE,,,,Patrina Jones,David Zepeda,4/28/2025
-,,,,,,Active,ELP,2025-04-25 00:00:00,ACTIVE,,,,Charles Ransford,Miriam Guizar,4/25/2025
-,,,,,,Active,ELP,2025-04-24 00:00:00,ACTIVE,,,,Carlos Herrera,Miriam Guizar,4/24/2025
-,,,,,,Active,ELP,2025-04-24 00:00:00,ACTIVE,,,,Ninalyn Peck,Miriam Guizar,4/24/2025
-,,,,,,Active,ELP,2025-04-17 00:00:00,ACTIVE,,,,Robert Sims,Miriam Guizar,4/17/2025
-,,,,,,Active,ELP,2025-04-16 00:00:00,ACTIVE,,,,Jennie Alvarado,Miriam Guizar,4/16/2025
-,,,,,,Active,ELP,2025-04-15 00:00:00,ACTIVE,,,,Sesilia Maileoi,Miriam Guizar,4/15/2025
-,,,,,,Active,ELP,2025-04-15 00:00:00,ACTIVE,,,,Lynelle Overturf,Richard Hernandez,4/15/2025
-,,,,,,Active,ELP,2025-04-11 00:00:00,ACTIVE,,,,Jesse Green,Richard Hernandez,4/11/2025
-,,,,,,Active,ELP,2025-04-11 00:00:00,ACTIVE,,,,Sharon Jefferson,Richard Hernandez,4/11/2025
-,,,,,,Active,ELP,2025-04-10 00:00:00,ACTIVE,,,,Dolores Langston,Miriam Guizar,4/10/2025
-,,,,,,Active,ELP,2025-04-08 00:00:00,ACTIVE,,,,William Howard,Miriam Guizar,4/8/2025
-,,,,,,Active,ELP,2025-04-01 00:00:00,ACTIVE,,,,Matthew Stoddard,Richard Hernandez,4/1/2025
-,,,,,,Active,ELP,2025-03-27 00:00:00,ACTIVE,,,,Lisa Ellison,David Zepeda,3/27/2025
-,,,,,,Active,ELP,2025-03-26 00:00:00,ACTIVE,,,,Michael Tompa,Jazmin Cruz,3/26/2025
-,,,,,,Active,ELP,2025-03-26 00:00:00,ACTIVE,,,,John Wilson,David Zepeda,3/26/2025
-,,,,,,Active,ELP,2025-03-26 00:00:00,ACTIVE,,,,Patricia Hockabay,Andy Wade,3/26/2025
-,,,,,,Active,ELP,2025-03-25 00:00:00,ACTIVE,,,,Carol D Davis,Andy Wade,3/25/2025
-,,,,,,Active,ELP,2025-03-24 00:00:00,ACTIVE,,,,Sandra Sullivan,Miriam Guizar,3/24/2025
-,,,,,,Active,ELP,2025-03-24 00:00:00,ACTIVE,,,,Robert Zivojnovity,Richard Hernandez,3/24/2025
-,,,,,,Active,ELP,2025-03-23 00:00:00,ACTIVE,,,,William Burkhalter,David Zepeda,3/23/2025
-,,,,,,Active,ELP,2025-03-20 00:00:00,ACTIVE,,,,Suzette Hughes,Richard Hernandez,3/20/2025
-,,,,,,Active,ELP,2025-03-19 00:00:00,ACTIVE,,,,Willie Chambers,Heidi Elizondo,3/19/2025
-,,,,,,Active,ELP,2025-03-19 00:00:00,ACTIVE,,,,Audrey Swartz,Vanessa Hernandez,3/19/2025
-,,,,,,Active,ELP,2025-03-17 00:00:00,ACTIVE,,,,Jose Manuel Robledo Salazar,Heidi Elizondo,3/17/2025
-,,,,,,Cancelled,ELP,2025-03-17 00:00:00,CANCELLED,,,,Ana Herrera Shapiama,Bryan Garcia,3/17/2025
-,,,,,,Cancelled,ELP,2025-03-13 00:00:00,CANCELLED,,,,Dalias Ogetange,David Zepeda,3/13/2025
-,,,,,,Cancelled,ELP,2025-03-13 00:00:00,CANCELLED,,,,Donte Marshall,Richard Hernandez,3/13/2025
-,,,,,,Cancelled,ELP,2025-03-12 00:00:00,CANCELLED,,,,Kaye Tune-Ross,Bryan Garcia,3/12/2025
-,,,,,,Cancelled,ELP,2025-03-11 00:00:00,CANCELLED,,,,Deborah Hall,Miriam Guizar,3/11/2025
-,,,,,,Cancelled,ELP,2025-03-11 00:00:00,CANCELLED,,,,Jeffrey Shoemaker,Andy Wade,3/11/2025
-,,,,,,Cancelled,ELP,2025-03-11 00:00:00,CANCELLED,,,,Roberto Campos,Bryan Garcia,3/11/2025
-,,,,,,Cancelled,ELP,2025-03-06 00:00:00,CANCELLED,,,,Mellisa Cole,Andy Wade,3/6/2025
-,,,,,,Cancelled,ELP,2025-03-06 00:00:00,CANCELLED,,,,Richard Lowe,Andy Wade,3/6/2025
-,,,,,,Cancelled,ELP,2025-03-06 00:00:00,CANCELLED,,,,Corina Beevers,Amy Franco,3/6/2025
-,,,,,,Cancelled,ELP,2025-03-05 00:00:00,CANCELLED,,,,Leonora Hurst,David Zepeda,3/5/2025
-,,,,,,Cancelled,ELP,2025-03-04 00:00:00,CANCELLED,,,,Robyn Hughes,David Zepeda,3/4/2025
-,,,,,,Cancelled,ELP,2025-03-03 00:00:00,CANCELLED,,,,Rodney Thompson,David Zepeda,3/3/2025
-,,,,,,Cancelled,ELP,2025-03-03 00:00:00,CANCELLED,,,,David Currie,Heidi Elizondo,3/3/2025
-,,,,,,Cancelled,ELP,2025-03-03 00:00:00,CANCELLED,,,,Joan Dorr,Richard Hernandez,3/3/2025
-,,,,,,Cancelled,ELP,2025-03-02 00:00:00,CANCELLED,,,,William Chaffman,Brent Lewis,3/2/2025
-,,,,,,Cancelled,ELP,2025-02-28 00:00:00,CANCELLED,,,,Gail Schill Emmons,Arthur Perez,2/28/2025
-,,,,,,Cancelled,ELP,2025-02-26 00:00:00,CANCELLED,,,,Orin Williams,Miriam Guizar,2/26/2025
-,,,,,,Cancelled,ELP,2025-02-26 00:00:00,CANCELLED,,,,Aline Elias,Richard Hernandez,2/26/2025
-,,,,,,Cancelled,ELP,2025-02-26 00:00:00,CANCELLED,,,,Estaban Rosado,Dallas Villa,2/26/2025
-,,,,,,Cancelled,ELP,2025-02-26 00:00:00,CANCELLED,,,,Brian Higgins,Richard Hernandez,2/26/2025
-,,,,,,Cancelled,ELP,2025-02-20 00:00:00,CANCELLED,,,,Jeffrey Keinath,Heidi Elizondo,2/20/2025
-,,,,,,Cancelled,ELP,2025-02-18 00:00:00,CANCELLED,,,,Randall Anderson,Dallas Villa,2/18/2025
-,,,,,,Cancelled,ELP,2025-02-18 00:00:00,CANCELLED,,,,Patrick Gohl,David Zepeda,2/18/2025
-,,,,,,Cancelled,ELP,2025-02-17 00:00:00,CANCELLED,,,,Martha Hrisoulas,Heidi Elizondo,2/17/2025
-,,,,,,Cancelled,ELP,2025-02-17 00:00:00,CANCELLED,,,,Charlene Stoops,David Zepeda,2/17/2025
-,,,,,,Cancelled,ELP,2025-02-13 00:00:00,CANCELLED,,,,Mary Walters,Miriam Guizar,2/13/2025
-,,,,,,Cancelled,ELP,2025-02-11 00:00:00,CANCELLED,,,,Robert ly,Edwin Orantes,2/11/2025
-,,,,,,Cancelled,ELP,2025-02-11 00:00:00,CANCELLED,,,,Matthew Anderson,Joseph Martinez,2/11/2025
-,,,,,,Cancelled,ELP,2025-02-11 00:00:00,CANCELLED,,,,Florita Paras,Andy Wade,2/11/2025
-,,,,,,Cancelled,ELP,2025-02-10 00:00:00,CANCELLED,,,,Tamara Souder,Andy Wade,2/10/2025
-,,,,,,Cancelled,ELP,2025-02-10 00:00:00,CANCELLED,,,,Marcus Holman,Richard Hernandez,2/10/2025
-,,,,,,Cancelled,ELP,2025-02-10 00:00:00,CANCELLED,,,,Jerome Goldsby,Richard Hernandez,2/10/2025
-,,,,,,Cancelled,ELP,2025-02-10 00:00:00,CANCELLED,,,,Thomas Ollie,Andy Wade,2/10/2025
-,,,,,,Cancelled,ELP,2025-02-09 00:00:00,CANCELLED,,,,Rodger Cates,Miriam Guizar,2/9/2025
-,,,,,,Cancelled,ELP,2025-02-09 00:00:00,CANCELLED,,,,Jacquelyn Shupak,Israel Pelcastre,2/9/2025
-,,,,,,Cancelled,ELP,2025-02-06 00:00:00,CANCELLED,,,,Elizabeth Allen,Bryan Garcia,2/6/2025
-,,,,,,Cancelled,ELP,2025-02-05 00:00:00,CANCELLED,,,,John Doromal,Israel Pelcastre,2/5/2025
-,,,,,,Cancelled,ELP,2025-02-05 00:00:00,CANCELLED,,,,Billy Ray Hudson Jr,Mike Solis,2/5/2025
-,,,,,,Cancelled,ELP,2025-02-04 00:00:00,CANCELLED,,,,Carol E. Hamby,Andy Wade,2/4/2025
-,,,,,,Cancelled,ELP,2025-02-04 00:00:00,CANCELLED,,,,Tracy Halley,Miriam Guizar,2/4/2025
+CUSTOMER ID,AGENT,ENROLLED DATE,STATUS,SOURCE_SHEET,CATEGORY
+CID125426,Israel Pelcastre,2025-06-19,Active,MLG,ACTIVE
+CID153461,Israel Pelcastre,2025-06-19,Active,MLG,ACTIVE
+CID160974,Vanessa Glass,2025-06-17,Active,MLG,ACTIVE
+CID188650,Salvador Flores,2025-06-17,Active,MLG,ACTIVE
+CID173537,Vivian Garza,2025-06-11,Active,MLG,ACTIVE
+CID186988,Salvador Flores,2025-06-09,Active,MLG,ACTIVE
+CID166450,Israel Pelcastre,2025-06-09,Pending Cancellation,MLG,CANCELLED
+CID167916,Salvador Flores,2025-06-05,Active,MLG,ACTIVE
+CID124200,Vanessa Glass,2025-06-02,Active,MLG,ACTIVE
+CID147809,Vanessa Glass,2025-05-30,Active,MLG,ACTIVE
+CID163533,Israel Pelcastre,2025-05-30,Active,MLG,ACTIVE
+CID191239,Israel Pelcastre,2025-05-30,Active,MLG,ACTIVE
+CID196068,Israel Pelcastre,2025-05-29,Active,MLG,ACTIVE
+CID135605,Richard Hernandez,2025-05-29,Active,MLG,ACTIVE
+CID123505,Richard Hernandez,2025-05-28,Active,MLG,ACTIVE
+CID138303,Israel Pelcastre,2025-05-29,Pending Cancellation,MLG,CANCELLED
+Terry Blue,David Zepeda,2025-06-17,Active,ELP,ACTIVE
+David Saffold,Vanessa Glass,2025-06-14,Active,ELP,ACTIVE
+Charlene Wood,Vanessa Glass,2025-06-13,Active,ELP,ACTIVE
+Brian Christian,David Zepeda,2025-06-10,Active,ELP,ACTIVE
+Julieta Pimentel,David Zepeda,2025-06-09,Active,ELP,ACTIVE
+Jules Stfort,Richard Hernandez,2025-06-09,Active,ELP,ACTIVE
+Brandy Short,Vanessa Hernandez,2025-06-09,Active,ELP,ACTIVE
+Daniel Christianson,Vanessa Hernandez,2025-06-09,Active,ELP,ACTIVE
+Sandra Perez,Vanessa Hernandez,2025-06-09,Active,ELP,ACTIVE
+Elizabeth Ashe,Vanessa Glass,2025-06-04,Active,ELP,ACTIVE
+Jeffery Van Vleck,Vanessa Hernandez,2025-06-04,Active,ELP,ACTIVE
+James Hahn,David Zepeda,2025-06-03,Active,ELP,ACTIVE
+Robert Moore,Richard Hernandez,2025-05-28,Active,ELP,ACTIVE
+Sandra Pare,David Zepeda,2025-05-27,Cancelled,ELP,CANCELLED
+Clarence Hunt,Richard Hernandez,2025-05-24,Active,ELP,ACTIVE
+Gloria Diaz,Richard Hernandez,2025-05-20,Active,ELP,ACTIVE
+Amanda Leon,Vanessa Hernandez,2025-05-16,Cancelled,ELP,CANCELLED
+Brenda Westgate,Richard Hernandez,2025-05-16,Active,ELP,ACTIVE
+Nathan Willis,Vanessa Hernandez,2025-05-15,Active,ELP,ACTIVE
+Lenny Belgarde,Miriam Guizar,2025-05-15,Active,ELP,ACTIVE
+Roger McLennan,Vanessa Hernandez,2025-05-14,Active,ELP,ACTIVE
+Keyoni Graves,Bianca Rodriguez,2025-05-14,Active,ELP,ACTIVE
+Melissa Ketchell,Richard Hernandez,2025-05-14,Active,ELP,ACTIVE
+Mary Williams,Miriam Guizar,2025-05-13,Active,ELP,ACTIVE
+Dianna Isaacs,Vanessa Hernandez,2025-05-13,Active,ELP,ACTIVE
+Katherine L Chambers,Miriam Guizar,2025-05-09,Active,ELP,ACTIVE
+Tonika Barnes,Vanessa Hernandez,2025-05-08,Active,ELP,ACTIVE
+Joyce Lackey,Vanessa Hernandez,2025-05-05,Active,ELP,ACTIVE
+Cynthia Larsen,David Zepeda,2025-05-02,Active,ELP,ACTIVE
+Kenneth Wong,Richard Hernandez,2025-04-30,Active,ELP,ACTIVE
+Frederick Jones,Richard Hernandez,2025-04-30,Active,ELP,ACTIVE
+Patrina Jones,David Zepeda,2025-04-28,Active,ELP,ACTIVE
+Charles Ransford,Miriam Guizar,2025-04-25,Active,ELP,ACTIVE
+Carlos Herrera,Miriam Guizar,2025-04-24,Active,ELP,ACTIVE
+Ninalyn Peck,Miriam Guizar,2025-04-24,Active,ELP,ACTIVE
+Robert Sims,Miriam Guizar,2025-04-17,Active,ELP,ACTIVE
+Jennie Alvarado,Miriam Guizar,2025-04-16,Active,ELP,ACTIVE
+Sesilia Maileoi,Miriam Guizar,2025-04-15,Active,ELP,ACTIVE
+Lynelle Overturf,Richard Hernandez,2025-04-15,Active,ELP,ACTIVE
+Jesse Green,Richard Hernandez,2025-04-11,Active,ELP,ACTIVE
+Sharon Jefferson,Richard Hernandez,2025-04-11,Active,ELP,ACTIVE
+Dolores Langston,Miriam Guizar,2025-04-10,Active,ELP,ACTIVE
+William Howard,Miriam Guizar,2025-04-08,Active,ELP,ACTIVE
+Matthew Stoddard,Richard Hernandez,2025-04-01,Active,ELP,ACTIVE
+Lisa Ellison,David Zepeda,2025-03-27,Active,ELP,ACTIVE
+Michael Tompa,Jazmin Cruz,2025-03-26,Active,ELP,ACTIVE
+John Wilson,David Zepeda,2025-03-26,Active,ELP,ACTIVE
+Patricia Hockabay,Andy Wade,2025-03-26,Active,ELP,ACTIVE
+Carol D Davis,Andy Wade,2025-03-25,Active,ELP,ACTIVE
+Sandra Sullivan,Miriam Guizar,2025-03-24,Active,ELP,ACTIVE
+Robert Zivojnovity,Richard Hernandez,2025-03-24,Active,ELP,ACTIVE
+William Burkhalter,David Zepeda,2025-03-23,Active,ELP,ACTIVE
+Suzette Hughes,Richard Hernandez,2025-03-20,Active,ELP,ACTIVE
+Willie Chambers,Heidi Elizondo,2025-03-19,Active,ELP,ACTIVE
+Audrey Swartz,Vanessa Hernandez,2025-03-19,Active,ELP,ACTIVE
+Jose Manuel Robledo Salazar,Heidi Elizondo,2025-03-17,Active,ELP,ACTIVE
+Ana Herrera Shapiama,Bryan Garcia,2025-03-17,Cancelled,ELP,CANCELLED
+Dalias Ogetange,David Zepeda,2025-03-13,Cancelled,ELP,CANCELLED
+Donte Marshall,Richard Hernandez,2025-03-13,Cancelled,ELP,CANCELLED
+Kaye Tune-Ross,Bryan Garcia,2025-03-12,Cancelled,ELP,CANCELLED
+Deborah Hall,Miriam Guizar,2025-03-11,Cancelled,ELP,CANCELLED
+Jeffrey Shoemaker,Andy Wade,2025-03-11,Cancelled,ELP,CANCELLED
+Roberto Campos,Bryan Garcia,2025-03-11,Cancelled,ELP,CANCELLED
+Mellisa Cole,Andy Wade,2025-03-06,Cancelled,ELP,CANCELLED
+Richard Lowe,Andy Wade,2025-03-06,Cancelled,ELP,CANCELLED
+Corina Beevers,Amy Franco,2025-03-06,Cancelled,ELP,CANCELLED
+Leonora Hurst,David Zepeda,2025-03-05,Cancelled,ELP,CANCELLED
+Robyn Hughes,David Zepeda,2025-03-04,Cancelled,ELP,CANCELLED
+Rodney Thompson,David Zepeda,2025-03-03,Cancelled,ELP,CANCELLED
+David Currie,Heidi Elizondo,2025-03-03,Cancelled,ELP,CANCELLED
+Joan Dorr,Richard Hernandez,2025-03-03,Cancelled,ELP,CANCELLED
+William Chaffman,Brent Lewis,2025-03-02,Cancelled,ELP,CANCELLED
+Gail Schill Emmons,Arthur Perez,2025-02-28,Cancelled,ELP,CANCELLED
+Orin Williams,Miriam Guizar,2025-02-26,Cancelled,ELP,CANCELLED
+Aline Elias,Richard Hernandez,2025-02-26,Cancelled,ELP,CANCELLED
+Estaban Rosado,Dallas Villa,2025-02-26,Cancelled,ELP,CANCELLED
+Brian Higgins,Richard Hernandez,2025-02-26,Cancelled,ELP,CANCELLED
+Jeffrey Keinath,Heidi Elizondo,2025-02-20,Cancelled,ELP,CANCELLED
+Randall Anderson,Dallas Villa,2025-02-18,Cancelled,ELP,CANCELLED
+Patrick Gohl,David Zepeda,2025-02-18,Cancelled,ELP,CANCELLED
+Martha Hrisoulas,Heidi Elizondo,2025-02-17,Cancelled,ELP,CANCELLED
+Charlene Stoops,David Zepeda,2025-02-17,Cancelled,ELP,CANCELLED
+Mary Walters,Miriam Guizar,2025-02-13,Cancelled,ELP,CANCELLED
+Robert ly,Edwin Orantes,2025-02-11,Cancelled,ELP,CANCELLED
+Matthew Anderson,Joseph Martinez,2025-02-11,Cancelled,ELP,CANCELLED
+Florita Paras,Andy Wade,2025-02-11,Cancelled,ELP,CANCELLED
+Tamara Souder,Andy Wade,2025-02-10,Cancelled,ELP,CANCELLED
+Marcus Holman,Richard Hernandez,2025-02-10,Cancelled,ELP,CANCELLED
+Jerome Goldsby,Richard Hernandez,2025-02-10,Cancelled,ELP,CANCELLED
+Thomas Ollie,Andy Wade,2025-02-10,Cancelled,ELP,CANCELLED
+Rodger Cates,Miriam Guizar,2025-02-09,Cancelled,ELP,CANCELLED
+Jacquelyn Shupak,Israel Pelcastre,2025-02-09,Cancelled,ELP,CANCELLED
+Elizabeth Allen,Bryan Garcia,2025-02-06,Cancelled,ELP,CANCELLED
+John Doromal,Israel Pelcastre,2025-02-05,Cancelled,ELP,CANCELLED
+Billy Ray Hudson Jr,Mike Solis,2025-02-05,Cancelled,ELP,CANCELLED
+Carol E. Hamby,Andy Wade,2025-02-04,Cancelled,ELP,CANCELLED
+Tracy Halley,Miriam Guizar,2025-02-04,Cancelled,ELP,CANCELLED
