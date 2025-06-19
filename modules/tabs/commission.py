@@ -122,8 +122,8 @@ def render_commission_tab(df_filtered, COLORS):
             ]
             
             if not recent_cleared.empty:
-                # Sort by cleared date
-                recent_cleared = recent_cleared.sort_values('ClearedDate')
+                # Sort by cleared date chronologically (most recent first)
+                recent_cleared = recent_cleared.sort_values('ClearedDate', ascending=False)
                 
                 # Group by agent and count payments
                 agent_payment_counts = recent_cleared.groupby('AgentName').size().reset_index()
@@ -152,8 +152,17 @@ def render_commission_tab(df_filtered, COLORS):
                     display_df['Cleared Date'] = display_df['Cleared Date'].dt.strftime('%Y-%m-%d')
                     display_df['Payment Date'] = display_df['Payment Date'].dt.strftime('%Y-%m-%d')
                     
-                    # Display the table
+                    # Display the table with download option
                     st.dataframe(display_df, use_container_width=True)
+                    
+                    # Add download button for cleared payments
+                    csv_data = display_df.to_csv(index=False)
+                    st.download_button(
+                        label="Download Cleared Payments (Last 14 Days)",
+                        data=csv_data,
+                        file_name=f"cleared_payments_{fourteen_days_ago.strftime('%Y%m%d')}_to_{today.strftime('%Y%m%d')}.csv",
+                        mime="text/csv"
+                    )
                 
                 with col2:
                     # Display agent payment counts
