@@ -28,7 +28,7 @@ def render_commission_tab(df_filtered, COLORS):
                     'PaymentID': str(df.iloc[i, 2]),
                     'Status': str(df.iloc[i, 3]),
                     'PaymentDate': str(df.iloc[i, 4]),
-                    'ClearedDate': str(df.iloc[i, 10]) if i < len(df) and pd.notna(df.iloc[i, 10]) else ""
+                    'ClearedDate': str(df.iloc[i, 11]) if i < len(df) and len(df.columns) > 11 and pd.notna(df.iloc[i, 11]) else ""
                 }
                 data.append(row_data)
         
@@ -41,7 +41,7 @@ def render_commission_tab(df_filtered, COLORS):
                     'PaymentID': str(df.iloc[i, 7]),
                     'Status': str(df.iloc[i, 8]),
                     'PaymentDate': str(df.iloc[i, 9]),
-                    'ClearedDate': str(df.iloc[i, 11]) if i < len(df) and pd.notna(df.iloc[i, 11]) else ""
+                    'ClearedDate': str(df.iloc[i, 10]) if i < len(df) and len(df.columns) > 10 and pd.notna(df.iloc[i, 10]) else ""
                 }
                 data.append(row_data)
         
