@@ -219,7 +219,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                 
                 # Group by week for this agent
                 agent_weekly = agent_data.groupby(['Week_Start', 'Week_Label']).agg({
-                    'CUSTOMER_NAME': 'count',
+                    agent_data.columns[0]: 'count',  # Use first column for counting
                     'CATEGORY': lambda x: (x == 'ACTIVE').sum()
                 }).reset_index()
                 
