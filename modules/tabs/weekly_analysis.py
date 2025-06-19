@@ -94,7 +94,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                 markers=True,
                 color_discrete_sequence=[COLORS['primary']]
             )
-            fig.update_xaxis(tickangle=45)
+            fig.update_layout(xaxis_tickangle=45)
             st.plotly_chart(fig, use_container_width=True)
             
             # Active rate trend
@@ -106,7 +106,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                 markers=True,
                 color_discrete_sequence=[COLORS['accent']]
             )
-            fig.update_xaxis(tickangle=45)
+            fig.update_layout(xaxis_tickangle=45)
             st.plotly_chart(fig, use_container_width=True)
             
             # Weekly data table
@@ -249,7 +249,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                         markers=True,
                         color_discrete_sequence=[COLORS['primary']]
                     )
-                    fig.update_xaxis(tickangle=45)
+                    fig.update_layout(xaxis_tickangle=45)
                     st.plotly_chart(fig, use_container_width=True)
                     
                     # Agent weekly data table
