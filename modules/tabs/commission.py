@@ -111,14 +111,14 @@ def render_commission_tab(df_filtered, COLORS):
             
             # Get current date and date 14 days ago
             from datetime import datetime, timedelta
-            today = datetime.now().date()
+            today = datetime.now()
             fourteen_days_ago = today - timedelta(days=14)
             
             # Filter for cleared payments in the last 14 days
             recent_cleared = payments_df[
                 (payments_df['Status'].str.contains('Cleared', na=False)) & 
                 (payments_df['ClearedDate'].notna()) & 
-                (payments_df['ClearedDate'] >= pd.Timestamp(fourteen_days_ago))
+                (payments_df['ClearedDate'] >= fourteen_days_ago)
             ]
             
             if not recent_cleared.empty:
