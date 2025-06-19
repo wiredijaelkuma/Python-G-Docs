@@ -115,11 +115,9 @@ def main():
         st.warning("⚠️ No data available. Please upload a CSV file with your data.")
         st.stop()
 
-    # Normalize text columns to handle case variations
-    text_columns = ['STATUS', 'CATEGORY', 'AGENT']
-    for col in text_columns:
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.upper().str.strip()
+    # Normalize data using centralized processor
+    from modules.data_processor import normalize_dataframe
+    df = normalize_dataframe(df)
     
     # Store data in session state
     st.session_state['df'] = df
@@ -132,13 +130,10 @@ def main():
         st.subheader("Date Range")
         today = datetime.now().date()
         
-        # Handle case where ENROLLED_DATE might not exist or have valid dates
-        if 'ENROLLED_DATE' in df.columns and not df['ENROLLED_DATE'].isna().all():
-            min_date = df['ENROLLED_DATE'].min().date()
-            max_date = max(df['ENROLLED_DATE'].max().date(), today)
-        else:
-            min_date = date(2024, 10, 1)
-            max_date = today
+        # Get safe date range using data processor
+        from modules.data_processor import safe_date_range
+        min_date, max_date = safe_date_range(df)
+        max_date = max(max_date, today)
             
         # Ensure default start date is within valid range
         default_start = max(min_date, max_date - timedelta(days=30))
@@ -179,15 +174,10 @@ def main():
     if date_col:
         mask &= df[date_col].notna() & (df[date_col].dt.date >= start) & (df[date_col].dt.date <= end)
     
-    # Apply status filter - only if CATEGORY exists
-    status_filter = []
-    if show_active: status_filter.append('ACTIVE')
-    if show_nsf: status_filter.append('NSF')
-    if show_cancelled: status_filter.append('CANCELLED')
-    if show_other: status_filter.append('OTHER')
-    
-    if 'CATEGORY' in df.columns and status_filter:
-        mask &= df['CATEGORY'].isin(status_filter)
+    # Apply status filter using data processor
+    from modules.data_processor import get_status_filter_mask
+    status_mask = get_status_filter_mask(df, show_active, show_nsf, show_cancelled, show_other)
+    mask &= status_mask
     
     # Apply source filter - only if SOURCE_SHEET exists and sources are selected
     if 'SOURCE_SHEET' in df.columns and not all_sources and sources:
@@ -204,7 +194,7 @@ def main():
 
     # --- Tab Navigation ---
     tabs = st.tabs([
-        "Home", "Monthly Analysis", "Performance", "Data Explorer", "Commission"
+        "Home", "Weekly Analysis", "Monthly Analysis", "Performance", "Data Explorer", "Commission"
     ])
     
     # Home/Landing Page Tab
@@ -217,8 +207,17 @@ def main():
             st.exception(traceback.format_exc())
             fallback_landing_page(df_filtered, COLORS)
     
-    # Monthly Analysis Tab
+    # Weekly Analysis Tab
     with tabs[1]:
+        try:
+            from modules.tabs.weekly_analysis import render_weekly_analysis_tab
+            render_weekly_analysis_tab(df_filtered, COLORS)
+        except Exception as e:
+            st.error(f"Error rendering Weekly Analysis tab: {e}")
+            st.info("The Weekly Analysis tab provides week-over-week performance comparisons.")
+    
+    # Monthly Analysis Tab
+    with tabs[2]:
         try:
             render_monthly_analysis_tab(df_filtered, COLORS)
         except Exception as e:
@@ -257,7 +256,7 @@ def main():
                 st.info("The Monthly Analysis tab provides detailed metrics and trends by month.")
     
     # Performance Tab
-    with tabs[2]:
+    with tabs[3]:
         try:
             render_performance_tab(df_filtered, COLORS)
         except Exception as e:
@@ -265,7 +264,7 @@ def main():
             fallback_performance(df_filtered, COLORS)
         
     # Data Explorer Tab
-    with tabs[3]:
+    with tabs[4]:
         try:
             render_data_explorer(df_filtered, COLORS)
         except Exception as e:
@@ -273,7 +272,7 @@ def main():
             fallback_data_explorer(df_filtered)
             
     # Commission Tab
-    with tabs[4]:
+    with tabs[5]:
         try:
             render_commission_tab(df_filtered, COLORS)
         except Exception as e:

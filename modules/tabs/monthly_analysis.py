@@ -8,28 +8,8 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
 
-def clean_dataframe(df, date_column):
-    """Clean and prepare dataframe for analysis"""
-    # Make a copy to avoid modifying the original
-    df_clean = df.copy()
-    
-    # Ensure date column is datetime
-    if date_column in df_clean.columns:
-        try:
-            if not pd.api.types.is_datetime64_any_dtype(df_clean[date_column]):
-                df_clean[date_column] = pd.to_datetime(df_clean[date_column], errors='coerce')
-            
-            # Remove rows with NaN dates
-            df_clean = df_clean[df_clean[date_column].notna()]
-        except Exception as e:
-            st.warning(f"Date conversion error: {str(e)}")
-    
-    # Handle missing values in critical columns
-    for col in ['CATEGORY', 'STATUS', 'AGENT']:
-        if col in df_clean.columns:
-            df_clean[col] = df_clean[col].fillna('Unknown')
-    
-    return df_clean
+# Import centralized data processor
+from modules.data_processor import normalize_dataframe
 
 def render_monthly_analysis_tab(df_filtered, COLORS):
     """Render the monthly analysis tab"""
@@ -47,9 +27,9 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
         elif 'ENROLLED DATE' in df_all.columns:
             date_col = 'ENROLLED DATE'
             
-        # Clean both dataframes
-        df_all = clean_dataframe(df_all, date_col)
-        df_filtered = clean_dataframe(df_filtered, date_col)
+        # Clean both dataframes using centralized processor
+        df_all = normalize_dataframe(df_all)
+        df_filtered = normalize_dataframe(df_filtered)
     except Exception as e:
         st.warning(f"Could not load full dataset: {str(e)}")
         df_all = df_filtered.copy()
