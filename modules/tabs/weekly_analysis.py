@@ -29,7 +29,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
         df['Week_Label'] = df['Week_Start'].dt.strftime('Week of %b %d, %Y')
         
         # Create tabs
-        tabs = st.tabs(["Week Overview", "Week Comparison", "Agent Weekly Performance"])
+        tabs = st.tabs(["Week Overview", "Week Comparison", "Historical Analysis", "Agent Weekly Performance"])
         
         # Tab 1: Week Overview
         with tabs[0]:
@@ -119,26 +119,38 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
         with tabs[1]:
             st.subheader("Week-over-Week Comparison")
             
-            # Week selector
-            available_weeks = sorted(weekly_data['Week_Label'].unique(), reverse=True)
+            # Week selector - chronologically sorted
+            all_weeks = weekly_data.sort_values('Week_Start')
+            week_options = ['All Time'] + all_weeks['Week_Label'].tolist()
             
             col1, col2 = st.columns(2)
             with col1:
-                week1 = st.selectbox("Select First Week", available_weeks, key="week1")
+                week1 = st.selectbox("Select First Week", week_options, key="week1")
             with col2:
-                week2 = st.selectbox("Select Second Week", available_weeks, index=1 if len(available_weeks) > 1 else 0, key="week2")
+                week2 = st.selectbox("Select Second Week", week_options, index=1 if len(week_options) > 1 else 0, key="week2")
             
             if week1 and week2 and week1 != week2:
-                # Get data for selected weeks
-                week1_data = df[df['Week_Label'] == week1]
-                week2_data = df[df['Week_Label'] == week2]
+                # Handle "All Time" selection
+                if week1 == "All Time":
+                    week1_data = df
+                    week1_label = "All Time"
+                else:
+                    week1_data = df[df['Week_Label'] == week1]
+                    week1_label = week1
+                    
+                if week2 == "All Time":
+                    week2_data = df
+                    week2_label = "All Time"
+                else:
+                    week2_data = df[df['Week_Label'] == week2]
+                    week2_label = week2
                 
                 # Calculate metrics for both weeks
                 week1_metrics = calculate_metrics(week1_data)
                 week2_metrics = calculate_metrics(week2_data)
                 
                 # Display comparison
-                st.subheader(f"Comparison: {week1} vs {week2}")
+                st.subheader(f"Comparison: {week1_label} vs {week2_label}")
                 
                 col1, col2, col3, col4 = st.columns(4)
                 
@@ -147,7 +159,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                         "Total Enrollments",
                         week1_metrics['total'],
                         delta=week1_metrics['total'] - week2_metrics['total'],
-                        help=f"{week2}: {week2_metrics['total']}"
+                        help=f"{week2_label}: {week2_metrics['total']}"
                     )
                 
                 with col2:
@@ -155,7 +167,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                         "Active Enrollments",
                         week1_metrics['active'],
                         delta=week1_metrics['active'] - week2_metrics['active'],
-                        help=f"{week2}: {week2_metrics['active']}"
+                        help=f"{week2_label}: {week2_metrics['active']}"
                     )
                 
                 with col3:
@@ -163,7 +175,7 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                         "Active Rate",
                         f"{week1_metrics['active_rate']:.1f}%",
                         delta=f"{week1_metrics['active_rate'] - week2_metrics['active_rate']:.1f}%",
-                        help=f"{week2}: {week2_metrics['active_rate']:.1f}%"
+                        help=f"{week2_label}: {week2_metrics['active_rate']:.1f}%"
                     )
                 
                 with col4:
@@ -171,12 +183,12 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                         "Cancelled",
                         week1_metrics['cancelled'],
                         delta=week1_metrics['cancelled'] - week2_metrics['cancelled'],
-                        help=f"{week2}: {week2_metrics['cancelled']}"
+                        help=f"{week2_label}: {week2_metrics['cancelled']}"
                     )
                 
                 # Side-by-side comparison chart
                 comparison_data = pd.DataFrame({
-                    'Week': [week1, week2],
+                    'Period': [week1_label, week2_label],
                     'Total': [week1_metrics['total'], week2_metrics['total']],
                     'Active': [week1_metrics['active'], week2_metrics['active']],
                     'Cancelled': [week1_metrics['cancelled'], week2_metrics['cancelled']]
@@ -184,9 +196,9 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                 
                 fig = px.bar(
                     comparison_data,
-                    x='Week',
+                    x='Period',
                     y=['Total', 'Active', 'Cancelled'],
-                    title='Week Comparison',
+                    title='Period Comparison',
                     barmode='group',
                     color_discrete_sequence=[COLORS['primary'], COLORS['accent'], COLORS['danger']]
                 )
@@ -205,8 +217,86 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                     
                     st.dataframe(agent_comparison, use_container_width=True, hide_index=True)
         
-        # Tab 3: Agent Weekly Performance
+        # Tab 3: Historical Analysis
         with tabs[2]:
+            st.subheader("Historical Deep Dive")
+            
+            # Date range selector for historical analysis
+            col1, col2 = st.columns(2)
+            with col1:
+                min_date = df[date_column].min().date()
+                max_date = df[date_column].max().date()
+                hist_start = st.date_input("Historical Start Date", min_date, min_value=min_date, max_value=max_date, key="hist_start")
+            
+            with col2:
+                hist_end = st.date_input("Historical End Date", max_date, min_value=min_date, max_value=max_date, key="hist_end")
+            
+            # Filter historical data
+            hist_data = df[(df[date_column].dt.date >= hist_start) & (df[date_column].dt.date <= hist_end)]
+            
+            if not hist_data.empty:
+                # Historical weekly data
+                hist_data['Week_Start'] = hist_data[date_column].dt.to_period('W').dt.start_time
+                hist_data['Week_Label'] = hist_data['Week_Start'].dt.strftime('Week of %b %d, %Y')
+                
+                hist_weekly = hist_data.groupby(['Week_Start', 'Week_Label']).agg({
+                    hist_data.columns[0]: 'count',
+                    'CATEGORY': lambda x: (x == 'ACTIVE').sum()
+                }).reset_index()
+                
+                hist_weekly.columns = ['Week_Start', 'Week_Label', 'Total_Enrollments', 'Active_Enrollments']
+                hist_weekly['Active_Rate'] = (hist_weekly['Active_Enrollments'] / hist_weekly['Total_Enrollments'] * 100).round(1)
+                hist_weekly = hist_weekly.sort_values('Week_Start')
+                
+                # Historical metrics
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("Total Weeks", len(hist_weekly))
+                
+                with col2:
+                    st.metric("Avg Weekly Enrollments", f"{hist_weekly['Total_Enrollments'].mean():.1f}")
+                
+                with col3:
+                    st.metric("Peak Week Enrollments", hist_weekly['Total_Enrollments'].max())
+                
+                with col4:
+                    st.metric("Avg Active Rate", f"{hist_weekly['Active_Rate'].mean():.1f}%")
+                
+                # Historical trend chart
+                fig = px.line(
+                    hist_weekly,
+                    x='Week_Start',
+                    y='Total_Enrollments',
+                    title=f'Historical Weekly Trend ({hist_start} to {hist_end})',
+                    markers=True,
+                    color_discrete_sequence=[COLORS['primary']]
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Moving averages
+                if len(hist_weekly) >= 4:
+                    hist_weekly['4_Week_MA'] = hist_weekly['Total_Enrollments'].rolling(window=4).mean()
+                    
+                    fig = px.line(
+                        hist_weekly,
+                        x='Week_Start',
+                        y=['Total_Enrollments', '4_Week_MA'],
+                        title='Weekly Enrollments with 4-Week Moving Average',
+                        markers=True
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # Historical data table
+                st.subheader("Historical Weekly Data")
+                display_hist = hist_weekly[['Week_Label', 'Total_Enrollments', 'Active_Enrollments', 'Active_Rate']].copy()
+                display_hist.columns = ['Week', 'Total Enrollments', 'Active Enrollments', 'Active Rate (%)']
+                st.dataframe(display_hist.sort_values('Week', ascending=False), use_container_width=True, hide_index=True)
+            else:
+                st.warning("No data available for the selected date range.")
+        
+        # Tab 4: Agent Weekly Performance
+        with tabs[3]:
             st.subheader("Agent Weekly Performance")
             
             if 'AGENT' in df.columns:
