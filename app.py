@@ -115,6 +115,12 @@ def main():
         st.warning("⚠️ No data available. Please upload a CSV file with your data.")
         st.stop()
 
+    # Normalize text columns to handle case variations
+    text_columns = ['STATUS', 'CATEGORY', 'AGENT']
+    for col in text_columns:
+        if col in df.columns:
+            df[col] = df[col].astype(str).str.upper().str.strip()
+    
     # Store data in session state
     st.session_state['df'] = df
 
@@ -134,7 +140,10 @@ def main():
             min_date = date(2024, 10, 1)
             max_date = today
             
-        start = st.date_input("Start Date", max_date - timedelta(days=30), min_value=min_date, max_value=max_date)
+        # Ensure default start date is within valid range
+        default_start = max(min_date, max_date - timedelta(days=30))
+        
+        start = st.date_input("Start Date", default_start, min_value=min_date, max_value=max_date)
         end = st.date_input("End Date", max_date, min_value=min_date, max_value=max_date)
         
         # Status Filter
@@ -289,7 +298,7 @@ def fallback_landing_page(df_filtered, COLORS):
             
         with col2:
             if 'CATEGORY' in recent_df.columns and len(recent_df) > 0:
-                active_count = len(recent_df[recent_df['CATEGORY'] == 'ACTIVE'])
+                active_count = len(recent_df[recent_df['CATEGORY'].str.upper() == 'ACTIVE'])
                 active_rate = (active_count / len(recent_df) * 100) if len(recent_df) > 0 else 0
                 st.metric("Active Rate", f"{active_rate:.1f}%")
         
