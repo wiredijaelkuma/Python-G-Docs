@@ -179,6 +179,13 @@ def main():
     status_mask = get_status_filter_mask(df, show_active, show_nsf, show_cancelled, show_other)
     mask &= status_mask
     
+    # Create status_filter list for header function
+    status_filter = []
+    if show_active: status_filter.append('ACTIVE')
+    if show_nsf: status_filter.append('NSF')
+    if show_cancelled: status_filter.append('CANCELLED')
+    if show_other: status_filter.append('OTHER')
+    
     # Apply source filter - only if SOURCE_SHEET exists and sources are selected
     if 'SOURCE_SHEET' in df.columns and not all_sources and sources:
         mask &= df['SOURCE_SHEET'].isin(sources)
