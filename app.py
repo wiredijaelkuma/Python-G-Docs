@@ -89,9 +89,12 @@ def main():
         else:
             df, load_err = load_csv_data("processed_combined_data.csv")
             
-        # Convert date columns to datetime
-        if load_err is None:
-            # Handle both possible date column names
+        # Fix duplicate column names
+        if load_err is None and not df.empty:
+            # Remove duplicate columns
+            df = df.loc[:, ~df.columns.duplicated()]
+            
+            # Convert date columns to datetime
             date_col = None
             if 'ENROLLED_DATE' in df.columns:
                 date_col = 'ENROLLED_DATE'
