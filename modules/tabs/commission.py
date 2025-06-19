@@ -118,7 +118,7 @@ def render_commission_tab(df_filtered, COLORS):
             recent_cleared = payments_df[
                 (payments_df['Status'].str.contains('Cleared', na=False)) & 
                 (payments_df['ClearedDate'].notna()) & 
-                (payments_df['ClearedDate'].dt.date >= fourteen_days_ago)
+                (payments_df['ClearedDate'] >= pd.Timestamp(fourteen_days_ago))
             ]
             
             if not recent_cleared.empty:
