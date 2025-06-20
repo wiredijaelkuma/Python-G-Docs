@@ -115,24 +115,24 @@ def render_commission_tab(df_filtered, COLORS):
             col3.metric("NSF/Returned", nsf_payments)
             col4.metric("Pending", pending_payments)
             
-            # Recent Cleared Payments (Last 14 Days)
+            # Get current date and date 30 days ago (extending to show more data)
+            from datetime import datetime, timedelta
+            today = datetime.now()
+            fourteen_days_ago = today - timedelta(days=30)  # Extended to 30 days to show more data
+            
+            # Recent Cleared Payments (Last 30 Days)
             st.subheader("Recent Cleared Payments (Last 30 Days)")
             
             # Debug info to help diagnose issues
             with st.expander("Debug Info"):
                 st.write(f"Current date: {today}")
-                st.write(f"14 days ago: {fourteen_days_ago}")
+                st.write(f"30 days ago: {fourteen_days_ago}")
                 st.write(f"Total payments: {len(payments_df)}")
                 st.write(f"Payments with 'Cleared' status: {len(payments_df[payments_df['Status'].str.contains('Cleared', na=False)])}")
                 st.write(f"Payments with ClearedDate: {len(payments_df[payments_df['ClearedDate'].notna()])}")
                 if not payments_df[payments_df['ClearedDate'].notna()].empty:
                     st.write("Sample ClearedDate values:")
                     st.write(payments_df[payments_df['ClearedDate'].notna()]['ClearedDate'].head())
-            
-            # Get current date and date 30 days ago (extending to show more data)
-            from datetime import datetime, timedelta
-            today = datetime.now()
-            fourteen_days_ago = today - timedelta(days=30)  # Extended to 30 days to show more data
             
             # Filter for cleared payments in the last 14 days
             # Make sure to convert string 'Cleared' to uppercase for case-insensitive comparison
