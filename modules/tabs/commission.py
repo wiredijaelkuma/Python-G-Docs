@@ -71,6 +71,15 @@ def render_commission_tab(df_filtered, COLORS):
                 except:
                     pass
         
+        # Add a download button for all payments
+        st.download_button(
+            label="Download All Payments",
+            data=payments_df.to_csv(index=False),
+            file_name="all_commission_payments.csv",
+            mime="text/csv",
+            key="download_all_payments"
+        )
+        
         # Create tabs
         tabs = st.tabs(["Dashboard Overview", "Agent Performance", "Payment Analysis", "Raw Data"])
         
@@ -107,19 +116,34 @@ def render_commission_tab(df_filtered, COLORS):
             col4.metric("Pending", pending_payments)
             
             # Recent Cleared Payments (Last 14 Days)
-            st.subheader("Cleared Payments in Last 14 Days")
+            st.subheader("Recent Cleared Payments (Last 30 Days)")
             
-            # Get current date and date 14 days ago
+            # Debug info to help diagnose issues
+            with st.expander("Debug Info"):
+                st.write(f"Current date: {today}")
+                st.write(f"14 days ago: {fourteen_days_ago}")
+                st.write(f"Total payments: {len(payments_df)}")
+                st.write(f"Payments with 'Cleared' status: {len(payments_df[payments_df['Status'].str.contains('Cleared', na=False)])}")
+                st.write(f"Payments with ClearedDate: {len(payments_df[payments_df['ClearedDate'].notna()])}")
+                if not payments_df[payments_df['ClearedDate'].notna()].empty:
+                    st.write("Sample ClearedDate values:")
+                    st.write(payments_df[payments_df['ClearedDate'].notna()]['ClearedDate'].head())
+            
+            # Get current date and date 30 days ago (extending to show more data)
             from datetime import datetime, timedelta
             today = datetime.now()
-            fourteen_days_ago = today - timedelta(days=14)
+            fourteen_days_ago = today - timedelta(days=30)  # Extended to 30 days to show more data
             
             # Filter for cleared payments in the last 14 days
+            # Make sure to convert string 'Cleared' to uppercase for case-insensitive comparison
             recent_cleared = payments_df[
-                (payments_df['Status'].str.contains('Cleared', na=False)) & 
-                (payments_df['ClearedDate'].notna()) & 
-                (payments_df['ClearedDate'] >= fourteen_days_ago)
+                (payments_df['Status'].str.upper().str.contains('CLEARED', na=False)) & 
+                (payments_df['ClearedDate'].notna())
             ]
+            
+            # Now filter by date separately to help diagnose issues
+            if not recent_cleared.empty:
+                recent_cleared = recent_cleared[recent_cleared['ClearedDate'] >= fourteen_days_ago]
             
             if not recent_cleared.empty:
                 # Sort by cleared date chronologically (most recent first)
@@ -137,7 +161,7 @@ def render_commission_tab(df_filtered, COLORS):
                     # Add payment number to each agent's payments
                     agent_payment_numbers = {}
                     for agent in recent_cleared['AgentName'].unique():
-                        agent_payments = recent_cleared[recent_cleared['AgentName'] == agent].sort_values('ClearedDate')
+                        agent_payments = recent_cleared[recent_cleared['AgentName'] == agent].sort_values('ClearedDate', ascending=False)
                         agent_payments['PaymentNumber'] = range(1, len(agent_payments) + 1)
                         agent_payment_numbers[agent] = agent_payments
                     
@@ -158,7 +182,7 @@ def render_commission_tab(df_filtered, COLORS):
                     # Add download button for cleared payments
                     csv_data = display_df.to_csv(index=False)
                     st.download_button(
-                        label="Download Cleared Payments (Last 14 Days)",
+                        label="Download Cleared Payments (Last 30 Days)",
                         data=csv_data,
                         file_name=f"cleared_payments_{fourteen_days_ago.strftime('%Y%m%d')}_to_{today.strftime('%Y%m%d')}.csv",
                         mime="text/csv"
