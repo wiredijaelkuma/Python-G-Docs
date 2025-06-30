@@ -101,16 +101,27 @@ def main():
         if data_source == "Google Sheet":
             # Load from Google Sheets
             st.info("Fetching data from Google Sheet: 'Forth Py'")
-            df, load_err = fetch_data_from_sheet()
             
-            if not load_err and not df.empty:
-                st.success(f"Successfully loaded {len(df)} records from Google Sheets")
+            try:
+                # Check if we have access to secrets
+                if hasattr(st, 'secrets') and 'gcp_service_account' in st.secrets:
+                    st.success("Found Google credentials in Streamlit secrets")
+                else:
+                    st.warning("No Google credentials found in Streamlit secrets, will try local file")
+                    
+                df, load_err = fetch_data_from_sheet()
                 
-                # Save to processed_combined_data.csv for backup/offline use
-                try:
-                    df.to_csv("processed_combined_data.csv", index=False)
-                except Exception as e:
-                    st.sidebar.warning(f"Could not save backup: {e}")
+                if not load_err and not df.empty:
+                    st.success(f"Successfully loaded {len(df)} records from Google Sheets")
+                    
+                    # Save to processed_combined_data.csv for backup/offline use
+                    try:
+                        df.to_csv("processed_combined_data.csv", index=False)
+                    except Exception as e:
+                        st.sidebar.warning(f"Could not save backup: {e}")
+            except Exception as e:
+                st.error(f"Error connecting to Google Sheets: {e}")
+                load_err = str(e)
         else:
             # Try to load from uploaded file first, then fall back to default file
             if 'uploaded_file' in st.session_state:

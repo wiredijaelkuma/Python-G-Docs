@@ -18,12 +18,20 @@ def get_credentials():
     """Get credentials from local file or Streamlit secrets"""
     # First try Streamlit secrets
     try:
-        return st.secrets["gcp_service_account"]
+        creds = dict(st.secrets["gcp_service_account"])
+        # Add universe_domain if missing (required by newer versions)
+        if "universe_domain" not in creds:
+            creds["universe_domain"] = "googleapis.com"
+        return creds
     except Exception:
         # Fall back to local credentials file
         try:
             with open(CREDENTIALS_FILE, 'r') as f:
-                return json.load(f)
+                creds = json.load(f)
+                # Add universe_domain if missing (required by newer versions)
+                if "universe_domain" not in creds:
+                    creds["universe_domain"] = "googleapis.com"
+                return creds
         except Exception as e:
             st.error(f"Error loading credentials: {e}")
             return None
@@ -40,17 +48,26 @@ def get_gspread_client():
         if not creds_dict:
             return None, "Failed to load credentials"
             
-        # Check if running on Streamlit Cloud
-        if 'STREAMLIT_SHARING_MODE' in os.environ or 'STREAMLIT_APP_ID' in os.environ:
-            # Create credentials from dict for Streamlit Cloud
+        # Create credentials from dict
+        try:
+            # Try using google-auth (preferred for Streamlit Cloud)
             from google.oauth2 import service_account
             creds = service_account.Credentials.from_service_account_info(
                 creds_dict,
                 scopes=scope
             )
-        else:
-            # Use ServiceAccountCredentials for local development
-            creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+        except ImportError:
+            # Fall back to oauth2client
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False) as temp:
+                json.dump(creds_dict, temp)
+                temp_name = temp.name
+            
+            try:
+                creds = ServiceAccountCredentials.from_json_keyfile_name(temp_name, scope)
+            finally:
+                if os.path.exists(temp_name):
+                    os.unlink(temp_name)
             
         client = gspread.authorize(creds)
         return client, None
@@ -60,6 +77,9 @@ def get_gspread_client():
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_SHEET_NAMES):
     """Fetch and process data from Google Sheets"""
+    # Add debug info
+    st.write("Debug: Running on Streamlit Cloud:", 'STREAMLIT_SHARING_MODE' in os.environ or 'STREAMLIT_APP_ID' in os.environ)
+    
     client, error = get_gspread_client()
     
     if error:
