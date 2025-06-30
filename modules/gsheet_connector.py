@@ -12,7 +12,7 @@ import json
 # Configuration constants
 SPREADSHEET_TITLE = "Forth Py"
 CREDENTIALS_FILE = 'credentials.json'
-RAW_SHEET_NAMES = ["PAC", "MLG", "ELP", "Cordoba"]
+RAW_SHEET_NAMES = ["PAC", "MLG", "ELP", "Cordoba", "Comission"]
 
 def get_credentials():
     """Get credentials from local file or Streamlit secrets"""
@@ -131,10 +131,18 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
         combined_df = pd.concat(all_dfs, ignore_index=True)
         
         # Process date columns
+        # Handle enrollment dates
         if 'ENROLLED DATE' in combined_df.columns:
             combined_df['ENROLLED DATE'] = pd.to_datetime(combined_df['ENROLLED DATE'], errors='coerce')
             # Rename to match app's expected column name
             combined_df.rename(columns={'ENROLLED DATE': 'ENROLLED_DATE'}, inplace=True)
+            
+        # Handle commission dates
+        if 'PROCESSED DATE' in combined_df.columns:
+            combined_df['PROCESSED DATE'] = pd.to_datetime(combined_df['PROCESSED DATE'], errors='coerce')
+            
+        if 'CLEARED DATE' in combined_df.columns:
+            combined_df['CLEARED DATE'] = pd.to_datetime(combined_df['CLEARED DATE'], errors='coerce')
         
         # Add category column if status exists
         if 'STATUS' in combined_df.columns:

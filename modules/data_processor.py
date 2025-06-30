@@ -21,26 +21,19 @@ def normalize_dataframe(df):
         if col in df_clean.columns:
             df_clean[col] = df_clean[col].astype(str).str.upper().str.strip()
     
-    # Handle date columns
-    date_columns = ['ENROLLED_DATE', 'ENROLLED DATE']
+    # Handle date columns - dates should already be properly formatted from Google Sheets
+    date_columns = ['ENROLLED_DATE', 'ENROLLED DATE', 'PROCESSED DATE', 'CLEARED DATE']
     for col in date_columns:
-        if col in df_clean.columns:
-            try:
-                if not pd.api.types.is_datetime64_any_dtype(df_clean[col]):
-                    df_clean[col] = pd.to_datetime(df_clean[col], errors='coerce')
-                # Remove rows with invalid dates
-                df_clean = df_clean[df_clean[col].notna()]
-            except Exception as e:
-                st.warning(f"Date conversion error for {col}: {str(e)}")
+        if col in df_clean.columns and not pd.api.types.is_datetime64_any_dtype(df_clean[col]):
+            df_clean[col] = pd.to_datetime(df_clean[col], errors='coerce')
     
-    # Standardize category values
-    if 'CATEGORY' in df_clean.columns:
-        df_clean['CATEGORY'] = df_clean['CATEGORY'].replace({
-            'PENDING CANCELLATION': 'CANCELLED',
-            'PENDING AFFILIATE CANCELLATION': 'CANCELLED',
-            'RETURNED': 'OTHER',
-            'WAITING FOR FIRST PAYMENT': 'OTHER'
-        })
+    # Standardize category values if needed
+    if 'CATEGORY' not in df_clean.columns and 'STATUS' in df_clean.columns:
+        # Create CATEGORY column based on STATUS
+        df_clean['CATEGORY'] = 'OTHER'
+        df_clean.loc[df_clean['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
+        df_clean.loc[df_clean['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
+        df_clean.loc[df_clean['STATUS'].str.contains('CANCEL|DROP|TERMIN', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
     
     return df_clean
 

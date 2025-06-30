@@ -1,43 +1,6 @@
 # modules/utils.py
 import streamlit as st
-import pandas as pd
 from datetime import timedelta
-
-@st.cache_data(ttl=3600)
-def load_csv_data(file_path="processed_combined_data.csv"):
-    """Load data with minimal processing for speed"""
-    try:
-        # Check if the file has proper headers by reading the first line
-        with open(file_path, 'r') as f:
-            first_line = f.readline().strip()
-        
-        # If the first line starts with a date (like 2025-), it's missing headers
-        if first_line.startswith('20'):
-            # Define column names based on expected structure
-            column_names = ['CUSTOMER_ID', 'AGENT', 'ENROLLED_DATE', 'STATUS', 'SOURCE_SHEET', 'CATEGORY']
-            df = pd.read_csv(file_path, names=column_names)
-        else:
-            # Normal CSV reading
-            df = pd.read_csv(file_path)
-            
-            # Standardize column names
-            df.columns = [col.strip().upper().replace(" ", "_") for col in df.columns]
-        
-        # Only process essential columns
-        if 'ENROLLED_DATE' in df.columns:
-            df['ENROLLED_DATE'] = pd.to_datetime(df['ENROLLED_DATE'], errors='coerce')
-            df['MONTH_YEAR'] = df['ENROLLED_DATE'].dt.strftime('%Y-%m')
-        
-        if 'STATUS' in df.columns:
-            # Simplified status categorization
-            df['CATEGORY'] = 'OTHER'
-            df.loc[df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
-            df.loc[df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
-            df.loc[df['STATUS'].str.contains('CANCEL|DROP|TERMIN|PENDING', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
-        
-        return df, None
-    except Exception as e:
-        return pd.DataFrame(), str(e)
 
 def format_large_number(num):
     """Format large numbers with commas"""

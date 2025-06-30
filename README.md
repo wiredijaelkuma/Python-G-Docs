@@ -45,9 +45,18 @@ The app connects to the "Forth Py" Google Sheet with these worksheets:
 - MLG
 - ELP
 - Cordoba
+- Comission
 
-Each worksheet should have these columns:
+Enrollment worksheets (PAC, MLG, ELP, Cordoba) should have these columns:
 - CUSTOMER ID
 - AGENT
 - ENROLLED DATE
 - STATUS
+
+The Comission worksheet should have these columns:
+- Customer ID
+- Agent
+- Transaction Id
+- Status
+- Processed Date
+- Cleared Date

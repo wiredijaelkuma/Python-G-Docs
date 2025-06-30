@@ -13,118 +13,41 @@ def render_commission_tab(df_filtered, COLORS):
     st.header("Commission Dashboard")
     
     try:
-        # Read CSV directly with more robust error handling
-        try:
-            df = pd.read_csv("comissions.csv", header=0)
-            st.success("Commission data loaded successfully")
-        except Exception as e:
-            st.error(f"Error loading commission data: {str(e)}")
+        # Get commission data from the filtered dataframe
+        commission_data = df_filtered[df_filtered['SOURCE_SHEET'] == 'Comission']
+        
+        if commission_data.empty:
+            st.warning("No commission data found. Please make sure the 'Comission' worksheet exists in your Google Sheet.")
             # Create empty dataframe with expected columns as fallback
-            df = pd.DataFrame(columns=['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate'])
+            df = pd.DataFrame(columns=['CUSTOMER_ID', 'AGENT', 'PAYMENT_ID', 'STATUS', 'PAYMENT_DATE', 'CLEARED_DATE'])
             return
+            
+        st.success(f"Commission data loaded successfully: {len(commission_data)} records")
         
-        # Create a clean dataframe with just the data we need
-        data = []
+        # Rename columns to match expected format
+        df = commission_data.copy()
+        column_mapping = {
+            'CUSTOMER ID': 'CustomerID',
+            'AGENT': 'AgentName',
+            'TRANSACTION ID': 'PaymentID',
+            'STATUS': 'Status',
+            'PROCESSED DATE': 'PaymentDate',
+            'CLEARED DATE': 'ClearedDate'
+        }
         
-        # Display CSV structure for debugging
-        with st.expander("CSV Structure"):
-            st.write("CSV Columns:", df.columns.tolist())
-            st.write("CSV Shape:", df.shape)
+        # Rename columns if they exist
+        for old_col, new_col in column_mapping.items():
+            if old_col in df.columns:
+                df.rename(columns={old_col: new_col}, inplace=True)
+        
+        # Display data structure for debugging
+        with st.expander("Data Structure"):
+            st.write("Columns:", df.columns.tolist())
+            st.write("Shape:", df.shape)
             st.dataframe(df.head(2))
         
-        # Dynamically determine column indices based on CSV structure
-        try:
-            # Process even columns (left side of CSV)
-            even_col_indices = {}
-            for i, col in enumerate(df.columns):
-                if 'dgEven' in str(col):
-                    if i == 0 or 'dgEven 2' in str(col):
-                        even_col_indices['CustomerID'] = i
-                    elif 'dgEven 2' in str(col):
-                        even_col_indices['AgentName'] = i
-                    elif 'dgEven 3' in str(col):
-                        even_col_indices['PaymentID'] = i
-                    elif 'dgEven 4' in str(col):
-                        even_col_indices['Status'] = i
-                    elif 'dgEven 5' in str(col):
-                        even_col_indices['PaymentDate'] = i
-                    elif 'dgEven 6' in str(col):
-                        even_col_indices['ClearedDate'] = i
-            
-            # Process odd columns (right side of CSV)
-            odd_col_indices = {}
-            for i, col in enumerate(df.columns):
-                if 'dgOdd' in str(col):
-                    if i == 5 or 'dgOdd' in str(col) and not any(x in str(col) for x in ['2', '3', '4', '5', '6']):
-                        odd_col_indices['CustomerID'] = i
-                    elif 'dgOdd 2' in str(col):
-                        odd_col_indices['AgentName'] = i
-                    elif 'dgOdd 3' in str(col):
-                        odd_col_indices['PaymentID'] = i
-                    elif 'dgOdd 4' in str(col):
-                        odd_col_indices['Status'] = i
-                    elif 'dgOdd 5' in str(col):
-                        odd_col_indices['PaymentDate'] = i
-                    elif 'dgOdd 6' in str(col):
-                        odd_col_indices['ClearedDate'] = i
-            
-            # Fallback to default indices if not found
-            if not even_col_indices:
-                even_col_indices = {'CustomerID': 0, 'AgentName': 1, 'PaymentID': 2, 'Status': 3, 'PaymentDate': 4, 'ClearedDate': 11}
-            if not odd_col_indices:
-                odd_col_indices = {'CustomerID': 5, 'AgentName': 6, 'PaymentID': 7, 'Status': 8, 'PaymentDate': 9, 'ClearedDate': 10}
-            
-            # Process even columns (left side)
-            for i in range(len(df)):
-                try:
-                    if pd.notna(df.iloc[i, even_col_indices.get('AgentName', 1)]) and df.iloc[i, even_col_indices.get('AgentName', 1)] != "":
-                        row_data = {
-                            'CustomerID': str(df.iloc[i, even_col_indices.get('CustomerID', 0)]),
-                            'AgentName': str(df.iloc[i, even_col_indices.get('AgentName', 1)]),
-                            'PaymentID': str(df.iloc[i, even_col_indices.get('PaymentID', 2)]),
-                            'Status': str(df.iloc[i, even_col_indices.get('Status', 3)]),
-                            'PaymentDate': str(df.iloc[i, even_col_indices.get('PaymentDate', 4)]),
-                            'ClearedDate': str(df.iloc[i, even_col_indices.get('ClearedDate', 11)]) if i < len(df) and even_col_indices.get('ClearedDate', 11) < df.shape[1] and pd.notna(df.iloc[i, even_col_indices.get('ClearedDate', 11)]) else ""
-                        }
-                        data.append(row_data)
-                except Exception as e:
-                    st.warning(f"Error processing even row {i}: {str(e)}")
-                    continue
-            
-            # Process odd columns (right side)
-            for i in range(len(df)):
-                try:
-                    if pd.notna(df.iloc[i, odd_col_indices.get('AgentName', 6)]) and df.iloc[i, odd_col_indices.get('AgentName', 6)] != "":
-                        row_data = {
-                            'CustomerID': str(df.iloc[i, odd_col_indices.get('CustomerID', 5)]),
-                            'AgentName': str(df.iloc[i, odd_col_indices.get('AgentName', 6)]),
-                            'PaymentID': str(df.iloc[i, odd_col_indices.get('PaymentID', 7)]),
-                            'Status': str(df.iloc[i, odd_col_indices.get('Status', 8)]),
-                            'PaymentDate': str(df.iloc[i, odd_col_indices.get('PaymentDate', 9)]),
-                            'ClearedDate': str(df.iloc[i, odd_col_indices.get('ClearedDate', 10)]) if i < len(df) and odd_col_indices.get('ClearedDate', 10) < df.shape[1] and pd.notna(df.iloc[i, odd_col_indices.get('ClearedDate', 10)]) else ""
-                        }
-                        data.append(row_data)
-                except Exception as e:
-                    st.warning(f"Error processing odd row {i}: {str(e)}")
-                    continue
-        except Exception as e:
-            st.error(f"Error processing CSV structure: {str(e)}")
-            # Create a simple fallback with just the visible columns
-            for i in range(len(df)):
-                for j in range(min(6, df.shape[1])):
-                    if pd.notna(df.iloc[i, j]) and df.iloc[i, j] != "" and isinstance(df.iloc[i, j], str) and len(df.iloc[i, j]) > 2:
-                        row_data = {
-                            'CustomerID': str(df.iloc[i, 0]) if df.shape[1] > 0 else "",
-                            'AgentName': str(df.iloc[i, 1]) if df.shape[1] > 1 else "",
-                            'PaymentID': str(df.iloc[i, 2]) if df.shape[1] > 2 else "",
-                            'Status': str(df.iloc[i, 3]) if df.shape[1] > 3 else "",
-                            'PaymentDate': str(df.iloc[i, 4]) if df.shape[1] > 4 else "",
-                            'ClearedDate': ""
-                        }
-                        data.append(row_data)
-        
-        # Convert to dataframe
-        payments_df = pd.DataFrame(data)
+        # Use the dataframe directly
+        payments_df = df.copy()
         
         # Clean and validate data
         payments_df = payments_df[payments_df['AgentName'].notna() & (payments_df['AgentName'] != "") & (payments_df['AgentName'] != "nan")]
@@ -542,9 +465,7 @@ def render_commission_tab(df_filtered, COLORS):
             st.subheader("Raw Payment Data")
             
             # Add data inspection tools
-            with st.expander("Data Inspection Tools"):
-                st.subheader("Data Quality Check")
-                
+            with st.expander("Data Quality Check"):
                 # Check for missing values
                 missing_values = payments_df.isna().sum()
                 st.write("Missing Values by Column:")
@@ -553,28 +474,6 @@ def render_commission_tab(df_filtered, COLORS):
                 # Check for invalid dates
                 invalid_payment_dates = payments_df[payments_df['PaymentDate'].isna()].shape[0]
                 st.write(f"Invalid Payment Dates: {invalid_payment_dates}")
-                
-                # Show sample of original CSV
-                st.subheader("Original CSV Sample")
-                st.dataframe(df.head(5), use_container_width=True)
-                
-                # Show column mapping
-                st.subheader("Column Mapping")
-                st.write("Even columns (0-5, 10):")
-                st.write("- Column 0 → CustomerID")
-                st.write("- Column 1 → AgentName")
-                st.write("- Column 2 → PaymentID")
-                st.write("- Column 3 → Status")
-                st.write("- Column 4 → PaymentDate")
-                st.write("- Column 10 → ClearedDate")
-                
-                st.write("Odd columns (5-11):")
-                st.write("- Column 5 → CustomerID")
-                st.write("- Column 6 → AgentName")
-                st.write("- Column 7 → PaymentID")
-                st.write("- Column 8 → Status")
-                st.write("- Column 9 → PaymentDate")
-                st.write("- Column 11 → ClearedDate")
             
             # Display the raw data
             st.dataframe(payments_df, use_container_width=True)
