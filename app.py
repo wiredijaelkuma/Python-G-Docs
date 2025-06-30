@@ -7,7 +7,7 @@ from pathlib import Path
 import os
 
 # Import modules
-from modules.utils import load_css, load_csv_data, format_large_number
+from modules.utils import load_css, format_large_number
 from modules.ui_components import display_metrics, create_header
 from modules.tabs.landing_page import render_landing_page
 from modules.tabs.overview import render_overview_tab
@@ -67,25 +67,11 @@ def main():
             st.sidebar.success("✅ Data refreshed successfully!")
             st.rerun()
         
-        # Data source selection
+        # Data source info
         st.header("Data Source")
-        data_source = st.radio(
-            "Select data source:",
-            ["Local CSV", "Google Sheet"],
-            index=0,
-            key="data_source"
-        )
-        
-        if data_source == "Local CSV":
-            uploaded_file = st.file_uploader("Upload processed data CSV", type=["csv"])
-            if uploaded_file is not None:
-                st.session_state['uploaded_file'] = uploaded_file
-                st.success("✅ File uploaded successfully!")
-        else:  # Google Sheet
-            # Using default Google Sheet "Forth Py" with existing credentials.json
-            st.info("Using Google Sheet: 'Forth Py'")
-            st.session_state['spreadsheet_name'] = "Forth Py"
-            st.session_state['credentials_file'] = "credentials.json"
+        st.info("Connected to Google Sheet: 'Forth Py'")
+        st.session_state['data_source'] = "Google Sheet"
+        st.session_state['spreadsheet_name'] = "Forth Py"
 
     # --- Banner ---
     try:
@@ -95,40 +81,23 @@ def main():
 
     # --- Data Loading ---
     with st.spinner("🔍 Loading data..."):
-        # Determine data source and load accordingly
-        data_source = st.session_state.get('data_source', "Local CSV")
+        # Load from Google Sheets
+        st.info("Fetching data from Google Sheet: 'Forth Py'")
         
-        if data_source == "Google Sheet":
-            # Load from Google Sheets
-            st.info("Fetching data from Google Sheet: 'Forth Py'")
+        try:
+            df, load_err = fetch_data_from_sheet()
             
-            try:
-                # Check if we have access to secrets
-                if hasattr(st, 'secrets') and 'gcp_service_account' in st.secrets:
-                    st.success("Found Google credentials in Streamlit secrets")
-                else:
-                    st.warning("No Google credentials found in Streamlit secrets, will try local file")
-                    
-                df, load_err = fetch_data_from_sheet()
+            if not load_err and not df.empty:
+                st.success(f"Successfully loaded {len(df)} records from Google Sheets")
                 
-                if not load_err and not df.empty:
-                    st.success(f"Successfully loaded {len(df)} records from Google Sheets")
-                    
-                    # Save to processed_combined_data.csv for backup/offline use
-                    try:
-                        df.to_csv("processed_combined_data.csv", index=False)
-                    except Exception as e:
-                        st.sidebar.warning(f"Could not save backup: {e}")
-            except Exception as e:
-                st.error(f"Error connecting to Google Sheets: {e}")
-                load_err = str(e)
-        else:
-            # Try to load from uploaded file first, then fall back to default file
-            if 'uploaded_file' in st.session_state:
-                df = pd.read_csv(st.session_state['uploaded_file'])
-                load_err = None
-            else:
-                df, load_err = load_csv_data("processed_combined_data.csv")
+                # Save to processed_combined_data.csv for backup/offline use
+                try:
+                    df.to_csv("processed_combined_data.csv", index=False)
+                except Exception:
+                    pass  # Silently ignore backup errors
+        except Exception as e:
+            st.error(f"Error connecting to Google Sheets: {e}")
+            load_err = str(e)
         
         # Fix duplicate column names
         if load_err is None and not df.empty:

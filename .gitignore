@@ -1,7 +1,6 @@
 # Credentials and secrets
 credentials.json
 .streamlit/secrets.toml
-STREAMLIT_CLOUD_SETUP.md  # Contains instructions that might leak credential format
 
 # Python
 __pycache__/

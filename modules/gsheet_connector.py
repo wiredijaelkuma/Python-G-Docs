@@ -77,9 +77,6 @@ def get_gspread_client():
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_SHEET_NAMES):
     """Fetch and process data from Google Sheets"""
-    # Add debug info
-    st.write("Debug: Running on Streamlit Cloud:", 'STREAMLIT_SHARING_MODE' in os.environ or 'STREAMLIT_APP_ID' in os.environ)
-    
     client, error = get_gspread_client()
     
     if error:

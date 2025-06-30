@@ -9,7 +9,7 @@ A comprehensive sales and performance dashboard built with Streamlit.
 - Drop rate analysis
 - Risk analysis
 - Interactive data explorer
-- **Google Sheets Integration** - Connect directly to Google Sheets for real-time data
+- Google Sheets Integration - Connects directly to "Forth Py" Google Sheet
 
 ## Setup
 
@@ -21,26 +21,26 @@ A comprehensive sales and performance dashboard built with Streamlit.
 ### Streamlit Cloud Deployment
 1. Push your code to GitHub (excluding credentials.json)
 2. Deploy on Streamlit Cloud
-3. Add your Google API credentials to Streamlit Cloud secrets
-4. See `GSHEET_SETUP.md` for detailed instructions
+3. Add your Google API credentials to Streamlit Cloud secrets in this format:
 
-## Data Sources
-
-### 1. Local CSV File
-Upload a CSV file with the following columns:
-- ENROLLED_DATE: Date of enrollment
-- STATUS: Contract status
-- AGENT: Sales agent name
-- And other optional columns for more detailed analysis
-
-### 2. Google Sheets
-Connect directly to your "Forth Py" Google Sheet:
-1. Select "Google Sheet" as the data source in the app sidebar
-2. The app will automatically connect to the sheet using your credentials
+```toml
+[gcp_service_account]
+type = "service_account"
+project_id = "your-project-id"
+private_key_id = "your-private-key-id"
+private_key = "-----BEGIN PRIVATE KEY-----\nYour private key content with \n for line breaks\n-----END PRIVATE KEY-----\n"
+client_email = "your-service-account@your-project-id.iam.gserviceaccount.com"
+client_id = "your-client-id"
+auth_uri = "https://accounts.google.com/o/oauth2/auth"
+token_uri = "https://oauth2.googleapis.com/token"
+auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
+client_x509_cert_url = "https://www.googleapis.com/robot/v1/metadata/x509/your-service-account%40your-project-id.iam.gserviceaccount.com"
+universe_domain = "googleapis.com"
+```
 
 ## Google Sheet Structure
 
-Your Google Sheet should have the following worksheets:
+The app connects to the "Forth Py" Google Sheet with these worksheets:
 - PAC
 - MLG
 - ELP
