@@ -15,6 +15,7 @@ from modules.tabs.performance import render_performance_tab
 from modules.tabs.data_explorer import render_data_explorer
 from modules.tabs.commission import render_commission_tab
 from modules.tabs.monthly_analysis import render_monthly_analysis_tab
+from modules.gsheet_connector import fetch_data_from_sheet
 
 # --- Set page configuration first (must be the first Streamlit command) ---
 st.set_page_config(
@@ -66,13 +67,25 @@ def main():
             st.sidebar.success("✅ Data refreshed successfully!")
             st.rerun()
         
-        # Data source section - only show this if no data is loaded yet
-        if 'df' not in st.session_state:
-            st.header("Data Source")
+        # Data source selection
+        st.header("Data Source")
+        data_source = st.radio(
+            "Select data source:",
+            ["Local CSV", "Google Sheet"],
+            index=0,
+            key="data_source"
+        )
+        
+        if data_source == "Local CSV":
             uploaded_file = st.file_uploader("Upload processed data CSV", type=["csv"])
             if uploaded_file is not None:
                 st.session_state['uploaded_file'] = uploaded_file
                 st.success("✅ File uploaded successfully!")
+        else:  # Google Sheet
+            # Using default Google Sheet "Forth Py" with existing credentials.json
+            st.info("Using Google Sheet: 'Forth Py'")
+            st.session_state['spreadsheet_name'] = "Forth Py"
+            st.session_state['credentials_file'] = "credentials.json"
 
     # --- Banner ---
     try:
@@ -82,13 +95,30 @@ def main():
 
     # --- Data Loading ---
     with st.spinner("🔍 Loading data..."):
-        # Try to load from uploaded file first, then fall back to default file
-        if 'uploaded_file' in st.session_state:
-            df = pd.read_csv(st.session_state['uploaded_file'])
-            load_err = None
-        else:
-            df, load_err = load_csv_data("processed_combined_data.csv")
+        # Determine data source and load accordingly
+        data_source = st.session_state.get('data_source', "Local CSV")
+        
+        if data_source == "Google Sheet":
+            # Load from Google Sheets
+            st.info("Fetching data from Google Sheet: 'Forth Py'")
+            df, load_err = fetch_data_from_sheet()
             
+            if not load_err and not df.empty:
+                st.success(f"Successfully loaded {len(df)} records from Google Sheets")
+                
+                # Save to processed_combined_data.csv for backup/offline use
+                try:
+                    df.to_csv("processed_combined_data.csv", index=False)
+                except Exception as e:
+                    st.sidebar.warning(f"Could not save backup: {e}")
+        else:
+            # Try to load from uploaded file first, then fall back to default file
+            if 'uploaded_file' in st.session_state:
+                df = pd.read_csv(st.session_state['uploaded_file'])
+                load_err = None
+            else:
+                df, load_err = load_csv_data("processed_combined_data.csv")
+        
         # Fix duplicate column names
         if load_err is None and not df.empty:
             # Remove duplicate columns
@@ -106,6 +136,11 @@ def main():
                     df[date_col] = pd.to_datetime(df[date_col])
                 except:
                     st.warning(f"Could not convert {date_col} to datetime format.")
+        
+        # Show error details in an expander if there was an error
+        if load_err:
+            with st.expander("Error Details"):
+                st.code(load_err)
         
     if load_err:
         st.error(f"🚨 Data Load Error: {load_err}")

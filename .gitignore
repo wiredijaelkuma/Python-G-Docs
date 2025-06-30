@@ -1,38 +1,39 @@
-# Python cache files
+# Credentials and secrets
+credentials.json
+.streamlit/secrets.toml
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-
-# Virtual environments
-venv/
+*.so
+.Python
 env/
-ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Backup files
+gsheet_data_backup_*.csv
+*_backup_*.csv
 
-# IDE specific files
+# IDE files
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Streamlit specific
-.streamlit/secrets.toml
-
-# Credentials
-credentials.json
-*.key
-*.pem
-
-# Logs
-*.log
-
-# OS specific
+# OS files
 .DS_Store
 Thumbs.db
