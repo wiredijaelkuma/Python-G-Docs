@@ -16,12 +16,11 @@ RAW_SHEET_NAMES = ["PAC", "MLG", "ELP", "Cordoba"]
 
 def get_credentials():
     """Get credentials from local file or Streamlit secrets"""
-    # Check if running on Streamlit Cloud
-    if 'STREAMLIT_SHARING_MODE' in os.environ or 'STREAMLIT_APP_ID' in os.environ:
-        # Use Streamlit secrets
+    # First try Streamlit secrets
+    try:
         return st.secrets["gcp_service_account"]
-    else:
-        # Use local credentials file
+    except Exception:
+        # Fall back to local credentials file
         try:
             with open(CREDENTIALS_FILE, 'r') as f:
                 return json.load(f)
