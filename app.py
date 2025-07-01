@@ -588,7 +588,12 @@ def render_trends_dashboard(sales_df, COLORS, HEAT_COLORS):
     st.subheader("📈 Performance Trends")
     
     # Time range selector
-    time_range = st.selectbox("Select Time Range:", ["Last 30 Days", "Last 60 Days", "Last 90 Days", "Last 180 Days"])
+    time_range = st.selectbox(
+        "Select Time Range:", 
+        ["Last 30 Days", "Last 60 Days", "Last 90 Days", "Last 180 Days"],
+        index=2,  # Default to Last 90 Days
+        key="trends_time_range"
+    )
     
     # Calculate date range
     end_date = sales_df['ENROLLED_DATE'].max()
@@ -663,18 +668,24 @@ def render_trends_dashboard(sales_df, COLORS, HEAT_COLORS):
                 'CATEGORY': lambda x: (x == 'ACTIVE').sum()
             }).rename(columns={'AGENT': 'Total', 'CATEGORY': 'Active'})
             
+            # Calculate weighted stick rate (considers both rate and volume)
             agent_performance['Stick_Rate'] = (agent_performance['Active'] / agent_performance['Total'] * 100).round(1)
-            agent_performance = agent_performance[agent_performance['Total'] >= 5]  # Min 5 sales
-            agent_performance = agent_performance.sort_values('Stick_Rate', ascending=False).head(10)
+            agent_performance['Volume_Weight'] = (agent_performance['Total'] / agent_performance['Total'].max() * 100).round(1)
+            agent_performance['Weighted_Score'] = (agent_performance['Stick_Rate'] * 0.7 + agent_performance['Volume_Weight'] * 0.3).round(1)
+            
+            # Filter agents with minimum activity and sort by weighted score
+            agent_performance = agent_performance[agent_performance['Total'] >= 3]  # Min 3 sales
+            agent_performance = agent_performance.sort_values('Weighted_Score', ascending=False).head(10)
             
             if not agent_performance.empty:
                 fig = px.bar(
                     agent_performance,
                     x=agent_performance.index,
-                    y='Stick_Rate',
-                    title="Top Agents by Stick Rate",
-                    color='Stick_Rate',
-                    color_continuous_scale=HEAT_COLORS
+                    y='Weighted_Score',
+                    title="Top Agents by Weighted Performance",
+                    color='Weighted_Score',
+                    color_continuous_scale=HEAT_COLORS,
+                    hover_data=['Stick_Rate', 'Total', 'Active']
                 )
                 fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
                 st.plotly_chart(fig, use_container_width=True)
@@ -739,11 +750,13 @@ def render_trends_dashboard(sales_df, COLORS, HEAT_COLORS):
         
         detailed_performance.columns = ['Total_Sales', 'Active_Sales', 'Cancelled_Sales', 'NSF_Sales']
         detailed_performance['Stick_Rate'] = (detailed_performance['Active_Sales'] / detailed_performance['Total_Sales'] * 100).round(1)
-        detailed_performance['Retention_Score'] = (detailed_performance['Active_Sales'] * 2 - detailed_performance['Cancelled_Sales']).clip(lower=0)
+        detailed_performance['Volume_Weight'] = (detailed_performance['Total_Sales'] / detailed_performance['Total_Sales'].max() * 100).round(1)
+        detailed_performance['Weighted_Score'] = (detailed_performance['Stick_Rate'] * 0.7 + detailed_performance['Volume_Weight'] * 0.3).round(1)
+        detailed_performance['Performance_Rank'] = detailed_performance['Weighted_Score'].rank(ascending=False, method='dense').astype(int)
         
         # Filter agents with minimum activity
         qualified_agents = detailed_performance[detailed_performance['Total_Sales'] >= 3]
-        qualified_agents = qualified_agents.sort_values('Stick_Rate', ascending=False).reset_index()
+        qualified_agents = qualified_agents.sort_values('Weighted_Score', ascending=False).reset_index()
         
         st.dataframe(qualified_agents, use_container_width=True, hide_index=True)
     
