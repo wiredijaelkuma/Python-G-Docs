@@ -41,7 +41,7 @@ def load_css():
     st.markdown(f"""
     <style>
     .stApp {{
-        background-image: url("data:image/jpeg;base64,{bg_image}");
+        background-image: linear-gradient(rgba(180, 180, 220, 0.4), rgba(180, 180, 220, 0.4)), url("data:image/jpeg;base64,{bg_image}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
