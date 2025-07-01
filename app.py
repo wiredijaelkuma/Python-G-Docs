@@ -106,7 +106,7 @@ def main():
         render_dashboard(df, COLORS, HEAT_COLORS)
     
     with tabs[1]:
-        from modules.agent_hybrid_analysis import render_agent_hybrid_analysis
+        from modules.agent_hybrid_enhanced import render_agent_hybrid_analysis
         render_agent_hybrid_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[2]:
