@@ -128,7 +128,8 @@ def main():
                 st.write(f"• {source}: {count}")
 
     # Header
-    st.markdown(f'<div class="main-header"><h2>Total Records: {len(df)} | Sources: {', '.join(df['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df.columns else 'N/A'}</h2></div>', unsafe_allow_html=True)
+    sources_text = ', '.join(df['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df.columns else 'N/A'
+    st.markdown(f'<div class="main-header"><h2>Total Records: {len(df)} | Sources: {sources_text}</h2></div>', unsafe_allow_html=True)
 
     # Tabs
     tabs = st.tabs(["Overview", "Agents", "Commission", "Data Explorer"])
