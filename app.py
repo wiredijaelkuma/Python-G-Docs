@@ -72,21 +72,21 @@ def load_css():
     }}
     
     .main .block-container {{
-        background: rgba(230, 230, 250, 0.85);
+        background: rgba(200, 200, 240, 0.9);
         border-radius: 10px;
         padding: 2rem;
         margin-top: 1rem;
     }}
     
     .stMetric {{
-        background: rgba(230, 230, 250, 0.7);
+        background: rgba(200, 200, 240, 0.8);
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
     }}
     
     .stDataFrame {{
-        background: rgba(230, 230, 250, 0.8);
+        background: rgba(200, 200, 240, 0.85);
         border-radius: 8px;
         padding: 1rem;
     }}
