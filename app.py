@@ -78,18 +78,18 @@ def load_css():
         margin-top: 1rem;
     }}
     
-    .stMetric {
+    .stMetric {{
         background: rgba(230, 230, 250, 0.7);
         padding: 1rem;
         border-radius: 8px;
         margin: 0.5rem 0;
-    }
+    }}
     
-    .stDataFrame {
+    .stDataFrame {{
         background: rgba(230, 230, 250, 0.8);
         border-radius: 8px;
         padding: 1rem;
-    }
+    }}
     </style>
     """, unsafe_allow_html=True)
 
