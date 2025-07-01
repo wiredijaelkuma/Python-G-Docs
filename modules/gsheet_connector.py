@@ -114,16 +114,32 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
         
         if 'PROCESSED DATE' in combined_df.columns:
             combined_df['PROCESSED DATE'] = pd.to_datetime(combined_df['PROCESSED DATE'], errors='coerce')
+            combined_df.rename(columns={'PROCESSED DATE': 'PROCESSED_DATE'}, inplace=True)
             
         if 'CLEARED DATE' in combined_df.columns:
             combined_df['CLEARED DATE'] = pd.to_datetime(combined_df['CLEARED DATE'], errors='coerce')
+            combined_df.rename(columns={'CLEARED DATE': 'CLEARED_DATE'}, inplace=True)
         
-        # Add category column
+        # Enhanced commission data processing
+        commission_mask = combined_df['SOURCE_SHEET'] == 'Comission'
+        if commission_mask.any():
+            combined_df['CATEGORY'] = 'OTHER'  # Initialize category
+            # For commission data, use cleared date for successful payments
+            if 'CLEARED_DATE' in combined_df.columns:
+                combined_df.loc[commission_mask & combined_df['CLEARED_DATE'].notna(), 'CATEGORY'] = 'CLEARED'
+            # Use processed date for pending/failed payments
+            if 'PROCESSED_DATE' in combined_df.columns:
+                combined_df.loc[commission_mask & combined_df['CLEARED_DATE'].isna() & combined_df['PROCESSED_DATE'].notna(), 'CATEGORY'] = 'PROCESSING'
+        
+        # Add category column for sales data
         if 'STATUS' in combined_df.columns:
-            combined_df['CATEGORY'] = 'OTHER'
-            combined_df.loc[combined_df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
-            combined_df.loc[combined_df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
-            combined_df.loc[combined_df['STATUS'].str.contains('CANCEL|DROP|TERMIN|NEEDS ROL', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
+            # Only apply to non-commission data
+            sales_mask = combined_df['SOURCE_SHEET'] != 'Comission'
+            if not combined_df.loc[sales_mask].empty:
+                combined_df.loc[sales_mask, 'CATEGORY'] = 'OTHER'
+                combined_df.loc[sales_mask & combined_df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
+                combined_df.loc[sales_mask & combined_df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
+                combined_df.loc[sales_mask & combined_df['STATUS'].str.contains('CANCEL|DROP|TERMIN|NEEDS ROL', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
         
         return combined_df, None
     except Exception as e:
