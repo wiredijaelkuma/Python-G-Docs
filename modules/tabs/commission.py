@@ -13,26 +13,48 @@ def render_commission_tab(df_filtered, COLORS):
     st.header("Commission Dashboard")
     
     try:
+        # Check if the Comission sheet exists in the data
+        if 'SOURCE_SHEET' not in df_filtered.columns or 'Comission' not in df_filtered['SOURCE_SHEET'].values:
+            st.warning("No commission data found. Please make sure the 'Comission' worksheet exists in your Google Sheet.")
+            st.info("Available sheets: " + ", ".join(df_filtered['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df_filtered.columns else "No sheets found")
+            # Create empty dataframe with expected columns as fallback
+            df = pd.DataFrame(columns=['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate'])
+            return
+            
         # Get commission data from the filtered dataframe
         commission_data = df_filtered[df_filtered['SOURCE_SHEET'] == 'Comission']
         
         if commission_data.empty:
-            st.warning("No commission data found. Please make sure the 'Comission' worksheet exists in your Google Sheet.")
+            st.warning("Commission data is empty. Please add data to the 'Comission' worksheet in your Google Sheet.")
             # Create empty dataframe with expected columns as fallback
-            df = pd.DataFrame(columns=['CUSTOMER_ID', 'AGENT', 'PAYMENT_ID', 'STATUS', 'PAYMENT_DATE', 'CLEARED_DATE'])
+            df = pd.DataFrame(columns=['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate'])
             return
             
         st.success(f"Commission data loaded successfully: {len(commission_data)} records")
         
         # Rename columns to match expected format
         df = commission_data.copy()
+        
+        # Display all available columns for debugging
+        st.write("Available columns:", df.columns.tolist())
+        
+        # Create column mapping with both uppercase and regular case
         column_mapping = {
+            # Uppercase versions
             'CUSTOMER ID': 'CustomerID',
             'AGENT': 'AgentName',
             'TRANSACTION ID': 'PaymentID',
             'STATUS': 'Status',
             'PROCESSED DATE': 'PaymentDate',
-            'CLEARED DATE': 'ClearedDate'
+            'CLEARED DATE': 'ClearedDate',
+            
+            # Regular case versions
+            'Customer ID': 'CustomerID',
+            'Agent': 'AgentName',
+            'Transaction Id': 'PaymentID',
+            'Status': 'Status',
+            'Processed Date': 'PaymentDate',
+            'Cleared Date': 'ClearedDate'
         }
         
         # Rename columns if they exist

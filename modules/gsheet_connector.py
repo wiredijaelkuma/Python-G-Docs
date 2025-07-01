@@ -114,8 +114,8 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
                     # Create DataFrame
                     df = pd.DataFrame(rows, columns=fixed_headers)
                     
-                    # Standardize column names
-                    df.columns = [str(col).strip().upper() for col in df.columns]
+                    # Keep original column names but strip whitespace
+                    df.columns = [str(col).strip() for col in df.columns]
                     
                     # Add source column
                     df['SOURCE_SHEET'] = sheet_name
@@ -131,26 +131,36 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
         combined_df = pd.concat(all_dfs, ignore_index=True)
         
         # Process date columns
-        # Handle enrollment dates
-        if 'ENROLLED DATE' in combined_df.columns:
-            combined_df['ENROLLED DATE'] = pd.to_datetime(combined_df['ENROLLED DATE'], errors='coerce')
-            # Rename to match app's expected column name
-            combined_df.rename(columns={'ENROLLED DATE': 'ENROLLED_DATE'}, inplace=True)
-            
-        # Handle commission dates
-        if 'PROCESSED DATE' in combined_df.columns:
-            combined_df['PROCESSED DATE'] = pd.to_datetime(combined_df['PROCESSED DATE'], errors='coerce')
-            
-        if 'CLEARED DATE' in combined_df.columns:
-            combined_df['CLEARED DATE'] = pd.to_datetime(combined_df['CLEARED DATE'], errors='coerce')
+        # Handle enrollment dates (both uppercase and regular case)
+        date_columns = [
+            'ENROLLED DATE', 'Enrolled Date', 'ENROLLED_DATE', 'Enrolled_Date',
+            'PROCESSED DATE', 'Processed Date', 
+            'CLEARED DATE', 'Cleared Date'
+        ]
         
-        # Add category column if status exists
+        for col in date_columns:
+            if col in combined_df.columns:
+                combined_df[col] = pd.to_datetime(combined_df[col], errors='coerce')
+                
+        # Rename ENROLLED DATE to ENROLLED_DATE if needed
+        if 'ENROLLED DATE' in combined_df.columns and 'ENROLLED_DATE' not in combined_df.columns:
+            combined_df.rename(columns={'ENROLLED DATE': 'ENROLLED_DATE'}, inplace=True)
+        elif 'Enrolled Date' in combined_df.columns and 'ENROLLED_DATE' not in combined_df.columns:
+            combined_df.rename(columns={'Enrolled Date': 'ENROLLED_DATE'}, inplace=True)
+        
+        # Add category column if status exists (handle both uppercase and regular case)
+        status_col = None
         if 'STATUS' in combined_df.columns:
+            status_col = 'STATUS'
+        elif 'Status' in combined_df.columns:
+            status_col = 'Status'
+            
+        if status_col:
             # Create CATEGORY column using efficient vectorized operations
             combined_df['CATEGORY'] = 'OTHER'
-            combined_df.loc[combined_df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
-            combined_df.loc[combined_df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
-            combined_df.loc[combined_df['STATUS'].str.contains('CANCEL|DROP|TERMIN|NEEDS ROL', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
+            combined_df.loc[combined_df[status_col].str.contains('ACTIVE|ENROLLED|active|enrolled', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
+            combined_df.loc[combined_df[status_col].str.contains('NSF|nsf', case=False, na=False), 'CATEGORY'] = 'NSF'
+            combined_df.loc[combined_df[status_col].str.contains('CANCEL|DROP|TERMIN|NEEDS ROL|cancel|drop|termin', case=False, na=False), 'CATEGORY'] = 'CANCELLED'
         
         return combined_df, None
     except Exception as e:

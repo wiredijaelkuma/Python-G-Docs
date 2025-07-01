@@ -7,35 +7,57 @@ import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime, timedelta
 
-def process_commission_data():
+def process_commission_data(df_filtered):
     """Process commission data for performance metrics"""
     try:
-        # Read the raw CSV file
-        df = pd.read_csv("comissions.csv")
+        # Get commission data from the filtered dataframe
+        if 'SOURCE_SHEET' not in df_filtered.columns or 'Comission' not in df_filtered['SOURCE_SHEET'].values:
+            st.warning("No commission data found. Please make sure the 'Comission' worksheet exists in your Google Sheet.")
+            return pd.DataFrame()
+            
+        # Get commission data from the filtered dataframe
+        commission_data = df_filtered[df_filtered['SOURCE_SHEET'] == 'Comission']
         
-        # Extract even and odd columns
-        even_df = df.iloc[:, 0:6].copy()
-        even_df.columns = ['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate']
+        if commission_data.empty:
+            st.warning("Commission data is empty. Please add data to the 'Comission' worksheet in your Google Sheet.")
+            return pd.DataFrame()
+            
+        # Rename columns to match expected format
+        df = commission_data.copy()
         
-        odd_df = df.iloc[:, 6:12].copy()
-        odd_df.columns = ['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate']
+        # Create column mapping with both uppercase and regular case
+        column_mapping = {
+            # Uppercase versions
+            'CUSTOMER ID': 'CustomerID',
+            'AGENT': 'AgentName',
+            'TRANSACTION ID': 'PaymentID',
+            'STATUS': 'Status',
+            'PROCESSED DATE': 'PaymentDate',
+            'CLEARED DATE': 'ClearedDate',
+            
+            # Regular case versions
+            'Customer ID': 'CustomerID',
+            'Agent': 'AgentName',
+            'Transaction Id': 'PaymentID',
+            'Status': 'Status',
+            'Processed Date': 'PaymentDate',
+            'Cleared Date': 'ClearedDate'
+        }
         
-        # Combine the dataframes
-        combined_df = pd.concat([even_df, odd_df], ignore_index=True)
+        # Rename columns if they exist
+        for old_col, new_col in column_mapping.items():
+            if old_col in df.columns:
+                df.rename(columns={old_col: new_col}, inplace=True)
         
         # Remove rows where CustomerID is empty
-        combined_df = combined_df[combined_df['CustomerID'].notna() & (combined_df['CustomerID'] != "")]
-        
-        # Convert dates to datetime
-        combined_df['PaymentDate'] = pd.to_datetime(combined_df['PaymentDate'], errors='coerce')
-        combined_df['ClearedDate'] = pd.to_datetime(combined_df['ClearedDate'], errors='coerce')
+        df = df[df['CustomerID'].notna() & (df['CustomerID'] != "")]
         
         # Create a payment status column
-        combined_df['PaymentStatus'] = combined_df['Status'].apply(
+        df['PaymentStatus'] = df['Status'].apply(
             lambda x: 'Cleared' if 'Cleared' in str(x) else 'NSF' if 'NSF' in str(x) or 'Returned' in str(x) else 'Pending'
         )
         
-        return combined_df
+        return df
     except Exception as e:
         st.error(f"Error processing commission data: {e}")
         return pd.DataFrame()
@@ -46,7 +68,7 @@ def render_performance_tab(df, COLORS):
     st.subheader("Performance Metrics")
     
     # Process commission data for performance metrics
-    commission_df = process_commission_data()
+    commission_df = process_commission_data(df)
     
     if commission_df.empty:
         st.error("Could not load commission data for performance metrics.")
