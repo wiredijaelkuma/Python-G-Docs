@@ -137,7 +137,8 @@ def render_dashboard(df, COLORS, HEAT_COLORS):
         render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS)
     
     with subtabs[2]:
-        render_trends_complete(sales_df, COLORS, HEAT_COLORS)
+        from modules.trends_dashboard import render_trends_dashboard
+        render_trends_dashboard(sales_df, COLORS, HEAT_COLORS)
 
 def render_weekly_complete(sales_df, COLORS, HEAT_COLORS):
     """Complete weekly dashboard with all displays"""
