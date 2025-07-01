@@ -9,7 +9,7 @@ from modules.gsheet_connector import fetch_data_from_sheet
 st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸")
 
 # Assets directory
-ASSETS_DIR = Path("assets")
+ASSETS_DIR = "assets"
 
 # Periwinkle and purple color palette
 COLORS = {
@@ -90,6 +90,7 @@ def main():
     
     # Banner
     try:
+        import os
         st.image(os.path.join(ASSETS_DIR, "banner.png"), use_container_width=True)
     except:
         st.markdown('<div class="main-header"><h1>🐸 Pepe\'s Power Dashboard</h1></div>', unsafe_allow_html=True)
