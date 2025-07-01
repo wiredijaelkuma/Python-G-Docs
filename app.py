@@ -7,7 +7,7 @@ from modules.gsheet_connector import fetch_data_from_sheet
 from modules.main_page import render_main_page
 
 # Page config
-st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸")
+st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸", initial_sidebar_state="collapsed")
 
 # Assets directory
 ASSETS_DIR = "assets"
@@ -46,15 +46,6 @@ def load_css():
         background: linear-gradient(135deg, #F8F9FA 0%, #E6E6FA 100%);
     }
     
-    .main-header {
-        background: linear-gradient(90deg, #8A7FBA, #6A5ACD);
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        color: white;
-        text-align: center;
-    }
-    
     div[data-testid="metric-container"] {
         background: linear-gradient(135deg, #FFFFFF, #F0F8FF);
         border: 1px solid #B39DDB;
@@ -63,45 +54,81 @@ def load_css():
         box-shadow: 0 2px 4px rgba(138, 127, 186, 0.1);
     }
     
-    .stTabs [data-baseweb="tab"] {
-        background: linear-gradient(135deg, #E6E6FA, #B39DDB);
-        border-radius: 8px;
-        color: #483D8B;
-        font-weight: bold;
+    /* MAIN TABS - Large and prominent */
+    .stTabs:first-of-type [data-baseweb="tab"] {
+        font-size: 24px !important;
+        font-weight: 900 !important;
+        padding: 25px 40px !important;
+        min-height: 80px !important;
+        border: 4px solid #8A7FBA !important;
+        border-radius: 20px !important;
+        margin: 0 10px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 2px !important;
+        background: linear-gradient(135deg, #E6E6FA, #B39DDB) !important;
+        color: #483D8B !important;
     }
     
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #8A7FBA, #6A5ACD);
-        color: white;
+    .stTabs:first-of-type [aria-selected="true"] {
+        background: linear-gradient(135deg, #6A5ACD, #483D8B) !important;
+        color: white !important;
+        border: 4px solid #483D8B !important;
+        box-shadow: 0 10px 20px rgba(106, 90, 205, 0.6) !important;
+        transform: translateY(-3px) scale(1.02) !important;
     }
     
+    /* SUBTABS - Smaller and different */
+    .stTabs .stTabs [data-baseweb="tab"] {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        padding: 12px 20px !important;
+        min-height: 45px !important;
+        border: 2px solid #B39DDB !important;
+        border-radius: 10px !important;
+        margin: 0 5px !important;
+        background: #F8F9FA !important;
+        color: #483D8B !important;
+        text-transform: capitalize !important;
+    }
+    
+    .stTabs .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #B39DDB, #8A7FBA) !important;
+        color: white !important;
+        border: 2px solid #8A7FBA !important;
+        box-shadow: 0 4px 8px rgba(179, 157, 219, 0.4) !important;
+    }
+    
+    /* DROPDOWNS - Much larger and better */
+    .stSelectbox > div > div {
+        font-size: 20px !important;
+        min-height: 65px !important;
+        padding: 18px !important;
+        border: 3px solid #8A7FBA !important;
+        border-radius: 15px !important;
+        background: linear-gradient(135deg, #F0F8FF, #E6E6FA) !important;
+        font-weight: 600 !important;
+    }
+    
+    .stSelectbox > div > div:hover {
+        border: 3px solid #6A5ACD !important;
+        box-shadow: 0 4px 12px rgba(138, 127, 186, 0.3) !important;
+    }
+    
+    /* BUTTONS */
     .stButton > button {
         background: linear-gradient(135deg, #8A7FBA, #6A5ACD);
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 12px;
         font-weight: bold;
-        font-size: 16px;
-        padding: 12px 24px;
-        min-height: 50px;
+        font-size: 18px;
+        padding: 15px 30px;
+        min-height: 60px;
     }
     
-    .stSelectbox > div > div {
-        font-size: 16px;
-        min-height: 50px;
-    }
-    
-    /* Larger main tabs */
-    .stTabs [data-baseweb="tab"] {
-        font-size: 18px !important;
-        padding: 16px 24px !important;
-        min-height: 60px !important;
-        border: 2px solid #B39DDB !important;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        border: 2px solid #6A5ACD !important;
-        box-shadow: 0 4px 8px rgba(138, 127, 186, 0.3) !important;
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(138, 127, 186, 0.4);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -115,7 +142,7 @@ def main():
         import os
         st.image(os.path.join(ASSETS_DIR, "banner.png"), use_container_width=True)
     except:
-        st.markdown('<div class="main-header"><h1>🐸 Pepe\'s Power Dashboard</h1></div>', unsafe_allow_html=True)
+        st.markdown('<div style="text-align: center; padding: 20px;"><h1>🐸 Pepe\'s Power Dashboard</h1></div>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
@@ -150,11 +177,8 @@ def main():
                 count = len(df[df['SOURCE_SHEET'] == source])
                 st.write(f"• {source}: {count}")
 
-    # Header
-    st.markdown(f'<div class="main-header"><h2>Total Records: {len(df)}</h2></div>', unsafe_allow_html=True)
-
     # Tabs
-    tabs = st.tabs(["📊 Main Dashboard", "👥 Agents", "💰 Commission", "🔍 Data Explorer"])
+    tabs = st.tabs(["📊 MAIN DASHBOARD", "👥 AGENTS", "💰 COMMISSION", "🔍 DATA EXPLORER"])
     
     with tabs[0]:
         render_main_page(df, COLORS, PURPLE_SCALES)
@@ -167,51 +191,6 @@ def main():
     
     with tabs[3]:
         render_data_explorer(df, COLORS)
-
-def render_overview(df, COLORS):
-    st.header("Overview")
-    
-    # Metrics
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Total Records", len(df))
-    
-    with col2:
-        if 'CATEGORY' in df.columns:
-            active_count = len(df[df['CATEGORY'] == 'ACTIVE'])
-            st.metric("Active", active_count)
-    
-    with col3:
-        if 'CATEGORY' in df.columns:
-            cancelled_count = len(df[df['CATEGORY'] == 'CANCELLED'])
-            st.metric("Cancelled", cancelled_count)
-    
-    with col4:
-        if 'CATEGORY' in df.columns:
-            other_count = len(df[df['CATEGORY'] == 'OTHER'])
-            st.metric("Other", other_count)
-
-    # Category Chart
-    if 'CATEGORY' in df.columns:
-        category_counts = df['CATEGORY'].value_counts()
-        fig = px.bar(x=category_counts.index, y=category_counts.values,
-                    title="Records by Category", color=category_counts.index,
-                    color_discrete_map={'ACTIVE': COLORS['med_green'], 'CANCELLED': COLORS['danger'], 'NSF': COLORS['warning'], 'OTHER': COLORS['med_purple']})
-        st.plotly_chart(fig, use_container_width=True)
-
-    # Monthly trend
-    if 'ENROLLED_DATE' in df.columns:
-        st.subheader("Monthly Enrollment Trend")
-        df_with_date = df[df['ENROLLED_DATE'].notna()].copy()
-        if not df_with_date.empty:
-            df_with_date['Month'] = df_with_date['ENROLLED_DATE'].dt.strftime('%Y-%m')
-            monthly_counts = df_with_date.groupby('Month').size().reset_index()
-            monthly_counts.columns = ['Month', 'Count']
-            
-            fig = px.line(monthly_counts, x='Month', y='Count', markers=True,
-                         title="Monthly Enrollments", color_discrete_sequence=[COLORS['primary']])
-            st.plotly_chart(fig, use_container_width=True)
 
 def render_agents(df, COLORS):
     st.header("Agent Performance")
