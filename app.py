@@ -131,7 +131,8 @@ def main():
         render_agent_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[2]:
-        render_commission(df, COLORS, HEAT_COLORS)
+        from modules.commission_dashboard import render_commission_dashboard
+        render_commission_dashboard(df, COLORS, HEAT_COLORS)
     
     with tabs[3]:
         render_data_explorer(df, COLORS)
@@ -154,6 +155,7 @@ def render_dashboard(df, COLORS, HEAT_COLORS):
         render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS)
     
     with subtabs[1]:
+        from modules.monthly_dashboard import render_monthly_dashboard
         render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS)
     
     with subtabs[2]:

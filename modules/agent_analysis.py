@@ -38,12 +38,8 @@ def render_lifespan_analysis(sales_df, commission_df, COLORS, HEAT_COLORS):
     # Agent selector with proper styling
     if not sales_df.empty:
         agents = ['All Agents'] + sorted(sales_df['AGENT'].dropna().unique().tolist())
-        selected_agent = st.selectbox(
-            "🔍 Select Agent for Analysis:",
-            options=agents,
-            index=0,
-            key="lifespan_agent_selector"
-        )
+        from modules.dropdown_utils import create_agent_selector
+        selected_agent = create_agent_selector(sales_df['AGENT'].dropna().unique(), "lifespan")
         
         if selected_agent == 'All Agents':
             agent_sales = sales_df
@@ -192,12 +188,8 @@ def render_payment_trends(sales_df, commission_df, COLORS, HEAT_COLORS):
     
     # Time range selector
     time_options = ["Last 30 Days", "Last 60 Days", "Last 90 Days", "Last 180 Days", "All Time"]
-    selected_range = st.selectbox(
-        "📅 Select Time Range:",
-        options=time_options,
-        index=2,
-        key="payment_trends_time_range"
-    )
+    from modules.dropdown_utils import create_time_range_selector
+    selected_range = create_time_range_selector("payment_trends")
     
     # Filter data based on time range
     if selected_range != "All Time" and not commission_df.empty:
