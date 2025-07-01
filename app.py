@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from modules.gsheet_connector import fetch_data_from_sheet
+from modules.main_page import render_main_page
 
 # Page config
 st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸")
@@ -80,6 +81,14 @@ def load_css():
         border: none;
         border-radius: 8px;
         font-weight: bold;
+        font-size: 16px;
+        padding: 12px 24px;
+        min-height: 50px;
+    }
+    
+    .stSelectbox > div > div {
+        font-size: 16px;
+        min-height: 50px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -129,14 +138,13 @@ def main():
                 st.write(f"• {source}: {count}")
 
     # Header
-    sources_text = ', '.join(df['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df.columns else 'N/A'
-    st.markdown(f'<div class="main-header"><h2>Total Records: {len(df)} | Sources: {sources_text}</h2></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="main-header"><h2>Total Records: {len(df)}</h2></div>', unsafe_allow_html=True)
 
     # Tabs
-    tabs = st.tabs(["Overview", "Agents", "Commission", "Data Explorer"])
+    tabs = st.tabs(["📊 Main Dashboard", "👥 Agents", "💰 Commission", "🔍 Data Explorer"])
     
     with tabs[0]:
-        render_overview(df, COLORS)
+        render_main_page(df, COLORS, PURPLE_SCALES)
     
     with tabs[1]:
         render_agents(df, COLORS)
@@ -167,26 +175,17 @@ def render_overview(df, COLORS):
             st.metric("Cancelled", cancelled_count)
     
     with col4:
-        if 'SOURCE_SHEET' in df.columns:
-            st.metric("Data Sources", df['SOURCE_SHEET'].nunique())
-
-    # Charts
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if 'SOURCE_SHEET' in df.columns:
-            source_counts = df['SOURCE_SHEET'].value_counts()
-            fig = px.pie(values=source_counts.values, names=source_counts.index, 
-                        title="Records by Source", color_discrete_sequence=PURPLE_SCALES['discrete'])
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
         if 'CATEGORY' in df.columns:
-            category_counts = df['CATEGORY'].value_counts()
-            fig = px.bar(x=category_counts.index, y=category_counts.values,
-                        title="Records by Category", color=category_counts.index,
-                        color_discrete_map={'ACTIVE': COLORS['med_green'], 'CANCELLED': COLORS['danger'], 'NSF': COLORS['warning'], 'OTHER': COLORS['med_purple']})
-            st.plotly_chart(fig, use_container_width=True)
+            other_count = len(df[df['CATEGORY'] == 'OTHER'])
+            st.metric("Other", other_count)
+
+    # Category Chart
+    if 'CATEGORY' in df.columns:
+        category_counts = df['CATEGORY'].value_counts()
+        fig = px.bar(x=category_counts.index, y=category_counts.values,
+                    title="Records by Category", color=category_counts.index,
+                    color_discrete_map={'ACTIVE': COLORS['med_green'], 'CANCELLED': COLORS['danger'], 'NSF': COLORS['warning'], 'OTHER': COLORS['med_purple']})
+        st.plotly_chart(fig, use_container_width=True)
 
     # Monthly trend
     if 'ENROLLED_DATE' in df.columns:
