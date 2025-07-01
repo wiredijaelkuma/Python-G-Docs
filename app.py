@@ -110,8 +110,8 @@ def main():
         render_agent_hybrid_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[2]:
-        from modules.commission_dashboard import render_commission_dashboard
-        render_commission_dashboard(df, COLORS, HEAT_COLORS)
+        from modules.commission_analysis import render_commission_analysis
+        render_commission_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[3]:
         render_data_explorer(df, COLORS)
