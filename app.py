@@ -8,20 +8,100 @@ from modules.gsheet_connector import fetch_data_from_sheet
 # Page config
 st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸")
 
-# Colors
+# Assets directory
+ASSETS_DIR = Path("assets")
+
+# Periwinkle and purple color palette
 COLORS = {
-    'primary': '#8A7FBA',
-    'secondary': '#6A5ACD', 
-    'accent': '#7FFFD4',
-    'warning': '#FFD700',
-    'danger': '#FF6347',
-    'success': '#98FB98'
+    'primary': '#8A7FBA',      # Periwinkle purple
+    'secondary': '#6A5ACD',    # Slateblue
+    'accent': '#7FFFD4',       # Aquamarine
+    'light_accent': '#AFFFEE', # Light aquamarine
+    'dark_accent': '#40E0D0',  # Turquoise
+    'warning': '#FFD700',      # Gold
+    'danger': '#FF6347',       # Tomato
+    'light': '#F0F8FF',        # Alice blue
+    'dark': '#483D8B',         # Dark slate blue
+    'background': '#F8F9FA',   # Light gray background
+    'text': '#2E2E2E',         # Near black
+    'light_purple': '#E6E6FA', # Lavender
+    'med_purple': '#B39DDB',   # Medium purple
+    'light_green': '#98FB98',  # Pale green
+    'med_green': '#66CDAA',    # Medium aquamarine
 }
 
+# Purple heat color scales for graphs
+PURPLE_SCALES = {
+    'sequential': ['#F8F9FA', '#E6E6FA', '#B39DDB', '#8A7FBA', '#6A5ACD', '#483D8B'],
+    'diverging': ['#483D8B', '#6A5ACD', '#8A7FBA', '#B39DDB', '#E6E6FA', '#F8F9FA'],
+    'discrete': ['#8A7FBA', '#6A5ACD', '#B39DDB', '#E6E6FA', '#7FFFD4', '#40E0D0']
+}
+
+def load_css():
+    """Load custom CSS styling"""
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #F8F9FA 0%, #E6E6FA 100%);
+    }
+    
+    .main-header {
+        background: linear-gradient(90deg, #8A7FBA, #6A5ACD);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        color: white;
+        text-align: center;
+    }
+    
+    div[data-testid="metric-container"] {
+        background: linear-gradient(135deg, #FFFFFF, #F0F8FF);
+        border: 1px solid #B39DDB;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(138, 127, 186, 0.1);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: linear-gradient(135deg, #E6E6FA, #B39DDB);
+        border-radius: 8px;
+        color: #483D8B;
+        font-weight: bold;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #8A7FBA, #6A5ACD);
+        color: white;
+    }
+    
+    .stButton > button {
+        background: linear-gradient(135deg, #8A7FBA, #6A5ACD);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 def main():
+    # Load CSS
+    load_css()
+    
+    # Banner
+    try:
+        st.image(os.path.join(ASSETS_DIR, "banner.png"), use_container_width=True)
+    except:
+        st.markdown('<div class="main-header"><h1>🐸 Pepe\'s Power Dashboard</h1></div>', unsafe_allow_html=True)
+    
     # Sidebar
     with st.sidebar:
-        st.title("🐸 Pepe's Power")
+        # Display the Pepe muscle icon
+        try:
+            st.image(os.path.join(ASSETS_DIR, "pepe-muscle.jpg"), width=180)
+        except:
+            st.title("🐸 Pepe's Power")
+        
         if st.button("🔄 Refresh Data", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
@@ -48,8 +128,7 @@ def main():
                 st.write(f"• {source}: {count}")
 
     # Header
-    st.title("Pepe's Power Dashboard")
-    st.markdown(f"**Total Records:** {len(df)} | **Sources:** {', '.join(df['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df.columns else 'N/A'}")
+    st.markdown(f'<div class="main-header"><h2>Total Records: {len(df)} | Sources: {', '.join(df['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df.columns else 'N/A'}</h2></div>', unsafe_allow_html=True)
 
     # Tabs
     tabs = st.tabs(["Overview", "Agents", "Commission", "Data Explorer"])
@@ -96,7 +175,7 @@ def render_overview(df, COLORS):
         if 'SOURCE_SHEET' in df.columns:
             source_counts = df['SOURCE_SHEET'].value_counts()
             fig = px.pie(values=source_counts.values, names=source_counts.index, 
-                        title="Records by Source", color_discrete_sequence=px.colors.qualitative.Set3)
+                        title="Records by Source", color_discrete_sequence=PURPLE_SCALES['discrete'])
             st.plotly_chart(fig, use_container_width=True)
     
     with col2:
@@ -104,7 +183,7 @@ def render_overview(df, COLORS):
             category_counts = df['CATEGORY'].value_counts()
             fig = px.bar(x=category_counts.index, y=category_counts.values,
                         title="Records by Category", color=category_counts.index,
-                        color_discrete_map={'ACTIVE': COLORS['success'], 'CANCELLED': COLORS['danger'], 'NSF': COLORS['warning']})
+                        color_discrete_map={'ACTIVE': COLORS['med_green'], 'CANCELLED': COLORS['danger'], 'NSF': COLORS['warning'], 'OTHER': COLORS['med_purple']})
             st.plotly_chart(fig, use_container_width=True)
 
     # Monthly trend
@@ -176,7 +255,7 @@ def render_agents(df, COLORS):
         
         fig = px.bar(agent_stats, x=agent_stats.index, y='Active_Rate',
                     title="Top 10 Agents by Active Rate", color='Active_Rate',
-                    color_continuous_scale='Viridis')
+                    color_continuous_scale=PURPLE_SCALES['sequential'])
         st.plotly_chart(fig, use_container_width=True)
 
 def render_commission(df, COLORS):
@@ -221,7 +300,7 @@ def render_commission(df, COLORS):
         st.subheader("Payment Status Distribution")
         status_counts = commission_df['STATUS'].value_counts()
         fig = px.pie(values=status_counts.values, names=status_counts.index,
-                    title="Payment Status", color_discrete_sequence=px.colors.qualitative.Set3)
+                    title="Payment Status", color_discrete_sequence=PURPLE_SCALES['discrete'])
         st.plotly_chart(fig, use_container_width=True)
     
     # Agent performance
@@ -238,7 +317,7 @@ def render_commission(df, COLORS):
         
         fig = px.bar(agent_stats.head(10), x=agent_stats.head(10).index, y='Clear_Rate',
                     title="Top 10 Agents by Clear Rate", color='Clear_Rate',
-                    color_continuous_scale='Viridis')
+                    color_continuous_scale=PURPLE_SCALES['sequential'])
         st.plotly_chart(fig, use_container_width=True)
 
 def render_data_explorer(df, COLORS):
