@@ -31,11 +31,11 @@ COLORS = {
     'med_green': '#66CDAA',    # Medium aquamarine
 }
 
-# Purple heat color scales for graphs
+# Periwinkle heat map colors - brightest to darkest
 PURPLE_SCALES = {
-    'sequential': ['#F8F9FA', '#E6E6FA', '#B39DDB', '#8A7FBA', '#6A5ACD', '#483D8B'],
-    'diverging': ['#483D8B', '#6A5ACD', '#8A7FBA', '#B39DDB', '#E6E6FA', '#F8F9FA'],
-    'discrete': ['#8A7FBA', '#6A5ACD', '#B39DDB', '#E6E6FA', '#7FFFD4', '#40E0D0']
+    'sequential': ['#F0F8FF', '#E6E6FA', '#D8BFD8', '#B39DDB', '#9370DB', '#8A7FBA', '#6A5ACD', '#483D8B'],
+    'diverging': ['#483D8B', '#6A5ACD', '#8A7FBA', '#9370DB', '#B39DDB', '#D8BFD8', '#E6E6FA', '#F0F8FF'],
+    'discrete': ['#F0F8FF', '#E6E6FA', '#D8BFD8', '#B39DDB', '#9370DB', '#8A7FBA', '#6A5ACD', '#483D8B']
 }
 
 def load_css():
@@ -98,20 +98,36 @@ def load_css():
         box-shadow: 0 4px 8px rgba(179, 157, 219, 0.4) !important;
     }
     
-    /* DROPDOWNS - Much larger and better */
+    /* DROPDOWNS - Fixed and accessible */
+    .stSelectbox label {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        color: #483D8B !important;
+    }
+    
     .stSelectbox > div > div {
-        font-size: 20px !important;
-        min-height: 65px !important;
-        padding: 18px !important;
-        border: 3px solid #8A7FBA !important;
-        border-radius: 15px !important;
-        background: linear-gradient(135deg, #F0F8FF, #E6E6FA) !important;
+        font-size: 18px !important;
+        min-height: 55px !important;
+        padding: 15px !important;
+        border: 2px solid #8A7FBA !important;
+        border-radius: 12px !important;
+        background: white !important;
+        color: #483D8B !important;
         font-weight: 600 !important;
     }
     
     .stSelectbox > div > div:hover {
-        border: 3px solid #6A5ACD !important;
-        box-shadow: 0 4px 12px rgba(138, 127, 186, 0.3) !important;
+        border: 2px solid #6A5ACD !important;
+        box-shadow: 0 3px 8px rgba(138, 127, 186, 0.2) !important;
+    }
+    
+    /* Dropdown text color fix */
+    .stSelectbox div[data-baseweb="select"] {
+        color: #483D8B !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] > div {
+        color: #483D8B !important;
     }
     
     /* BUTTONS */
@@ -184,15 +200,15 @@ def main():
         render_main_page(df, COLORS, PURPLE_SCALES)
     
     with tabs[1]:
-        render_agents(df, COLORS)
+        render_agents(df, COLORS, PURPLE_SCALES)
     
     with tabs[2]:
-        render_commission(df, COLORS)
+        render_commission(df, COLORS, PURPLE_SCALES)
     
     with tabs[3]:
         render_data_explorer(df, COLORS)
 
-def render_agents(df, COLORS):
+def render_agents(df, COLORS, PURPLE_SCALES):
     st.header("Agent Performance")
     
     if 'AGENT' not in df.columns:
@@ -251,7 +267,7 @@ def render_agents(df, COLORS):
                     color_continuous_scale=PURPLE_SCALES['sequential'])
         st.plotly_chart(fig, use_container_width=True)
 
-def render_commission(df, COLORS):
+def render_commission(df, COLORS, PURPLE_SCALES):
     st.header("Commission Dashboard")
     
     # Check for commission data
