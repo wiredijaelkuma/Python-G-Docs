@@ -7,16 +7,16 @@ import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime, timedelta
 
-def process_commission_data(df_filtered):
+def process_commission_data(df):
     """Process commission data for performance metrics"""
     try:
-        # Get commission data from the filtered dataframe
-        if 'Comission' not in df_filtered['SOURCE_SHEET'].values:
+        # Get commission data from the dataframe
+        if 'SOURCE_SHEET' not in df.columns or 'Comission' not in df['SOURCE_SHEET'].values:
             st.warning("No commission data found. Please make sure the 'Comission' worksheet exists in your Google Sheet.")
             return pd.DataFrame()
             
-        # Get commission data from the filtered dataframe
-        commission_data = df_filtered[df_filtered['SOURCE_SHEET'] == 'Comission']
+        # Get commission data from the dataframe
+        commission_data = df[df['SOURCE_SHEET'] == 'Comission']
         
         if commission_data.empty:
             st.warning("Commission data is empty. Please add data to the 'Comission' worksheet in your Google Sheet.")

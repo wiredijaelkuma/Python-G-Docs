@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 import numpy as np
 
-def render_commission_tab(df_filtered, COLORS):
+def render_commission_tab(df, COLORS):
     """Render the enhanced commission dashboard tab"""
     st.header("Commission Dashboard")
     
@@ -16,12 +16,12 @@ def render_commission_tab(df_filtered, COLORS):
 
             
         # Check if the Comission sheet exists in the data
-        if 'Comission' not in df_filtered['SOURCE_SHEET'].values:
+        if 'SOURCE_SHEET' not in df.columns or 'Comission' not in df['SOURCE_SHEET'].values:
             st.warning("No commission data found. Please make sure the 'Comission' worksheet exists in your Google Sheet.")
             return
             
-        # Get commission data from the filtered dataframe
-        commission_data = df_filtered[df_filtered['SOURCE_SHEET'] == 'Comission']
+        # Get commission data from the dataframe
+        commission_data = df[df['SOURCE_SHEET'] == 'Comission']
         
         if commission_data.empty:
             st.warning("Commission data is empty. Please add data to the 'Comission' worksheet in your Google Sheet.")

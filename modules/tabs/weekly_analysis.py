@@ -314,7 +314,8 @@ def render_weekly_analysis_tab(df_filtered, COLORS):
                 }).reset_index()
                 
                 agent_weekly.columns = ['Week_Start', 'Week_Label', 'Total', 'Active']
-                agent_weekly['Active_Rate'] = (agent_weekly['Active'] / agent_weekly['Total'] * 100).round(1)
+                agent_weekly['Active_Rate'] = pd.to_numeric(agent_weekly['Active'], errors='coerce') / pd.to_numeric(agent_weekly['Total'], errors='coerce') * 100
+        agent_weekly['Active_Rate'] = agent_weekly['Active_Rate'].round(1)
                 agent_weekly = agent_weekly.sort_values('Week_Start')
                 
                 if not agent_weekly.empty:
