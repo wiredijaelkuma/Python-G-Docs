@@ -280,7 +280,7 @@ def main():
     # Performance Tab
     with tabs[3]:
         try:
-            render_performance_tab(df_filtered, COLORS)
+            render_performance_tab(df, COLORS)  # Use unfiltered data for performance
         except Exception as e:
             st.error(f"Error rendering Performance tab: {e}")
             fallback_performance(df_filtered, COLORS)
@@ -296,7 +296,7 @@ def main():
     # Commission Tab
     with tabs[5]:
         try:
-            render_commission_tab(df_filtered, COLORS)
+            render_commission_tab(df, COLORS)  # Use unfiltered data for commission
         except Exception as e:
             st.error(f"Error rendering Commission tab: {e}")
             st.info("The Commission tab displays agent performance metrics and payment trends.")
