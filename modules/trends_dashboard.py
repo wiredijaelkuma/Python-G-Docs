@@ -11,13 +11,13 @@ def render_trends_dashboard(sales_df, COLORS, HEAT_COLORS):
     """Complete trends dashboard with all displays and working dropdown"""
     st.subheader("📈 Performance Trends")
     
-    # Time range selector - WORKING
-    time_options = ["Last 30 Days", "Last 60 Days", "Last 90 Days", "Last 180 Days"]
-    time_range = st.selectbox(
+    # Time range selector - RADIO BUTTONS (WORKING)
+    time_range = st.radio(
         "📅 Select Time Range:",
-        time_options,
+        ["Last 30 Days", "Last 60 Days", "Last 90 Days", "Last 180 Days"],
         index=2,
-        key="trends_time_range_complete"
+        horizontal=True,
+        key="trends_time_radio"
     )
     
     # Calculate date range
