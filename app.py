@@ -73,7 +73,7 @@ def main():
     # Banner
     try:
         import os
-        st.image(os.path.join(ASSETS_DIR, "banner.jpeg"), use_container_width=True)
+        st.image(os.path.join(ASSETS_DIR, "banner.jpg"), use_container_width=True)
     except:
         st.title("🐸 Pepe's Power Dashboard")
     
@@ -201,7 +201,7 @@ def render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS):
         if 'AGENT' in week_data.columns:
             st.metric("Active Agents", week_data['AGENT'].nunique())
     
-    # Charts
+    # Charts row 1
     col1, col2 = st.columns(2)
     
     with col1:
@@ -220,6 +220,7 @@ def render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS):
                         'OTHER': COLORS['info']
                     }
                 )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
                 st.plotly_chart(fig, use_container_width=True)
     
     with col2:
@@ -239,11 +240,84 @@ def render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS):
                     color=active_agents.values,
                     color_continuous_scale=HEAT_COLORS
                 )
-                fig.update_layout(
-                    plot_bgcolor='#F8F9FA',
-                    paper_bgcolor='white'
-                )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
                 st.plotly_chart(fig, use_container_width=True)
+    
+    # Charts row 2
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Daily Sales Trend")
+        daily_sales = week_data.groupby(week_data['ENROLLED_DATE'].dt.date).size().reset_index()
+        daily_sales.columns = ['Date', 'Sales']
+        
+        if not daily_sales.empty:
+            fig = px.line(
+                daily_sales,
+                x='Date',
+                y='Sales',
+                title="Daily Sales This Week",
+                markers=True,
+                color_discrete_sequence=[COLORS['primary']]
+            )
+            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        if 'CATEGORY' in week_data.columns:
+            st.subheader("Status Distribution")
+            status_counts = week_data['CATEGORY'].value_counts()
+            
+            fig = px.pie(
+                values=status_counts.values,
+                names=status_counts.index,
+                title="Weekly Status Breakdown",
+                color_discrete_map={
+                    'ACTIVE': COLORS['success'],
+                    'CANCELLED': COLORS['danger'],
+                    'NSF': COLORS['warning'],
+                    'OTHER': COLORS['info']
+                }
+            )
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Agent Performance Table
+    st.subheader("📋 Weekly Agent Performance")
+    if 'AGENT' in week_data.columns and 'CATEGORY' in week_data.columns:
+        agent_summary = week_data.groupby('AGENT').agg({
+            'AGENT': 'count',
+            'CATEGORY': [
+                lambda x: (x == 'ACTIVE').sum(),
+                lambda x: (x == 'CANCELLED').sum(),
+                lambda x: (x == 'NSF').sum()
+            ]
+        })
+        
+        agent_summary.columns = ['Total_Sales', 'Active_Sales', 'Cancelled_Sales', 'NSF_Sales']
+        agent_summary['Active_Rate'] = (agent_summary['Active_Sales'] / agent_summary['Total_Sales'] * 100).round(1)
+        agent_summary = agent_summary.sort_values('Active_Sales', ascending=False).reset_index()
+        
+        st.dataframe(agent_summary, use_container_width=True, hide_index=True)
+    
+    # Detailed Data
+    with st.expander("📋 Detailed Weekly Data"):
+        display_cols = ['ENROLLED_DATE', 'AGENT', 'SOURCE_SHEET', 'STATUS', 'CATEGORY']
+        available_cols = [col for col in display_cols if col in week_data.columns]
+        
+        if available_cols:
+            display_df = week_data[available_cols].copy()
+            if 'ENROLLED_DATE' in display_df.columns:
+                display_df['ENROLLED_DATE'] = display_df['ENROLLED_DATE'].dt.strftime('%Y-%m-%d')
+            
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+            
+            csv = display_df.to_csv(index=False)
+            st.download_button(
+                f"📥 Download Week Data",
+                csv,
+                f"weekly_data_{week_start.strftime('%Y%m%d')}.csv",
+                "text/csv"
+            )
 
 def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
     st.subheader("📆 Monthly Analysis")
@@ -256,7 +330,6 @@ def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
         st.warning("No monthly data available")
         return
     
-    # Month picker using selectbox with formatted options
     selected_month_date = st.date_input(
         "Select Any Date in Month:",
         value=available_months[0].start_time.date(),
@@ -292,7 +365,7 @@ def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
         weekly_avg = len(month_data) / weeks_in_month if weeks_in_month > 0 else 0
         st.metric("Weekly Average", f"{weekly_avg:.1f}")
     
-    # Monthly charts
+    # Charts row 1
     col1, col2 = st.columns(2)
     
     with col1:
@@ -309,6 +382,7 @@ def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
                 markers=True,
                 color_discrete_sequence=[COLORS['primary']]
             )
+            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
             st.plotly_chart(fig, use_container_width=True)
     
     with col2:
@@ -328,11 +402,87 @@ def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
                     color=monthly_agents.head(5).values,
                     color_continuous_scale=HEAT_COLORS
                 )
-                fig.update_layout(
-                    plot_bgcolor='#F8F9FA',
-                    paper_bgcolor='white'
-                )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
                 st.plotly_chart(fig, use_container_width=True)
+    
+    # Charts row 2
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Weekly Breakdown")
+        month_data['Week_of_Month'] = month_data['ENROLLED_DATE'].dt.isocalendar().week
+        weekly_breakdown = month_data.groupby('Week_of_Month').size().reset_index()
+        weekly_breakdown.columns = ['Week', 'Sales']
+        weekly_breakdown['Week'] = 'Week ' + weekly_breakdown['Week'].astype(str)
+        
+        if not weekly_breakdown.empty:
+            fig = px.bar(
+                weekly_breakdown,
+                x='Week',
+                y='Sales',
+                title=f"Weekly Distribution - {selected_month_str}",
+                color='Sales',
+                color_continuous_scale=HEAT_COLORS
+            )
+            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        if 'SOURCE_SHEET' in month_data.columns and 'CATEGORY' in month_data.columns:
+            st.subheader("Source Performance")
+            source_breakdown = month_data.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
+            
+            if not source_breakdown.empty:
+                fig = px.bar(
+                    source_breakdown,
+                    title=f"Source Breakdown - {selected_month_str}",
+                    color_discrete_map={
+                        'ACTIVE': COLORS['success'],
+                        'CANCELLED': COLORS['danger'],
+                        'NSF': COLORS['warning'],
+                        'OTHER': COLORS['info']
+                    }
+                )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+                st.plotly_chart(fig, use_container_width=True)
+    
+    # Monthly Agent Performance Table
+    st.subheader("📋 Monthly Agent Performance")
+    if 'AGENT' in month_data.columns and 'CATEGORY' in month_data.columns:
+        monthly_agent_summary = month_data.groupby('AGENT').agg({
+            'AGENT': 'count',
+            'CATEGORY': [
+                lambda x: (x == 'ACTIVE').sum(),
+                lambda x: (x == 'CANCELLED').sum(),
+                lambda x: (x == 'NSF').sum()
+            ]
+        })
+        
+        monthly_agent_summary.columns = ['Total_Sales', 'Active_Sales', 'Cancelled_Sales', 'NSF_Sales']
+        monthly_agent_summary['Active_Rate'] = (monthly_agent_summary['Active_Sales'] / monthly_agent_summary['Total_Sales'] * 100).round(1)
+        monthly_agent_summary = monthly_agent_summary.sort_values('Active_Sales', ascending=False).reset_index()
+        
+        st.dataframe(monthly_agent_summary, use_container_width=True, hide_index=True)
+    
+    # Detailed Monthly Data
+    with st.expander("📋 Detailed Monthly Data"):
+        display_cols = ['ENROLLED_DATE', 'AGENT', 'SOURCE_SHEET', 'STATUS', 'CATEGORY']
+        available_cols = [col for col in display_cols if col in month_data.columns]
+        
+        if available_cols:
+            display_df = month_data[available_cols].copy()
+            if 'ENROLLED_DATE' in display_df.columns:
+                display_df['ENROLLED_DATE'] = display_df['ENROLLED_DATE'].dt.strftime('%Y-%m-%d')
+            
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+            
+            csv = display_df.to_csv(index=False)
+            st.download_button(
+                f"📥 Download Monthly Data",
+                csv,
+                f"monthly_data_{selected_month.strftime('%Y_%m')}.csv",
+                "text/csv"
+            )
 
 def render_agents(df, COLORS, HEAT_COLORS):
     st.header("Agent Performance")
