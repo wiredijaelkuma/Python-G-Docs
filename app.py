@@ -136,13 +136,16 @@ def render_dashboard(df, COLORS, HEAT_COLORS):
     sales_df = sales_df[sales_df['ENROLLED_DATE'].notna()].copy()
     
     # Dashboard subtabs
-    subtabs = st.tabs(["📅 Weekly", "📆 Monthly"])
+    subtabs = st.tabs(["📅 Weekly", "📆 Monthly", "📈 Trends"])
     
     with subtabs[0]:
         render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS)
     
     with subtabs[1]:
         render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS)
+    
+    with subtabs[2]:
+        render_trends_dashboard(sales_df, COLORS, HEAT_COLORS)
 
 def render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS):
     st.subheader("📅 Weekly Analysis")
@@ -580,6 +583,189 @@ def render_data_explorer(df, COLORS):
     
     csv = filtered_df.to_csv(index=False)
     st.download_button("Download CSV", csv, "data.csv", "text/csv")
+
+def render_trends_dashboard(sales_df, COLORS, HEAT_COLORS):
+    st.subheader("📈 Performance Trends")
+    
+    # Time range selector
+    time_range = st.selectbox("Select Time Range:", ["Last 30 Days", "Last 60 Days", "Last 90 Days", "Last 180 Days"])
+    
+    # Calculate date range
+    end_date = sales_df['ENROLLED_DATE'].max()
+    days_map = {"Last 30 Days": 30, "Last 60 Days": 60, "Last 90 Days": 90, "Last 180 Days": 180}
+    start_date = end_date - timedelta(days=days_map[time_range])
+    
+    # Filter data for selected range
+    trend_data = sales_df[
+        (sales_df['ENROLLED_DATE'] >= start_date) & 
+        (sales_df['ENROLLED_DATE'] <= end_date)
+    ].copy()
+    
+    if trend_data.empty:
+        st.warning("No data for selected time range")
+        return
+    
+    # Performance metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if 'CATEGORY' in trend_data.columns:
+            stick_rate = (len(trend_data[trend_data['CATEGORY'] == 'ACTIVE']) / len(trend_data) * 100) if len(trend_data) > 0 else 0
+            st.metric("Stick Rate", f"{stick_rate:.1f}%")
+    
+    with col2:
+        # Calculate growth (compare first half vs second half)
+        mid_date = start_date + (end_date - start_date) / 2
+        first_half = len(trend_data[trend_data['ENROLLED_DATE'] < mid_date])
+        second_half = len(trend_data[trend_data['ENROLLED_DATE'] >= mid_date])
+        growth = ((second_half - first_half) / first_half * 100) if first_half > 0 else 0
+        st.metric("Sales Growth", f"{growth:+.1f}%")
+    
+    with col3:
+        if 'AGENT' in trend_data.columns:
+            avg_per_agent = len(trend_data) / trend_data['AGENT'].nunique() if trend_data['AGENT'].nunique() > 0 else 0
+            efficiency = min(avg_per_agent * 10, 100)  # Scale to percentage
+            st.metric("Team Efficiency", f"{efficiency:.1f}%")
+    
+    with col4:
+        if 'CATEGORY' in trend_data.columns:
+            conversion_rate = (len(trend_data[trend_data['CATEGORY'] == 'ACTIVE']) / len(trend_data) * 100) if len(trend_data) > 0 else 0
+            st.metric("Conversion Rate", f"{conversion_rate:.1f}%")
+    
+    # Charts row 1
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Sales Velocity")
+        # Weekly sales over time
+        trend_data['Week'] = trend_data['ENROLLED_DATE'].dt.to_period('W').dt.start_time
+        weekly_sales = trend_data.groupby('Week').size().reset_index()
+        weekly_sales.columns = ['Week', 'Sales']
+        
+        if not weekly_sales.empty:
+            fig = px.line(
+                weekly_sales,
+                x='Week',
+                y='Sales',
+                title=f"Weekly Sales Velocity - {time_range}",
+                markers=True,
+                color_discrete_sequence=[COLORS['primary']]
+            )
+            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        st.subheader("Agent Consistency")
+        if 'AGENT' in trend_data.columns and 'CATEGORY' in trend_data.columns:
+            # Agent stick rates
+            agent_performance = trend_data.groupby('AGENT').agg({
+                'AGENT': 'count',
+                'CATEGORY': lambda x: (x == 'ACTIVE').sum()
+            }).rename(columns={'AGENT': 'Total', 'CATEGORY': 'Active'})
+            
+            agent_performance['Stick_Rate'] = (agent_performance['Active'] / agent_performance['Total'] * 100).round(1)
+            agent_performance = agent_performance[agent_performance['Total'] >= 5]  # Min 5 sales
+            agent_performance = agent_performance.sort_values('Stick_Rate', ascending=False).head(10)
+            
+            if not agent_performance.empty:
+                fig = px.bar(
+                    agent_performance,
+                    x=agent_performance.index,
+                    y='Stick_Rate',
+                    title="Top Agents by Stick Rate",
+                    color='Stick_Rate',
+                    color_continuous_scale=HEAT_COLORS
+                )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+                st.plotly_chart(fig, use_container_width=True)
+    
+    # Charts row 2
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Weekly vs Monthly Comparison")
+        # Compare weekly and monthly averages
+        weekly_avg = trend_data.groupby(trend_data['ENROLLED_DATE'].dt.to_period('W')).size().mean()
+        monthly_avg = trend_data.groupby(trend_data['ENROLLED_DATE'].dt.to_period('M')).size().mean()
+        
+        comparison_data = pd.DataFrame({
+            'Period': ['Weekly Average', 'Monthly Average'],
+            'Sales': [weekly_avg, monthly_avg * 4]  # Scale monthly to 4 weeks
+        })
+        
+        fig = px.bar(
+            comparison_data,
+            x='Period',
+            y='Sales',
+            title="Weekly vs Monthly Performance",
+            color='Sales',
+            color_continuous_scale=HEAT_COLORS
+        )
+        fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        st.subheader("Source Performance Trends")
+        if 'SOURCE_SHEET' in trend_data.columns and 'CATEGORY' in trend_data.columns:
+            source_performance = trend_data.groupby('SOURCE_SHEET').agg({
+                'SOURCE_SHEET': 'count',
+                'CATEGORY': lambda x: (x == 'ACTIVE').sum()
+            }).rename(columns={'SOURCE_SHEET': 'Total', 'CATEGORY': 'Active'})
+            
+            source_performance['Active_Rate'] = (source_performance['Active'] / source_performance['Total'] * 100).round(1)
+            
+            fig = px.bar(
+                source_performance,
+                x=source_performance.index,
+                y='Active_Rate',
+                title="Source Active Rates",
+                color='Active_Rate',
+                color_continuous_scale=HEAT_COLORS
+            )
+            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Performance Tables
+    st.subheader("📋 Top Performers by Stick Rate")
+    if 'AGENT' in trend_data.columns and 'CATEGORY' in trend_data.columns:
+        detailed_performance = trend_data.groupby('AGENT').agg({
+            'AGENT': 'count',
+            'CATEGORY': [
+                lambda x: (x == 'ACTIVE').sum(),
+                lambda x: (x == 'CANCELLED').sum(),
+                lambda x: (x == 'NSF').sum()
+            ]
+        })
+        
+        detailed_performance.columns = ['Total_Sales', 'Active_Sales', 'Cancelled_Sales', 'NSF_Sales']
+        detailed_performance['Stick_Rate'] = (detailed_performance['Active_Sales'] / detailed_performance['Total_Sales'] * 100).round(1)
+        detailed_performance['Retention_Score'] = (detailed_performance['Active_Sales'] * 2 - detailed_performance['Cancelled_Sales']).clip(lower=0)
+        
+        # Filter agents with minimum activity
+        qualified_agents = detailed_performance[detailed_performance['Total_Sales'] >= 3]
+        qualified_agents = qualified_agents.sort_values('Stick_Rate', ascending=False).reset_index()
+        
+        st.dataframe(qualified_agents, use_container_width=True, hide_index=True)
+    
+    # Trend Analysis Summary
+    with st.expander("📈 Detailed Trend Analysis"):
+        display_cols = ['ENROLLED_DATE', 'AGENT', 'SOURCE_SHEET', 'STATUS', 'CATEGORY']
+        available_cols = [col for col in display_cols if col in trend_data.columns]
+        
+        if available_cols:
+            display_df = trend_data[available_cols].copy()
+            if 'ENROLLED_DATE' in display_df.columns:
+                display_df['ENROLLED_DATE'] = display_df['ENROLLED_DATE'].dt.strftime('%Y-%m-%d')
+            
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+            
+            csv = display_df.to_csv(index=False)
+            st.download_button(
+                f"📅 Download Trend Data ({time_range})",
+                csv,
+                f"trend_analysis_{time_range.lower().replace(' ', '_')}.csv",
+                "text/csv"
+            )
 
 if __name__ == "__main__":
     main()
