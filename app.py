@@ -163,20 +163,14 @@ def main():
         show_cancelled = st.checkbox("Cancelled", True)
         show_other = st.checkbox("Other Statuses", True)
         
-        # Source Filter - find the source column
-        source_col = None
+        # Source Filter - only if SOURCE_SHEET exists
         if 'SOURCE_SHEET' in df.columns:
-            source_col = 'SOURCE_SHEET'
-        elif 'Source_Sheet' in df.columns:
-            source_col = 'Source_Sheet'
-            
-        if source_col:
             st.subheader("Data Source")
             all_sources = st.checkbox("All Sources", True)
             if not all_sources:
-                sources = st.multiselect("Select sources:", df[source_col].unique())
+                sources = st.multiselect("Select sources:", df['SOURCE_SHEET'].unique())
             else:
-                sources = df[source_col].unique().tolist()
+                sources = df['SOURCE_SHEET'].unique().tolist()
         else:
             all_sources = True
             sources = []
@@ -185,13 +179,12 @@ def main():
     # Create a copy of the index for filtering
     mask = pd.Series(True, index=df.index)
     
-    # Apply date filter - find the date column
+    # Apply date filter - only if ENROLLED_DATE exists
     date_col = None
-    date_columns = ['ENROLLED_DATE', 'Enrolled_Date', 'ENROLLED DATE', 'Enrolled Date']
-    for col in date_columns:
-        if col in df.columns:
-            date_col = col
-            break
+    if 'ENROLLED_DATE' in df.columns:
+        date_col = 'ENROLLED_DATE'
+    elif 'ENROLLED DATE' in df.columns:
+        date_col = 'ENROLLED DATE'
         
     if date_col:
         mask &= df[date_col].notna() & (df[date_col].dt.date >= start) & (df[date_col].dt.date <= end)
@@ -208,16 +201,9 @@ def main():
     if show_cancelled: status_filter.append('CANCELLED')
     if show_other: status_filter.append('OTHER')
     
-    # Apply source filter - find the source column
-    source_col = None
-    if 'SOURCE_SHEET' in df.columns:
-        source_col = 'SOURCE_SHEET'
-    elif 'Source_Sheet' in df.columns:
-        source_col = 'Source_Sheet'
-        
-    # Apply source filter if column exists and sources are selected
-    if source_col and not all_sources and sources:
-        mask &= df[source_col].isin(sources)
+    # Apply source filter - only if SOURCE_SHEET exists and sources are selected
+    if 'SOURCE_SHEET' in df.columns and not all_sources and sources:
+        mask &= df['SOURCE_SHEET'].isin(sources)
         
     # Apply all filters at once
     df_filtered = df[mask]
@@ -263,19 +249,10 @@ def main():
             
             # Provide a simple fallback monthly analysis
             st.subheader("Monthly Analysis (Fallback View)")
-            
-            # Find date column
-            date_col = None
-            date_columns = ['ENROLLED_DATE', 'Enrolled_Date', 'ENROLLED DATE', 'Enrolled Date']
-            for col in date_columns:
-                if col in df_filtered.columns:
-                    date_col = col
-                    break
-                    
-            if date_col:
+            if 'ENROLLED_DATE' in df_filtered.columns:
                 try:
                     # Convert to string to avoid type comparison issues
-                    df_filtered['Year_Month'] = df_filtered[date_col].dt.strftime('%Y-%m')
+                    df_filtered['Year_Month'] = df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')
                     
                     # Group by month
                     monthly_counts = df_filtered.groupby('Year_Month').size().reset_index()
@@ -328,21 +305,12 @@ def fallback_landing_page(df_filtered, COLORS):
     import plotly.express as px
     
     st.subheader("Weekly Performance Summary")
-    
-    # Find date column
-    date_col = None
-    date_columns = ['ENROLLED_DATE', 'Enrolled_Date', 'ENROLLED DATE', 'Enrolled Date']
-    for col in date_columns:
-        if col in df_filtered.columns:
-            date_col = col
-            break
-            
-    if date_col and not df_filtered.empty:
+    if 'ENROLLED_DATE' in df_filtered.columns and not df_filtered.empty:
         # Get the most recent week's data
         today = datetime.now()
         one_week_ago = today - timedelta(days=7)
         
-        recent_df = df_filtered[df_filtered[date_col] >= one_week_ago]
+        recent_df = df_filtered[df_filtered['ENROLLED_DATE'] >= one_week_ago]
         
         col1, col2 = st.columns(2)
         
@@ -350,15 +318,8 @@ def fallback_landing_page(df_filtered, COLORS):
             st.metric("New Enrollments (Last 7 Days)", len(recent_df))
             
         with col2:
-            # Find category column
-            category_col = None
-            if 'CATEGORY' in recent_df.columns:
-                category_col = 'CATEGORY'
-            elif 'Category' in recent_df.columns:
-                category_col = 'Category'
-                
-            if category_col and len(recent_df) > 0:
-                active_count = len(recent_df[recent_df[category_col].str.upper() == 'ACTIVE'])
+            if 'CATEGORY' in recent_df.columns and len(recent_df) > 0:
+                active_count = len(recent_df[recent_df['CATEGORY'].str.upper() == 'ACTIVE'])
                 active_rate = (active_count / len(recent_df) * 100) if len(recent_df) > 0 else 0
                 st.metric("Active Rate", f"{active_rate:.1f}%")
         
@@ -366,16 +327,7 @@ def fallback_landing_page(df_filtered, COLORS):
         if not recent_df.empty:
             # Determine which columns to show
             display_columns = []
-            column_options = [
-                'ENROLLED_DATE', 'Enrolled Date', 'ENROLLED DATE', 'Enrolled_Date',
-                'CUSTOMER_NAME', 'Customer Name', 'CUSTOMER ID', 'Customer ID',
-                'AGENT', 'Agent',
-                'SOURCE_SHEET', 'Source_Sheet',
-                'STATUS', 'Status',
-                'CATEGORY', 'Category',
-                'AMOUNT', 'Amount'
-            ]
-            for col in column_options:
+            for col in ['ENROLLED_DATE', 'CUSTOMER_NAME', 'AGENT', 'SOURCE_SHEET', 'STATUS', 'CATEGORY', 'AMOUNT']:
                 if col in recent_df.columns:
                     display_columns.append(col)
             
@@ -383,10 +335,8 @@ def fallback_landing_page(df_filtered, COLORS):
                 table_df = recent_df[display_columns].copy()
                 
                 # Format date columns
-                date_columns = ['ENROLLED_DATE', 'Enrolled Date', 'ENROLLED DATE', 'Enrolled_Date']
-                for col in date_columns:
-                    if col in table_df.columns:
-                        table_df[col] = table_df[col].dt.strftime('%Y-%m-%d')
+                if 'ENROLLED_DATE' in table_df.columns:
+                    table_df['ENROLLED_DATE'] = table_df['ENROLLED_DATE'].dt.strftime('%Y-%m-%d')
                 
                 st.dataframe(table_df.head(10), use_container_width=True, hide_index=True)
             else:
@@ -400,17 +350,8 @@ def fallback_performance(df_filtered, COLORS):
     import plotly.express as px
     
     st.subheader("Monthly Enrollments")
-    
-    # Find date column
-    date_col = None
-    date_columns = ['ENROLLED_DATE', 'Enrolled_Date', 'ENROLLED DATE', 'Enrolled Date']
-    for col in date_columns:
-        if col in df_filtered.columns:
-            date_col = col
-            break
-            
-    if date_col:
-        monthly_data = df_filtered.groupby(df_filtered[date_col].dt.strftime('%Y-%m')).size().reset_index()
+    if 'ENROLLED_DATE' in df_filtered.columns:
+        monthly_data = df_filtered.groupby(df_filtered['ENROLLED_DATE'].dt.strftime('%Y-%m')).size().reset_index()
         monthly_data.columns = ['Month', 'Count']
         
         fig = px.bar(

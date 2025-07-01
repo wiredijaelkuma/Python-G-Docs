@@ -25,23 +25,14 @@ def process_commission_data(df_filtered):
         # Rename columns to match expected format
         df = commission_data.copy()
         
-        # Create column mapping with both uppercase and regular case
+        # Create column mapping
         column_mapping = {
-            # Uppercase versions
             'CUSTOMER ID': 'CustomerID',
             'AGENT': 'AgentName',
             'TRANSACTION ID': 'PaymentID',
             'STATUS': 'Status',
             'PROCESSED DATE': 'PaymentDate',
-            'CLEARED DATE': 'ClearedDate',
-            
-            # Regular case versions
-            'Customer ID': 'CustomerID',
-            'Agent': 'AgentName',
-            'Transaction Id': 'PaymentID',
-            'Status': 'Status',
-            'Processed Date': 'PaymentDate',
-            'Cleared Date': 'ClearedDate'
+            'CLEARED DATE': 'ClearedDate'
         }
         
         # Rename columns if they exist
