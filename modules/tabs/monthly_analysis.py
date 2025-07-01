@@ -17,8 +17,8 @@ def render_monthly_analysis_tab(df_filtered, COLORS):
     
     # Get the original unfiltered dataframe by loading directly from CSV
     try:
-        from modules.utils import load_csv_data
-        df_all, _ = load_csv_data("processed_combined_data.csv")
+        # Use the filtered data passed to the function
+        df_all = df_filtered.copy()
         
         # Identify date column
         date_col = None

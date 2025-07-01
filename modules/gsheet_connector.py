@@ -12,7 +12,7 @@ import json
 # Configuration constants
 SPREADSHEET_TITLE = "Forth Py"
 CREDENTIALS_FILE = 'credentials.json'
-RAW_SHEET_NAMES = ["PAC", "MLG", "ELP", "Cordoba", "Comission"]
+RAW_SHEET_NAMES = ["PAC", "MLG", "ELP", "Cordoba", "Comission", "Commission"]
 
 def get_credentials():
     """Get credentials from local file or Streamlit secrets"""
@@ -121,8 +121,12 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
                     df['SOURCE_SHEET'] = sheet_name
                     
                     all_dfs.append(df)
+                    st.success(f"Successfully loaded {len(df)} rows from '{sheet_name}' worksheet")
+                else:
+                    st.warning(f"Worksheet '{sheet_name}' is empty or has no data rows")
             except Exception as e:
                 st.warning(f"Error fetching data from worksheet '{sheet_name}': {e}")
+                # Continue with other sheets even if one fails
         
         if not all_dfs:
             return pd.DataFrame(), "No data found in any worksheet"

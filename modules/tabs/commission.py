@@ -13,15 +13,27 @@ def render_commission_tab(df_filtered, COLORS):
     st.header("Commission Dashboard")
     
     try:
-        # Check if the Comission sheet exists in the data
-        if 'SOURCE_SHEET' not in df_filtered.columns or 'Comission' not in df_filtered['SOURCE_SHEET'].values:
-            st.warning("No commission data found. Please make sure the 'Comission' worksheet exists in your Google Sheet.")
-            # Create empty dataframe with expected columns as fallback
-            df = pd.DataFrame(columns=['CustomerID', 'AgentName', 'PaymentID', 'Status', 'PaymentDate', 'ClearedDate'])
+        # Debug: Show available sheets
+        if 'SOURCE_SHEET' in df_filtered.columns:
+            available_sheets = df_filtered['SOURCE_SHEET'].unique().tolist()
+            st.info(f"Available sheets: {available_sheets}")
+        else:
+            st.warning("No SOURCE_SHEET column found")
+            return
+            
+        # Check if the Commission sheet exists in the data (try both spellings)
+        commission_sheet = None
+        if 'Comission' in df_filtered['SOURCE_SHEET'].values:
+            commission_sheet = 'Comission'
+        elif 'Commission' in df_filtered['SOURCE_SHEET'].values:
+            commission_sheet = 'Commission'
+            
+        if not commission_sheet:
+            st.warning("No commission data found. Please make sure the 'Comission' or 'Commission' worksheet exists in your Google Sheet.")
             return
             
         # Get commission data from the filtered dataframe
-        commission_data = df_filtered[df_filtered['SOURCE_SHEET'] == 'Comission']
+        commission_data = df_filtered[df_filtered['SOURCE_SHEET'] == commission_sheet]
         
         if commission_data.empty:
             st.warning("Commission data is empty. Please add data to the 'Comission' worksheet in your Google Sheet.")
