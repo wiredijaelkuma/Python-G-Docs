@@ -376,17 +376,19 @@ def render_performance_metrics(sales_df, commission_df, COLORS, HEAT_COLORS):
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            st.subheader("Sales vs Payment Performance")
+            st.subheader("Performance Score Comparison")
             
-            fig = px.scatter(
-                qualified_agents,
-                x='Sales_Retention_Rate',
-                y='Payment_Success_Rate',
-                size='Overall_Score',
+            # Use bar chart instead of scatter to avoid NaN issues
+            clean_data = qualified_agents.copy().fillna(0).head(10)
+            
+            fig = px.bar(
+                clean_data,
+                x=clean_data.index,
+                y='Overall_Score',
+                title="Top 10 Performance Scores",
                 color='Overall_Score',
-                title="Sales Retention vs Payment Success",
                 color_continuous_scale=HEAT_COLORS,
-                hover_name=qualified_agents.index
+                hover_data=['Sales_Retention_Rate', 'Payment_Success_Rate']
             )
             fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
             st.plotly_chart(fig, use_container_width=True)
