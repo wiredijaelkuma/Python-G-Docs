@@ -8,7 +8,20 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 def render_main_page(df, COLORS, PURPLE_SCALES):
-    """Render the main dashboard page with weekly sales focus"""
+    """Render the main dashboard page with weekly and monthly analysis"""
+    from .monthly_analysis import render_monthly_analysis
+    
+    # Create subtabs for weekly and monthly
+    subtabs = st.tabs(["📅 Weekly Analysis", "📆 Monthly Analysis"])
+    
+    with subtabs[0]:
+        render_weekly_analysis(df, COLORS, PURPLE_SCALES)
+    
+    with subtabs[1]:
+        render_monthly_analysis(df, COLORS, PURPLE_SCALES)
+
+def render_weekly_analysis(df, COLORS, PURPLE_SCALES):
+    """Render weekly sales analysis"""
     
     # Filter out commission data for sales analysis
     sales_df = df[df['SOURCE_SHEET'] != 'Comission'].copy() if 'SOURCE_SHEET' in df.columns else df.copy()
@@ -72,58 +85,82 @@ def render_main_page(df, COLORS, PURPLE_SCALES):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Sales by source (excluding commission)
-        if 'SOURCE_SHEET' in week_data.columns:
+        # Sales by source with active/cancelled breakdown
+        if 'SOURCE_SHEET' in week_data.columns and 'CATEGORY' in week_data.columns:
             st.subheader("🏢 Sales by Source")
-            source_counts = week_data['SOURCE_SHEET'].value_counts()
             
-            if not source_counts.empty:
+            # Create stacked bar showing active vs cancelled
+            source_breakdown = week_data.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
+            
+            if not source_breakdown.empty:
                 fig = px.bar(
-                    x=source_counts.index, 
-                    y=source_counts.values,
-                    title=f"Sales Distribution - Week of {selected_week_label}",
-                    color=source_counts.values,
-                    color_continuous_scale=PURPLE_SCALES['sequential'],
-                    text=source_counts.values
+                    source_breakdown,
+                    title=f"Sales Breakdown - Week of {selected_week_label}",
+                    color_discrete_map={
+                        'ACTIVE': COLORS['med_green'],
+                        'CANCELLED': COLORS['danger'],
+                        'NSF': COLORS['warning'],
+                        'OTHER': COLORS['med_purple']
+                    }
                 )
-                fig.update_traces(textposition='outside')
                 fig.update_layout(
                     xaxis_title="Source",
                     yaxis_title="Number of Sales",
-                    showlegend=False,
                     font=dict(size=14)
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"source_chart_{selected_week.strftime('%Y%m%d')}")
             else:
                 st.info("No source data available for this week")
     
     with col2:
-        # Top agents for the week
+        # Top agents for the week (based on ACTIVE sales only)
         if 'AGENT' in week_data.columns:
             st.subheader("🏆 Top Agents This Week")
-            agent_counts = week_data['AGENT'].value_counts().head(10)
+            
+            # Count only ACTIVE sales for ranking
+            if 'CATEGORY' in week_data.columns:
+                active_week_data = week_data[week_data['CATEGORY'] == 'ACTIVE']
+                agent_counts = active_week_data['AGENT'].value_counts().head(10)
+            else:
+                agent_counts = week_data['AGENT'].value_counts().head(10)
             
             if not agent_counts.empty:
                 fig = px.bar(
                     x=agent_counts.values,
                     y=agent_counts.index,
                     orientation='h',
-                    title=f"Top Performers - Week of {selected_week_label}",
-                    color=agent_counts.values,
-                    color_continuous_scale=PURPLE_SCALES['sequential'],
+                    title=f"Top Performers (Active Sales) - Week of {selected_week_label}",
+                    color_discrete_sequence=[COLORS['primary']],
                     text=agent_counts.values
                 )
                 fig.update_traces(textposition='outside')
                 fig.update_layout(
-                    xaxis_title="Number of Sales",
+                    xaxis_title="Active Sales",
                     yaxis_title="Agent",
                     showlegend=False,
                     font=dict(size=14),
                     height=400
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"agent_chart_{selected_week.strftime('%Y%m%d')}")
             else:
                 st.info("No agent data available for this week")
+    
+    # Agent Sales Table
+    st.subheader("📋 Agent Sales Summary")
+    
+    if 'AGENT' in week_data.columns:
+        agent_summary = week_data.groupby('AGENT').agg({
+            'AGENT': 'count',
+            'CATEGORY': lambda x: (x == 'ACTIVE').sum() if 'CATEGORY' in week_data.columns else 0
+        }).rename(columns={'AGENT': 'Total_Sales', 'CATEGORY': 'Active_Sales'})
+        
+        if 'CATEGORY' in week_data.columns:
+            agent_summary['Cancelled_Sales'] = week_data.groupby('AGENT')['CATEGORY'].apply(lambda x: (x == 'CANCELLED').sum())
+            agent_summary['Active_Rate'] = (agent_summary['Active_Sales'] / agent_summary['Total_Sales'] * 100).round(1)
+        
+        # Sort by ACTIVE sales for ranking (not total)
+        agent_summary = agent_summary.sort_values('Active_Sales', ascending=False).reset_index()
+        st.dataframe(agent_summary, use_container_width=True, hide_index=True)
     
     # Weekly trend comparison
     st.subheader("📈 Weekly Trend Analysis")
@@ -174,7 +211,7 @@ def render_main_page(df, COLORS, PURPLE_SCALES):
             hovermode='x unified'
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key=f"trend_chart_{datetime.now().strftime('%Y%m%d')}")
     
     # Detailed weekly data table
     with st.expander("📋 Detailed Weekly Data", expanded=False):
