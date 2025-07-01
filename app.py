@@ -4,6 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from modules.gsheet_connector import fetch_data_from_sheet
+import base64
+import os
 
 # Page config
 st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸", initial_sidebar_state="collapsed")
@@ -26,34 +28,55 @@ COLORS = {
 # Heat map colors - darker blues for better visibility
 HEAT_COLORS = ['#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1976D2', '#1565C0', '#0D47A1', '#0A3D91']
 
+def get_background_image():
+    """Get base64 encoded background image"""
+    try:
+        with open(os.path.join(ASSETS_DIR, "wallpaper-pepe-cash.jpg"), "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    except:
+        return ""
+
 def load_css():
-    st.markdown("""
+    bg_image = get_background_image()
+    st.markdown(f"""
     <style>
-    .stApp {
-        background: #F8F9FA;
-    }
+    .stApp {{
+        background-image: url("data:image/jpeg;base64,{bg_image}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
     
-    .stTabs [data-baseweb="tab"] {
+    .stTabs [data-baseweb="tab"] {{
         font-size: 18px;
         font-weight: 600;
         padding: 12px 24px;
         border-radius: 8px;
         margin: 0 4px;
-    }
+        background: rgba(255, 255, 255, 0.9);
+    }}
     
-    .stTabs [aria-selected="true"] {
+    .stTabs [aria-selected="true"] {{
         background: #4A90E2;
         color: white;
-    }
+    }}
     
-    .stSelectbox > div > div {
+    .stSelectbox > div > div {{
         font-size: 16px;
         padding: 12px;
         border: 2px solid #4A90E2;
         border-radius: 8px;
-        background: white;
+        background: rgba(255, 255, 255, 0.9);
         color: #343A40;
-    }
+    }}
+    
+    .main .block-container {{
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 2rem;
+        margin-top: 1rem;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -62,7 +85,6 @@ def main():
     
     # Banner
     try:
-        import os
         st.image(os.path.join(ASSETS_DIR, "banner.jpg"), use_container_width=True)
     except:
         st.title("🐸 Pepe's Power Dashboard")
@@ -77,7 +99,7 @@ def main():
         if st.button("🔄 Refresh Data", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
-        st.markdown("**Google Sheet:** [Forth Py](https://docs.google.com/spreadsheets)")
+        st.markdown("**Google Sheet:** [Forth Py](https://docs.google.com/spreadsheets/d/1p6b1FzANAyPHdH6BQkGFkoqhp0K2D1E5fdcgNLurRk4/edit?usp=sharing)")
 
     # Load data
     with st.spinner("Loading data..."):
@@ -110,7 +132,7 @@ def main():
         render_agent_hybrid_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[2]:
-        from modules.commission_fixed import render_commission_analysis
+        from modules.commission_clean import render_commission_analysis
         render_commission_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[3]:
@@ -297,217 +319,6 @@ def render_weekly_complete(sales_df, COLORS, HEAT_COLORS):
         agent_summary = agent_summary.sort_values('Active_Sales', ascending=False).reset_index()
         
         st.dataframe(agent_summary, use_container_width=True, hide_index=True)
-
-def render_trends_complete(sales_df, COLORS, HEAT_COLORS):
-    """Complete trends dashboard with working dropdown"""
-    st.subheader("📈 Performance Trends")
-    
-    # Time range selector - WORKING
-    time_range = st.selectbox(
-        "📅 Select Time Range:",
-        ["Last 30 Days", "Last 60 Days", "Last 90 Days", "Last 180 Days"],
-        index=2,
-        key="trends_time_range_fixed"
-    )
-    
-    # Calculate date range
-    end_date = sales_df['ENROLLED_DATE'].max()
-    days_map = {"Last 30 Days": 30, "Last 60 Days": 60, "Last 90 Days": 90, "Last 180 Days": 180}
-    start_date = end_date - timedelta(days=days_map[time_range])
-    
-    # Filter data for selected range
-    trend_data = sales_df[
-        (sales_df['ENROLLED_DATE'] >= start_date) & 
-        (sales_df['ENROLLED_DATE'] <= end_date)
-    ].copy()
-    
-    if trend_data.empty:
-        st.warning("No data for selected time range")
-        return
-    
-    # Performance metrics
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if 'CATEGORY' in trend_data.columns:
-            stick_rate = (len(trend_data[trend_data['CATEGORY'] == 'ACTIVE']) / len(trend_data) * 100) if len(trend_data) > 0 else 0
-            st.metric("Stick Rate", f"{stick_rate:.1f}%")
-    
-    with col2:
-        mid_date = start_date + (end_date - start_date) / 2
-        first_half = len(trend_data[trend_data['ENROLLED_DATE'] < mid_date])
-        second_half = len(trend_data[trend_data['ENROLLED_DATE'] >= mid_date])
-        growth = ((second_half - first_half) / first_half * 100) if first_half > 0 else 0
-        st.metric("Sales Growth", f"{growth:+.1f}%")
-    
-    with col3:
-        if 'AGENT' in trend_data.columns:
-            avg_per_agent = len(trend_data) / trend_data['AGENT'].nunique() if trend_data['AGENT'].nunique() > 0 else 0
-            efficiency = min(avg_per_agent * 10, 100)
-            st.metric("Team Efficiency", f"{efficiency:.1f}%")
-    
-    with col4:
-        if 'CATEGORY' in trend_data.columns:
-            conversion_rate = (len(trend_data[trend_data['CATEGORY'] == 'ACTIVE']) / len(trend_data) * 100) if len(trend_data) > 0 else 0
-            st.metric("Conversion Rate", f"{conversion_rate:.1f}%")
-    
-    # Charts
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Sales Velocity")
-        trend_data['Week'] = trend_data['ENROLLED_DATE'].dt.to_period('W').dt.start_time
-        weekly_sales = trend_data.groupby('Week').size().reset_index()
-        weekly_sales.columns = ['Week', 'Sales']
-        
-        if not weekly_sales.empty:
-            fig = px.line(
-                weekly_sales,
-                x='Week',
-                y='Sales',
-                title=f"Weekly Sales Velocity - {time_range}",
-                markers=True,
-                color_discrete_sequence=[COLORS['primary']]
-            )
-            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("Agent Consistency")
-        if 'AGENT' in trend_data.columns and 'CATEGORY' in trend_data.columns:
-            agent_performance = trend_data.groupby('AGENT').agg({
-                'AGENT': 'count',
-                'CATEGORY': lambda x: (x == 'ACTIVE').sum()
-            }).rename(columns={'AGENT': 'Total', 'CATEGORY': 'Active'})
-            
-            agent_performance['Stick_Rate'] = (agent_performance['Active'] / agent_performance['Total'] * 100).round(1)
-            agent_performance['Volume_Weight'] = (agent_performance['Total'] / agent_performance['Total'].max() * 100).round(1)
-            agent_performance['Weighted_Score'] = (agent_performance['Stick_Rate'] * 0.7 + agent_performance['Volume_Weight'] * 0.3).round(1)
-            
-            agent_performance = agent_performance[agent_performance['Total'] >= 3]
-            agent_performance = agent_performance.sort_values('Weighted_Score', ascending=False).head(10)
-            
-            if not agent_performance.empty:
-                fig = px.bar(
-                    agent_performance,
-                    x=agent_performance.index,
-                    y='Weighted_Score',
-                    title="Top Agents by Weighted Performance",
-                    color='Weighted_Score',
-                    color_continuous_scale=HEAT_COLORS,
-                    hover_data=['Stick_Rate', 'Total', 'Active']
-                )
-                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
-                st.plotly_chart(fig, use_container_width=True)
-
-def render_agents_complete(df, COLORS, HEAT_COLORS):
-    """Complete agents dashboard refactor"""
-    st.header("👥 Agent Performance Analysis")
-    
-    # Filter sales data
-    sales_df = df[df['SOURCE_SHEET'] != 'Comission'].copy() if 'SOURCE_SHEET' in df.columns else df.copy()
-    commission_df = df[df['SOURCE_SHEET'] == 'Comission'].copy() if 'SOURCE_SHEET' in df.columns else pd.DataFrame()
-    
-    if sales_df.empty:
-        st.warning("No sales data available")
-        return
-    
-    # Agent selector - WORKING
-    if 'AGENT' in sales_df.columns:
-        agents_list = ['All Agents'] + sorted(sales_df['AGENT'].dropna().unique().tolist())
-        selected_agent = st.selectbox(
-            "👤 Select Agent for Analysis:",
-            agents_list,
-            index=0,
-            key="agent_selector_main"
-        )
-        
-        if selected_agent == 'All Agents':
-            agent_sales = sales_df
-            agent_commission = commission_df
-        else:
-            agent_sales = sales_df[sales_df['AGENT'] == selected_agent]
-            agent_commission = commission_df[commission_df['AGENT'] == selected_agent] if not commission_df.empty else pd.DataFrame()
-    else:
-        st.warning("No agent data available")
-        return
-    
-    # Agent metrics
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Total Sales", len(agent_sales))
-    
-    with col2:
-        if 'CATEGORY' in agent_sales.columns:
-            active_count = len(agent_sales[agent_sales['CATEGORY'] == 'ACTIVE'])
-            active_rate = (active_count / len(agent_sales) * 100) if len(agent_sales) > 0 else 0
-            st.metric("Active Rate", f"{active_rate:.1f}%")
-    
-    with col3:
-        if 'CATEGORY' in agent_sales.columns:
-            cancelled_count = len(agent_sales[agent_sales['CATEGORY'] == 'CANCELLED'])
-            st.metric("Cancelled", cancelled_count)
-    
-    with col4:
-        commission_count = len(agent_commission) if not agent_commission.empty else 0
-        st.metric("Commission Payments", commission_count)
-    
-    # Charts
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Sales Performance")
-        if 'CATEGORY' in agent_sales.columns:
-            status_counts = agent_sales['CATEGORY'].value_counts()
-            
-            fig = px.pie(
-                values=status_counts.values,
-                names=status_counts.index,
-                title=f"Sales Status - {selected_agent}",
-                color_discrete_map={
-                    'ACTIVE': COLORS['success'],
-                    'CANCELLED': COLORS['danger'],
-                    'NSF': COLORS['warning'],
-                    'OTHER': COLORS['info']
-                }
-            )
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("Commission Performance")
-        if not agent_commission.empty and 'CATEGORY' in agent_commission.columns:
-            commission_status = agent_commission['CATEGORY'].value_counts()
-            
-            fig = px.bar(
-                x=commission_status.index,
-                y=commission_status.values,
-                title=f"Commission Status - {selected_agent}",
-                color=commission_status.values,
-                color_continuous_scale=HEAT_COLORS
-            )
-            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No commission data available")
-    
-    # Performance table
-    st.subheader("📋 Agent Performance Summary")
-    if 'AGENT' in sales_df.columns and 'CATEGORY' in sales_df.columns:
-        performance_summary = sales_df.groupby('AGENT').agg({
-            'AGENT': 'count',
-            'CATEGORY': [
-                lambda x: (x == 'ACTIVE').sum(),
-                lambda x: (x == 'CANCELLED').sum(),
-                lambda x: (x == 'NSF').sum()
-            ]
-        })
-        
-        performance_summary.columns = ['Total_Sales', 'Active_Sales', 'Cancelled_Sales', 'NSF_Sales']
-        performance_summary['Active_Rate'] = (performance_summary['Active_Sales'] / performance_summary['Total_Sales'] * 100).round(1)
-        performance_summary = performance_summary.sort_values('Active_Rate', ascending=False).reset_index()
-        
-        st.dataframe(performance_summary, use_container_width=True, hide_index=True)
 
 def render_data_explorer(df, COLORS):
     st.header("Data Explorer")

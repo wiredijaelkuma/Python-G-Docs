@@ -1,5 +1,5 @@
 """
-Fixed Commission Analysis with Proper Transaction ID Handling
+Clean Commission Analysis Module
 """
 import streamlit as st
 import pandas as pd
@@ -18,9 +18,6 @@ def render_commission_analysis(df, COLORS, HEAT_COLORS):
         st.warning("No commission data available")
         return
     
-    # Debug: Show column names
-    st.write("**Available Columns:**", list(commission_df.columns))
-    
     # Payment clearance time selector - RADIO BUTTONS
     clearance_days = st.radio(
         "📅 Payment Clearance Analysis Period:",
@@ -38,32 +35,21 @@ def render_commission_analysis(df, COLORS, HEAT_COLORS):
     payout_days = days_map[clearance_days]
     
     # Find the correct date and ID columns
-    date_cols = [col for col in commission_df.columns if 'DATE' in col.upper()]
-    id_cols = [col for col in commission_df.columns if any(x in col.upper() for x in ['ID', 'TRANSACTION', 'CUSTOMER'])]
-    
-    st.write("**Date Columns Found:**", date_cols)
-    st.write("**ID Columns Found:**", id_cols)
-    
-    # Use the most appropriate date column for filtering
     date_col = None
     if 'CLEARED_DATE' in commission_df.columns:
         date_col = 'CLEARED_DATE'
     elif 'PROCESSED_DATE' in commission_df.columns:
         date_col = 'PROCESSED_DATE'
-    elif date_cols:
-        date_col = date_cols[0]
+    elif any('DATE' in col.upper() for col in commission_df.columns):
+        date_col = next(col for col in commission_df.columns if 'DATE' in col.upper())
     
-    # Use the most appropriate ID column
     id_col = None
     if 'TRANSACTION_ID' in commission_df.columns:
         id_col = 'TRANSACTION_ID'
     elif 'CUSTOMER_ID' in commission_df.columns:
         id_col = 'CUSTOMER_ID'
-    elif id_cols:
-        id_col = id_cols[0]
-    
-    st.write(f"**Using Date Column:** {date_col}")
-    st.write(f"**Using ID Column:** {id_col}")
+    elif any(x in col.upper() for col in commission_df.columns for x in ['ID', 'TRANSACTION']):
+        id_col = next(col for col in commission_df.columns if any(x in col.upper() for x in ['ID', 'TRANSACTION']))
     
     # Filter cleared payments
     if date_col and date_col in commission_df.columns and 'CATEGORY' in commission_df.columns:
@@ -128,7 +114,6 @@ def render_commission_analysis(df, COLORS, HEAT_COLORS):
                 # Detailed transaction list
                 with st.expander("📄 Detailed Transaction List for Payout"):
                     if id_col and id_col in cleared_payments.columns:
-                        # Show available columns for transaction details
                         detail_cols = ['AGENT', id_col, date_col]
                         if 'STATUS' in cleared_payments.columns:
                             detail_cols.append('STATUS')
@@ -154,25 +139,15 @@ def render_commission_analysis(df, COLORS, HEAT_COLORS):
                                 f"commission_payout_{clearance_days.lower().replace(' ', '_')}.csv",
                                 "text/csv"
                             )
-                        else:
-                            st.warning("No suitable columns found for transaction details")
                     else:
-                        st.info(f"Transaction ID column ({id_col}) not available for detailed breakdown")
-                        
-                        # Show basic agent summary instead
+                        # Show basic agent summary
                         basic_summary = cleared_payments.groupby('AGENT').size().reset_index()
                         basic_summary.columns = ['AGENT', 'Payment_Count']
                         st.dataframe(basic_summary, use_container_width=True, hide_index=True)
-            else:
-                st.warning("Agent information not available")
         else:
             st.info(f"No cleared payments found in the last {clearance_days}")
     else:
         st.warning("Date or category information not available for payout analysis")
-        
-        # Show sample of commission data for debugging
-        st.subheader("📋 Commission Data Sample (First 10 Rows)")
-        st.dataframe(commission_df.head(10), use_container_width=True)
     
     st.divider()
     
@@ -189,12 +164,8 @@ def render_commission_analysis(df, COLORS, HEAT_COLORS):
         render_performance_metrics(commission_df, clearance_days, date_col, COLORS, HEAT_COLORS)
 
 def render_payment_overview(commission_df, clearance_days, date_col, id_col, COLORS, HEAT_COLORS):
-    """Payment overview with proper column handling"""
+    """Payment overview with 6 displays"""
     st.subheader(f"📊 Payment Overview - {clearance_days} Analysis")
-    
-    if commission_df.empty:
-        st.warning("No commission data available")
-        return
     
     # Calculate clearance period
     days_map = {"7 Days": 7, "14 Days": 14, "30 Days": 30, "90 Days": 90}
@@ -248,7 +219,7 @@ def render_payment_overview(commission_df, clearance_days, date_col, id_col, COL
                     'OTHER': COLORS['info']
                 }
             )
-            st.plotly_chart(fig, use_container_width=True, key="payment_status_pie_overview")
+            st.plotly_chart(fig, use_container_width=True, key="payment_status_pie")
     
     with col2:
         st.subheader("Agent Payment Volume")
@@ -263,7 +234,7 @@ def render_payment_overview(commission_df, clearance_days, date_col, id_col, COL
                 color_continuous_scale=HEAT_COLORS
             )
             fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
-            st.plotly_chart(fig, use_container_width=True, key="agent_payment_volume_overview")
+            st.plotly_chart(fig, use_container_width=True, key="agent_payment_volume")
     
     # Display 4 & 5: Additional analysis
     col1, col2 = st.columns(2)
@@ -284,9 +255,7 @@ def render_payment_overview(commission_df, clearance_days, date_col, id_col, COL
                     color_continuous_scale=HEAT_COLORS
                 )
                 fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
-                st.plotly_chart(fig, use_container_width=True, key="daily_payment_volume_overview")
-        else:
-            st.info("Date information not available for daily analysis")
+                st.plotly_chart(fig, use_container_width=True, key="daily_payment_volume")
     
     with col2:
         st.subheader("Payment Success by Agent")
@@ -309,9 +278,7 @@ def render_payment_overview(commission_df, clearance_days, date_col, id_col, COL
                     color_continuous_scale=HEAT_COLORS
                 )
                 fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
-                st.plotly_chart(fig, use_container_width=True, key="agent_success_rate_overview")
-        else:
-            st.info("Agent or category information not available")
+                st.plotly_chart(fig, use_container_width=True, key="agent_success_rate")
     
     # Display 6: Payment summary table
     st.subheader("📋 Payment Summary")
@@ -332,16 +299,14 @@ def render_payment_overview(commission_df, clearance_days, date_col, id_col, COL
         st.dataframe(payment_summary, use_container_width=True, hide_index=True)
 
 def render_processing_analysis(commission_df, clearance_days, date_col, COLORS, HEAT_COLORS):
-    """Processing analysis with proper date handling"""
+    """Processing analysis with 6 displays"""
     st.subheader(f"⏱️ Processing Analysis - {clearance_days} Focus")
     
-    # Simple processing metrics based on available data
+    # Processing metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if 'CATEGORY' in commission_df.columns:
-            total_processed = len(commission_df)
-            st.metric("Total Processed", total_processed)
+        st.metric("Total Processed", len(commission_df))
     
     with col2:
         if 'CATEGORY' in commission_df.columns:
@@ -391,35 +356,72 @@ def render_processing_analysis(commission_df, clearance_days, date_col, COLORS, 
             fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
             st.plotly_chart(fig, use_container_width=True, key="agent_processing_volume")
     
+    # Additional processing analysis
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Monthly Processing Trends")
+        if date_col and date_col in commission_df.columns:
+            monthly_processing = commission_df.groupby(commission_df[date_col].dt.strftime('%Y-%m')).size().reset_index()
+            monthly_processing.columns = ['Month', 'Count']
+            
+            if not monthly_processing.empty:
+                fig = px.line(
+                    monthly_processing,
+                    x='Month',
+                    y='Count',
+                    title="Monthly Processing Volume",
+                    markers=True,
+                    color_discrete_sequence=[COLORS['primary']]
+                )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+                st.plotly_chart(fig, use_container_width=True, key="monthly_processing_trend")
+    
+    with col2:
+        st.subheader("Agent Success Comparison")
+        if 'AGENT' in commission_df.columns and 'CATEGORY' in commission_df.columns:
+            agent_comparison = commission_df.groupby('AGENT').agg({
+                'AGENT': 'count',
+                'CATEGORY': lambda x: (x == 'CLEARED').sum()
+            }).rename(columns={'AGENT': 'Total', 'CATEGORY': 'Cleared'})
+            
+            agent_comparison['Success_Rate'] = (agent_comparison['Cleared'] / agent_comparison['Total'] * 100).round(1)
+            agent_comparison = agent_comparison[agent_comparison['Total'] >= 3].sort_values('Success_Rate', ascending=False).head(10)
+            
+            if not agent_comparison.empty:
+                fig = px.scatter(
+                    agent_comparison,
+                    x='Total',
+                    y='Success_Rate',
+                    size='Cleared',
+                    title="Agent Volume vs Success Rate",
+                    color='Success_Rate',
+                    color_continuous_scale=HEAT_COLORS,
+                    hover_name=agent_comparison.index
+                )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+                st.plotly_chart(fig, use_container_width=True, key="agent_success_scatter")
+    
     # Processing details table
-    st.subheader("📋 Processing Details")
-    if not commission_df.empty:
-        # Show available columns for processing analysis
-        display_cols = ['AGENT', 'STATUS', 'CATEGORY']
-        if date_col:
-            display_cols.append(date_col)
+    st.subheader("📋 Processing Summary by Agent")
+    if 'AGENT' in commission_df.columns and 'CATEGORY' in commission_df.columns:
+        processing_summary = commission_df.groupby('AGENT').agg({
+            'AGENT': 'count',
+            'CATEGORY': [
+                lambda x: (x == 'CLEARED').sum(),
+                lambda x: (x == 'PENDING').sum(),
+                lambda x: (x == 'NSF').sum()
+            ]
+        })
         
-        available_cols = [col for col in display_cols if col in commission_df.columns]
+        processing_summary.columns = ['Total', 'Cleared', 'Pending', 'NSF']
+        processing_summary['Success_Rate'] = (processing_summary['Cleared'] / processing_summary['Total'] * 100).round(1)
+        processing_summary = processing_summary.sort_values('Success_Rate', ascending=False).reset_index()
         
-        if available_cols:
-            processing_details = commission_df[available_cols].copy()
-            
-            # Format date if available
-            if date_col and date_col in processing_details.columns:
-                processing_details[date_col] = processing_details[date_col].dt.strftime('%Y-%m-%d')
-            
-            st.dataframe(processing_details.head(20), use_container_width=True, hide_index=True)
-            
-            csv = processing_details.to_csv(index=False)
-            st.download_button(
-                "📥 Download Processing Data",
-                csv,
-                "processing_analysis.csv",
-                "text/csv"
-            )
+        st.dataframe(processing_summary, use_container_width=True, hide_index=True)
 
 def render_performance_metrics(commission_df, clearance_days, date_col, COLORS, HEAT_COLORS):
-    """Performance metrics with proper data handling"""
+    """Performance metrics with 6 displays"""
     st.subheader(f"📈 Performance Metrics - {clearance_days} Analysis")
     
     # Performance KPIs
@@ -493,7 +495,48 @@ def render_performance_metrics(commission_df, clearance_days, date_col, COLORS, 
                     'High Risk (NSF)': COLORS['danger']
                 }
             )
-            st.plotly_chart(fig, use_container_width=True, key="risk_analysis_pie_metrics")
+            st.plotly_chart(fig, use_container_width=True, key="risk_analysis_pie")
+    
+    # Additional performance metrics
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Performance Trends")
+        if date_col and date_col in commission_df.columns and 'CATEGORY' in commission_df.columns:
+            daily_success = commission_df.groupby(commission_df[date_col].dt.date).agg({
+                'CATEGORY': ['count', lambda x: (x == 'CLEARED').sum()]
+            })
+            daily_success.columns = ['Total', 'Cleared']
+            daily_success['Success_Rate'] = (daily_success['Cleared'] / daily_success['Total'] * 100).round(1)
+            daily_success = daily_success.reset_index().tail(30)  # Last 30 days
+            
+            if not daily_success.empty:
+                fig = px.line(
+                    daily_success,
+                    x=date_col,
+                    y='Success_Rate',
+                    title="Daily Success Rate Trends (Last 30 Days)",
+                    markers=True,
+                    color_discrete_sequence=[COLORS['success']]
+                )
+                fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+                st.plotly_chart(fig, use_container_width=True, key="success_rate_trend")
+    
+    with col2:
+        st.subheader("Volume Distribution")
+        if 'AGENT' in commission_df.columns:
+            volume_dist = commission_df['AGENT'].value_counts().head(15)
+            
+            fig = px.bar(
+                x=volume_dist.values,
+                y=volume_dist.index,
+                orientation='h',
+                title="Top 15 Agents by Volume",
+                color=volume_dist.values,
+                color_continuous_scale=HEAT_COLORS
+            )
+            fig.update_layout(plot_bgcolor='#F8F9FA', paper_bgcolor='white')
+            st.plotly_chart(fig, use_container_width=True, key="volume_distribution")
     
     # Comprehensive metrics table
     st.subheader("📋 Comprehensive Performance Metrics")
