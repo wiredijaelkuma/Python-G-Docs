@@ -173,9 +173,11 @@ def render_monthly_analysis(df, COLORS, PURPLE_SCALES):
         }).rename(columns={'AGENT': 'Total_Sales', 'CATEGORY': 'Active_Sales'})
         
         if 'CATEGORY' in month_data.columns:
+            monthly_agents['Cancelled_Sales'] = month_data.groupby('AGENT')['CATEGORY'].apply(lambda x: (x == 'CANCELLED').sum())
             monthly_agents['Active_Rate'] = (monthly_agents['Active_Sales'] / monthly_agents['Total_Sales'] * 100).round(1)
         
-        monthly_agents = monthly_agents.sort_values('Total_Sales', ascending=False).head(10).reset_index()
+        # Sort by ACTIVE sales for ranking (not total)
+        monthly_agents = monthly_agents.sort_values('Active_Sales', ascending=False).head(10).reset_index()
         
         # Display as chart and table
         col1, col2 = st.columns([1, 1])
@@ -184,15 +186,15 @@ def render_monthly_analysis(df, COLORS, PURPLE_SCALES):
             fig = px.bar(
                 monthly_agents.head(5),
                 x='AGENT',
-                y='Total_Sales',
+                y='Active_Sales',
                 title="Top 5 Agents by Volume",
                 color_discrete_sequence=[COLORS['primary']],
-                text='Total_Sales'
+                text='Active_Sales'
             )
             fig.update_traces(textposition='outside')
             fig.update_layout(
                 xaxis_title="Agent",
-                yaxis_title="Total Sales",
+                yaxis_title="Active Sales",
                 font=dict(size=12)
             )
             st.plotly_chart(fig, use_container_width=True, key=f"top_agents_{selected_month.strftime('%Y%m')}")

@@ -90,6 +90,19 @@ def load_css():
         font-size: 16px;
         min-height: 50px;
     }
+    
+    /* Larger main tabs */
+    .stTabs [data-baseweb="tab"] {
+        font-size: 18px !important;
+        padding: 16px 24px !important;
+        min-height: 60px !important;
+        border: 2px solid #B39DDB !important;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        border: 2px solid #6A5ACD !important;
+        box-shadow: 0 4px 8px rgba(138, 127, 186, 0.3) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
