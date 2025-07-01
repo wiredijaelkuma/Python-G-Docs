@@ -23,8 +23,8 @@ COLORS = {
     'dark': '#343A40',         # Dark gray
 }
 
-# Heat map colors - light to dark blue
-HEAT_COLORS = ['#E3F2FD', '#BBDEFB', '#90CAF9', '#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1976D2']
+# Heat map colors - darker blues for better visibility
+HEAT_COLORS = ['#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1976D2', '#1565C0', '#0D47A1', '#0A3D91']
 
 def load_css():
     st.markdown("""
@@ -73,7 +73,7 @@ def main():
     # Banner
     try:
         import os
-        st.image(os.path.join(ASSETS_DIR, "banner.png"), use_container_width=True)
+        st.image(os.path.join(ASSETS_DIR, "banner.jpeg"), use_container_width=True)
     except:
         st.title("🐸 Pepe's Power Dashboard")
     
@@ -156,15 +156,17 @@ def render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS):
     
     with col1:
         selected_date = st.date_input(
-            "Select Week Starting Date:",
+            "Select Any Date in Week:",
             value=max_date,
             min_value=min_date,
             max_value=max_date
         )
     
     with col2:
-        # Calculate week range
-        week_start = pd.Timestamp(selected_date)
+        # Calculate Monday-Sunday week for selected date
+        selected_dt = pd.Timestamp(selected_date)
+        days_since_monday = selected_dt.weekday()
+        week_start = selected_dt - timedelta(days=days_since_monday)
         week_end = week_start + timedelta(days=6)
         st.info(f"Week: {week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}")
     
@@ -237,6 +239,10 @@ def render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS):
                     color=active_agents.values,
                     color_continuous_scale=HEAT_COLORS
                 )
+                fig.update_layout(
+                    plot_bgcolor='#F8F9FA',
+                    paper_bgcolor='white'
+                )
                 st.plotly_chart(fig, use_container_width=True)
 
 def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
@@ -251,9 +257,15 @@ def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
         return
     
     # Month picker using selectbox with formatted options
-    month_options = [m.strftime('%B %Y') for m in available_months]
-    selected_month_str = st.selectbox("Select Month:", month_options)
-    selected_month = available_months[month_options.index(selected_month_str)]
+    selected_month_date = st.date_input(
+        "Select Any Date in Month:",
+        value=available_months[0].start_time.date(),
+        min_value=available_months[-1].start_time.date(),
+        max_value=available_months[0].start_time.date()
+    )
+    
+    selected_month = pd.Timestamp(selected_month_date).to_period('M')
+    selected_month_str = selected_month.strftime('%B %Y')
     
     # Filter data for selected month
     month_data = sales_df[sales_df['Month'] == selected_month].copy()
@@ -315,6 +327,10 @@ def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
                     title="Top 5 Agents (Active Sales)",
                     color=monthly_agents.head(5).values,
                     color_continuous_scale=HEAT_COLORS
+                )
+                fig.update_layout(
+                    plot_bgcolor='#F8F9FA',
+                    paper_bgcolor='white'
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
