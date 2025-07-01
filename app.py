@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from modules.gsheet_connector import fetch_data_from_sheet
-from modules.main_page import render_main_page
 
 # Page config
 st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸", initial_sidebar_state="collapsed")
@@ -12,145 +11,63 @@ st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon
 # Assets directory
 ASSETS_DIR = "assets"
 
-# Periwinkle and purple color palette
+# Clean color palette
 COLORS = {
-    'primary': '#8A7FBA',      # Periwinkle purple
-    'secondary': '#6A5ACD',    # Slateblue
-    'accent': '#7FFFD4',       # Aquamarine
-    'light_accent': '#AFFFEE', # Light aquamarine
-    'dark_accent': '#40E0D0',  # Turquoise
-    'warning': '#FFD700',      # Gold
-    'danger': '#FF6347',       # Tomato
-    'light': '#F0F8FF',        # Alice blue
-    'dark': '#483D8B',         # Dark slate blue
-    'background': '#F8F9FA',   # Light gray background
-    'text': '#2E2E2E',         # Near black
-    'light_purple': '#E6E6FA', # Lavender
-    'med_purple': '#B39DDB',   # Medium purple
-    'light_green': '#98FB98',  # Pale green
-    'med_green': '#66CDAA',    # Medium aquamarine
+    'primary': '#4A90E2',      # Clean blue
+    'secondary': '#7B68EE',    # Medium slate blue
+    'success': '#5CB85C',      # Success green
+    'warning': '#F0AD4E',      # Warning orange
+    'danger': '#D9534F',       # Danger red
+    'info': '#5BC0DE',         # Info cyan
+    'light': '#F8F9FA',        # Light gray
+    'dark': '#343A40',         # Dark gray
 }
 
-# Periwinkle heat map colors - brightest to darkest
-PURPLE_SCALES = {
-    'sequential': ['#F0F8FF', '#E6E6FA', '#D8BFD8', '#B39DDB', '#9370DB', '#8A7FBA', '#6A5ACD', '#483D8B'],
-    'diverging': ['#483D8B', '#6A5ACD', '#8A7FBA', '#9370DB', '#B39DDB', '#D8BFD8', '#E6E6FA', '#F0F8FF'],
-    'discrete': ['#F0F8FF', '#E6E6FA', '#D8BFD8', '#B39DDB', '#9370DB', '#8A7FBA', '#6A5ACD', '#483D8B']
-}
+# Heat map colors - light to dark blue
+HEAT_COLORS = ['#E3F2FD', '#BBDEFB', '#90CAF9', '#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1976D2']
 
 def load_css():
-    """Load custom CSS styling"""
     st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(135deg, #F8F9FA 0%, #E6E6FA 100%);
+        background: #F8F9FA;
     }
     
-    div[data-testid="metric-container"] {
-        background: linear-gradient(135deg, #FFFFFF, #F0F8FF);
-        border: 1px solid #B39DDB;
-        padding: 1rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(138, 127, 186, 0.1);
-    }
-    
-    /* MAIN TABS - Large and prominent */
-    .stTabs:first-of-type [data-baseweb="tab"] {
-        font-size: 24px !important;
-        font-weight: 900 !important;
-        padding: 25px 40px !important;
-        min-height: 80px !important;
-        border: 4px solid #8A7FBA !important;
-        border-radius: 20px !important;
-        margin: 0 10px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 2px !important;
-        background: linear-gradient(135deg, #E6E6FA, #B39DDB) !important;
-        color: #483D8B !important;
-    }
-    
-    .stTabs:first-of-type [aria-selected="true"] {
-        background: linear-gradient(135deg, #6A5ACD, #483D8B) !important;
-        color: white !important;
-        border: 4px solid #483D8B !important;
-        box-shadow: 0 10px 20px rgba(106, 90, 205, 0.6) !important;
-        transform: translateY(-3px) scale(1.02) !important;
-    }
-    
-    /* SUBTABS - Smaller and different */
-    .stTabs .stTabs [data-baseweb="tab"] {
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        padding: 12px 20px !important;
-        min-height: 45px !important;
-        border: 2px solid #B39DDB !important;
-        border-radius: 10px !important;
-        margin: 0 5px !important;
-        background: #F8F9FA !important;
-        color: #483D8B !important;
-        text-transform: capitalize !important;
-    }
-    
-    .stTabs .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #B39DDB, #8A7FBA) !important;
-        color: white !important;
-        border: 2px solid #8A7FBA !important;
-        box-shadow: 0 4px 8px rgba(179, 157, 219, 0.4) !important;
-    }
-    
-    /* DROPDOWNS - Fixed and accessible */
-    .stSelectbox label {
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        color: #483D8B !important;
-    }
-    
-    .stSelectbox > div > div {
-        font-size: 18px !important;
-        min-height: 55px !important;
-        padding: 15px !important;
-        border: 2px solid #8A7FBA !important;
-        border-radius: 12px !important;
-        background: white !important;
-        color: #483D8B !important;
-        font-weight: 600 !important;
-    }
-    
-    .stSelectbox > div > div:hover {
-        border: 2px solid #6A5ACD !important;
-        box-shadow: 0 3px 8px rgba(138, 127, 186, 0.2) !important;
-    }
-    
-    /* Dropdown text color fix */
-    .stSelectbox div[data-baseweb="select"] {
-        color: #483D8B !important;
-    }
-    
-    .stSelectbox div[data-baseweb="select"] > div {
-        color: #483D8B !important;
-    }
-    
-    /* BUTTONS */
-    .stButton > button {
-        background: linear-gradient(135deg, #8A7FBA, #6A5ACD);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-weight: bold;
+    /* Clean tabs */
+    .stTabs [data-baseweb="tab"] {
         font-size: 18px;
-        padding: 15px 30px;
-        min-height: 60px;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 8px;
+        margin: 0 4px;
     }
     
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(138, 127, 186, 0.4);
+    .stTabs [aria-selected="true"] {
+        background: #4A90E2;
+        color: white;
+    }
+    
+    /* Date inputs */
+    .stDateInput > div > div > input {
+        font-size: 16px;
+        padding: 12px;
+        border: 2px solid #4A90E2;
+        border-radius: 8px;
+    }
+    
+    /* Selectbox */
+    .stSelectbox > div > div {
+        font-size: 16px;
+        padding: 12px;
+        border: 2px solid #4A90E2;
+        border-radius: 8px;
+        background: white;
+        color: #343A40;
     }
     </style>
     """, unsafe_allow_html=True)
 
 def main():
-    # Load CSS
     load_css()
     
     # Banner
@@ -158,11 +75,10 @@ def main():
         import os
         st.image(os.path.join(ASSETS_DIR, "banner.png"), use_container_width=True)
     except:
-        st.markdown('<div style="text-align: center; padding: 20px;"><h1>🐸 Pepe\'s Power Dashboard</h1></div>', unsafe_allow_html=True)
+        st.title("🐸 Pepe's Power Dashboard")
     
     # Sidebar
     with st.sidebar:
-        # Display the Pepe muscle icon
         try:
             st.image(os.path.join(ASSETS_DIR, "pepe-muscle.jpg"), width=180)
         except:
@@ -185,7 +101,7 @@ def main():
             st.warning("No data available")
             return
 
-    # Update sidebar with data info
+    # Update sidebar
     with st.sidebar:
         st.info(f"Total Records: {len(df)}")
         if 'SOURCE_SHEET' in df.columns:
@@ -193,40 +109,231 @@ def main():
                 count = len(df[df['SOURCE_SHEET'] == source])
                 st.write(f"• {source}: {count}")
 
-    # Tabs
-    tabs = st.tabs(["📊 MAIN DASHBOARD", "👥 AGENTS", "💰 COMMISSION", "🔍 DATA EXPLORER"])
+    # Main tabs
+    tabs = st.tabs(["📊 Dashboard", "👥 Agents", "💰 Commission", "🔍 Data"])
     
     with tabs[0]:
-        render_main_page(df, COLORS, PURPLE_SCALES)
+        render_dashboard(df, COLORS, HEAT_COLORS)
     
     with tabs[1]:
-        render_agents(df, COLORS, PURPLE_SCALES)
+        render_agents(df, COLORS, HEAT_COLORS)
     
     with tabs[2]:
-        render_commission(df, COLORS, PURPLE_SCALES)
+        render_commission(df, COLORS, HEAT_COLORS)
     
     with tabs[3]:
         render_data_explorer(df, COLORS)
 
-def render_agents(df, COLORS, PURPLE_SCALES):
+def render_dashboard(df, COLORS, HEAT_COLORS):
+    # Filter out commission data
+    sales_df = df[df['SOURCE_SHEET'] != 'Comission'].copy() if 'SOURCE_SHEET' in df.columns else df.copy()
+    
+    if sales_df.empty or 'ENROLLED_DATE' not in sales_df.columns:
+        st.warning("No sales data available")
+        return
+    
+    # Prepare data
+    sales_df = sales_df[sales_df['ENROLLED_DATE'].notna()].copy()
+    
+    # Dashboard subtabs
+    subtabs = st.tabs(["📅 Weekly", "📆 Monthly"])
+    
+    with subtabs[0]:
+        render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS)
+    
+    with subtabs[1]:
+        render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS)
+
+def render_weekly_dashboard(sales_df, COLORS, HEAT_COLORS):
+    st.subheader("📅 Weekly Analysis")
+    
+    # Date range for weeks
+    min_date = sales_df['ENROLLED_DATE'].min().date()
+    max_date = sales_df['ENROLLED_DATE'].max().date()
+    
+    # Week selection with date picker
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        selected_date = st.date_input(
+            "Select Week Starting Date:",
+            value=max_date,
+            min_value=min_date,
+            max_value=max_date
+        )
+    
+    with col2:
+        # Calculate week range
+        week_start = pd.Timestamp(selected_date)
+        week_end = week_start + timedelta(days=6)
+        st.info(f"Week: {week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}")
+    
+    # Filter data for selected week
+    week_data = sales_df[
+        (sales_df['ENROLLED_DATE'] >= week_start) & 
+        (sales_df['ENROLLED_DATE'] <= week_end)
+    ].copy()
+    
+    if week_data.empty:
+        st.warning("No data for selected week")
+        return
+    
+    # Weekly metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Sales", len(week_data))
+    
+    with col2:
+        if 'CATEGORY' in week_data.columns:
+            active_count = len(week_data[week_data['CATEGORY'] == 'ACTIVE'])
+            active_rate = (active_count / len(week_data) * 100) if len(week_data) > 0 else 0
+            st.metric("Active Sales", f"{active_count} ({active_rate:.1f}%)")
+    
+    with col3:
+        if 'CATEGORY' in week_data.columns:
+            cancelled_count = len(week_data[week_data['CATEGORY'] == 'CANCELLED'])
+            st.metric("Cancelled", cancelled_count)
+    
+    with col4:
+        if 'AGENT' in week_data.columns:
+            st.metric("Active Agents", week_data['AGENT'].nunique())
+    
+    # Charts
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if 'SOURCE_SHEET' in week_data.columns and 'CATEGORY' in week_data.columns:
+            st.subheader("Sales by Source")
+            source_breakdown = week_data.groupby(['SOURCE_SHEET', 'CATEGORY']).size().unstack(fill_value=0)
+            
+            if not source_breakdown.empty:
+                fig = px.bar(
+                    source_breakdown,
+                    title="Sales Breakdown by Source",
+                    color_discrete_map={
+                        'ACTIVE': COLORS['success'],
+                        'CANCELLED': COLORS['danger'],
+                        'NSF': COLORS['warning'],
+                        'OTHER': COLORS['info']
+                    }
+                )
+                st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        if 'AGENT' in week_data.columns:
+            st.subheader("Top Agents")
+            if 'CATEGORY' in week_data.columns:
+                active_agents = week_data[week_data['CATEGORY'] == 'ACTIVE']['AGENT'].value_counts().head(10)
+            else:
+                active_agents = week_data['AGENT'].value_counts().head(10)
+            
+            if not active_agents.empty:
+                fig = px.bar(
+                    x=active_agents.values,
+                    y=active_agents.index,
+                    orientation='h',
+                    title="Top Performers (Active Sales)",
+                    color=active_agents.values,
+                    color_continuous_scale=HEAT_COLORS
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+def render_monthly_dashboard(sales_df, COLORS, HEAT_COLORS):
+    st.subheader("📆 Monthly Analysis")
+    
+    # Month selection
+    sales_df['Month'] = sales_df['ENROLLED_DATE'].dt.to_period('M')
+    available_months = sorted(sales_df['Month'].unique(), reverse=True)
+    
+    if not available_months:
+        st.warning("No monthly data available")
+        return
+    
+    # Month picker using selectbox with formatted options
+    month_options = [m.strftime('%B %Y') for m in available_months]
+    selected_month_str = st.selectbox("Select Month:", month_options)
+    selected_month = available_months[month_options.index(selected_month_str)]
+    
+    # Filter data for selected month
+    month_data = sales_df[sales_df['Month'] == selected_month].copy()
+    
+    # Monthly metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Sales", len(month_data))
+    
+    with col2:
+        if 'CATEGORY' in month_data.columns:
+            active_count = len(month_data[month_data['CATEGORY'] == 'ACTIVE'])
+            active_rate = (active_count / len(month_data) * 100) if len(month_data) > 0 else 0
+            st.metric("Active Rate", f"{active_rate:.1f}%")
+    
+    with col3:
+        if 'AGENT' in month_data.columns:
+            avg_per_agent = len(month_data) / month_data['AGENT'].nunique() if month_data['AGENT'].nunique() > 0 else 0
+            st.metric("Avg per Agent", f"{avg_per_agent:.1f}")
+    
+    with col4:
+        weeks_in_month = len(month_data.groupby(month_data['ENROLLED_DATE'].dt.isocalendar().week))
+        weekly_avg = len(month_data) / weeks_in_month if weeks_in_month > 0 else 0
+        st.metric("Weekly Average", f"{weekly_avg:.1f}")
+    
+    # Monthly charts
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Daily Trend")
+        daily_sales = month_data.groupby(month_data['ENROLLED_DATE'].dt.date).size().reset_index()
+        daily_sales.columns = ['Date', 'Sales']
+        
+        if not daily_sales.empty:
+            fig = px.line(
+                daily_sales,
+                x='Date',
+                y='Sales',
+                title=f"Daily Sales - {selected_month_str}",
+                markers=True,
+                color_discrete_sequence=[COLORS['primary']]
+            )
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        if 'AGENT' in month_data.columns:
+            st.subheader("Top Monthly Performers")
+            if 'CATEGORY' in month_data.columns:
+                monthly_agents = month_data[month_data['CATEGORY'] == 'ACTIVE']['AGENT'].value_counts().head(10)
+            else:
+                monthly_agents = month_data['AGENT'].value_counts().head(10)
+            
+            if not monthly_agents.empty:
+                fig = px.bar(
+                    monthly_agents.head(5),
+                    x=monthly_agents.head(5).index,
+                    y=monthly_agents.head(5).values,
+                    title="Top 5 Agents (Active Sales)",
+                    color=monthly_agents.head(5).values,
+                    color_continuous_scale=HEAT_COLORS
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+def render_agents(df, COLORS, HEAT_COLORS):
     st.header("Agent Performance")
     
     if 'AGENT' not in df.columns:
         st.warning("No agent data available")
         return
     
-    # Agent selector
     agents = df['AGENT'].dropna().unique()
     selected_agent = st.selectbox("Select Agent", ['All Agents'] + list(agents))
     
     if selected_agent == 'All Agents':
         agent_df = df
-        st.subheader("All Agents Performance")
     else:
         agent_df = df[df['AGENT'] == selected_agent]
-        st.subheader(f"{selected_agent} Performance")
     
-    # Metrics
+    # Agent metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -241,36 +348,16 @@ def render_agents(df, COLORS, PURPLE_SCALES):
     with col3:
         if 'CATEGORY' in agent_df.columns:
             cancelled_count = len(agent_df[agent_df['CATEGORY'] == 'CANCELLED'])
-            cancel_rate = (cancelled_count / len(agent_df) * 100) if len(agent_df) > 0 else 0
-            st.metric("Cancelled", f"{cancelled_count} ({cancel_rate:.1f}%)")
+            st.metric("Cancelled", cancelled_count)
     
     with col4:
         if 'CATEGORY' in agent_df.columns:
             nsf_count = len(agent_df[agent_df['CATEGORY'] == 'NSF'])
-            nsf_rate = (nsf_count / len(agent_df) * 100) if len(agent_df) > 0 else 0
-            st.metric("NSF", f"{nsf_count} ({nsf_rate:.1f}%)")
+            st.metric("NSF", nsf_count)
 
-    # Agent comparison chart
-    if selected_agent == 'All Agents' and 'CATEGORY' in df.columns:
-        st.subheader("Agent Comparison")
-        
-        agent_stats = df.groupby('AGENT').agg({
-            'AGENT': 'count',
-            'CATEGORY': lambda x: (x == 'ACTIVE').sum()
-        }).rename(columns={'AGENT': 'Total', 'CATEGORY': 'Active'})
-        
-        agent_stats['Active_Rate'] = (agent_stats['Active'] / agent_stats['Total'] * 100).round(1)
-        agent_stats = agent_stats.sort_values('Active_Rate', ascending=False).head(10)
-        
-        fig = px.bar(agent_stats, x=agent_stats.index, y='Active_Rate',
-                    title="Top 10 Agents by Active Rate", color='Active_Rate',
-                    color_continuous_scale=PURPLE_SCALES['sequential'])
-        st.plotly_chart(fig, use_container_width=True)
-
-def render_commission(df, COLORS, PURPLE_SCALES):
+def render_commission(df, COLORS, HEAT_COLORS):
     st.header("Commission Dashboard")
     
-    # Check for commission data
     if 'SOURCE_SHEET' not in df.columns or 'Comission' not in df['SOURCE_SHEET'].values:
         st.warning("No commission data found")
         return
@@ -283,12 +370,7 @@ def render_commission(df, COLORS, PURPLE_SCALES):
     
     st.success(f"Commission data loaded: {len(commission_df)} records")
     
-    # Show available columns
-    with st.expander("Available Columns"):
-        st.write(commission_df.columns.tolist())
-        st.dataframe(commission_df.head(3))
-    
-    # Basic metrics
+    # Commission metrics
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -301,38 +383,11 @@ def render_commission(df, COLORS, PURPLE_SCALES):
     
     with col3:
         if 'AGENT' in commission_df.columns:
-            unique_agents = commission_df['AGENT'].nunique()
-            st.metric("Unique Agents", unique_agents)
-    
-    # Status distribution
-    if 'STATUS' in commission_df.columns:
-        st.subheader("Payment Status Distribution")
-        status_counts = commission_df['STATUS'].value_counts()
-        fig = px.pie(values=status_counts.values, names=status_counts.index,
-                    title="Payment Status", color_discrete_sequence=PURPLE_SCALES['discrete'])
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Agent performance
-    if 'AGENT' in commission_df.columns and 'STATUS' in commission_df.columns:
-        st.subheader("Agent Payment Performance")
-        
-        agent_stats = commission_df.groupby('AGENT').agg({
-            'AGENT': 'count',
-            'STATUS': lambda x: x.str.contains('Cleared', na=False).sum()
-        }).rename(columns={'AGENT': 'Total', 'STATUS': 'Cleared'})
-        
-        agent_stats['Clear_Rate'] = (agent_stats['Cleared'] / agent_stats['Total'] * 100).round(1)
-        agent_stats = agent_stats.sort_values('Clear_Rate', ascending=False)
-        
-        fig = px.bar(agent_stats.head(10), x=agent_stats.head(10).index, y='Clear_Rate',
-                    title="Top 10 Agents by Clear Rate", color='Clear_Rate',
-                    color_continuous_scale=PURPLE_SCALES['sequential'])
-        st.plotly_chart(fig, use_container_width=True)
+            st.metric("Unique Agents", commission_df['AGENT'].nunique())
 
 def render_data_explorer(df, COLORS):
     st.header("Data Explorer")
     
-    # Filters
     col1, col2 = st.columns(2)
     
     with col1:
@@ -355,11 +410,8 @@ def render_data_explorer(df, COLORS):
         filtered_df = filtered_df[filtered_df['CATEGORY'].isin(categories)]
     
     st.write(f"Showing {len(filtered_df)} of {len(df)} records")
-    
-    # Display data
     st.dataframe(filtered_df, use_container_width=True)
     
-    # Download button
     csv = filtered_df.to_csv(index=False)
     st.download_button("Download CSV", csv, "data.csv", "text/csv")
 
