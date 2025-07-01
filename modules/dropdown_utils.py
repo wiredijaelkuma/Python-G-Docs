@@ -34,7 +34,7 @@ def create_time_range_selector(key_suffix=""):
 
 def create_agent_selector(agents_list, key_suffix=""):
     """Create standardized agent selector"""
-    if not agents_list:
+    if len(agents_list) == 0:
         return "All Agents"
     
     options = ["All Agents"] + sorted(list(agents_list))
