@@ -116,7 +116,8 @@ def main():
         render_dashboard(df, COLORS, HEAT_COLORS)
     
     with tabs[1]:
-        render_agents(df, COLORS, HEAT_COLORS)
+        from modules.agent_performance import render_agent_performance
+        render_agent_performance(df, COLORS, HEAT_COLORS)
     
     with tabs[2]:
         render_commission(df, COLORS, HEAT_COLORS)
