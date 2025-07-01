@@ -1,245 +1,279 @@
-# app.py - Main application file
 import streamlit as st
 import pandas as pd
-import numpy as np
-from datetime import datetime, date, timedelta
-from pathlib import Path
-import os
-
-# Import modules
-from modules.utils import load_css, format_large_number
-from modules.ui_components import display_metrics, create_header
-from modules.tabs.landing_page import render_landing_page
-from modules.tabs.overview import render_overview_tab
-from modules.tabs.performance import render_performance_tab
-from modules.tabs.data_explorer import render_data_explorer
-from modules.tabs.commission import render_commission_tab
-from modules.tabs.monthly_analysis import render_monthly_analysis_tab
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
 from modules.gsheet_connector import fetch_data_from_sheet
 
-# --- Set page configuration first (must be the first Streamlit command) ---
-st.set_page_config(
-    layout="wide", 
-    page_title="Pepe's Power Dashboard",
-    page_icon="🐸",
-    initial_sidebar_state="collapsed"  # Start with sidebar collapsed to maximize chart space
-)
+# Page config
+st.set_page_config(layout="wide", page_title="Pepe's Power Dashboard", page_icon="🐸")
 
-# --- Constants ---
-# Simplified asset paths
-ASSETS_DIR = Path("assets")
-
-# --- Color Palette ---
-# Periwinkle purples and opaque greens
+# Colors
 COLORS = {
-    'primary': '#8A7FBA',      # Periwinkle purple
-    'secondary': '#6A5ACD',    # Slateblue
-    'accent': '#7FFFD4',       # Aquamarine
-    'light_accent': '#AFFFEE', # Light aquamarine
-    'dark_accent': '#40E0D0',  # Turquoise
-    'warning': '#FFD700',      # Gold
-    'danger': '#FF6347',       # Tomato
-    'light': '#F0F8FF',        # Alice blue
-    'dark': '#483D8B',         # Dark slate blue
-    'background': '#F8F9FA',   # Light gray background
-    'text': '#2E2E2E',         # Near black
-    'light_purple': '#E6E6FA', # Lavender
-    'med_purple': '#B39DDB',   # Medium purple
-    'light_green': '#98FB98',  # Pale green
-    'med_green': '#66CDAA',    # Medium aquamarine
+    'primary': '#8A7FBA',
+    'secondary': '#6A5ACD', 
+    'accent': '#7FFFD4',
+    'warning': '#FFD700',
+    'danger': '#FF6347',
+    'success': '#98FB98'
 }
 
 def main():
-    # Load CSS
-    load_css()
-    
-    # --- Simplified Sidebar ---
+    # Sidebar
     with st.sidebar:
-        try:
-            st.image(os.path.join(ASSETS_DIR, "pepe-muscle.jpg"), width=180)
-        except:
-            st.title("🐸 Pepe's Power")
-        
-        if st.button("🔄 Refresh Data", key="refresh_button", use_container_width=True):
+        st.title("🐸 Pepe's Power")
+        if st.button("🔄 Refresh Data", use_container_width=True):
             st.cache_data.clear()
-            st.sidebar.success("✅ Data refreshed successfully!")
             st.rerun()
-        
-        st.header("Data Source")
         st.markdown("**Google Sheet:** [Forth Py](https://docs.google.com/spreadsheets)")
 
-    # --- Banner ---
-    try:
-        st.image(os.path.join(ASSETS_DIR, "banner.png"), use_container_width=True)
-    except:
-        st.title("Pepe's Power Dashboard")
-
-    # --- Data Loading ---
-    with st.spinner("🔍 Loading data..."):
-        # Load from Google Sheets
-        st.info("Fetching data from Google Sheet: 'Forth Py'")
+    # Load data
+    with st.spinner("Loading data..."):
+        df, error = fetch_data_from_sheet()
         
-        try:
-            df, load_err = fetch_data_from_sheet()
+        if error:
+            st.error(f"Error: {error}")
+            return
             
-            if not load_err and not df.empty:
-                st.success(f"Successfully loaded {len(df)} records from Google Sheets")
-                
-                # Save to processed_combined_data.csv for backup/offline use
-                try:
-                    df.to_csv("processed_combined_data.csv", index=False)
-                except Exception:
-                    pass  # Silently ignore backup errors
-        except Exception as e:
-            st.error(f"Error connecting to Google Sheets: {e}")
-            load_err = str(e)
-        
-        # Fix duplicate column names
-        if load_err is None and not df.empty:
-            # Remove duplicate columns
-            df = df.loc[:, ~df.columns.duplicated()]
-            
-            # Convert date columns to datetime
-            date_col = None
-            if 'ENROLLED_DATE' in df.columns:
-                date_col = 'ENROLLED_DATE'
-            elif 'ENROLLED DATE' in df.columns:
-                date_col = 'ENROLLED DATE'
-                
-            if date_col:
-                try:
-                    df[date_col] = pd.to_datetime(df[date_col])
-                except:
-                    st.warning(f"Could not convert {date_col} to datetime format.")
-        
-        # Show error details in an expander if there was an error
-        if load_err:
-            with st.expander("Error Details"):
-                st.code(load_err)
-        
-    if load_err:
-        st.error(f"🚨 Data Load Error: {load_err}")
-        st.stop()
-        
-    if df.empty:
-        st.warning("⚠️ No data available. Please upload a CSV file with your data.")
-        st.stop()
+        if df.empty:
+            st.warning("No data available")
+            return
 
-    # Normalize data using centralized processor
-    from modules.data_processor import normalize_dataframe
-    df = normalize_dataframe(df)
-    
-    # Store data in session state
-    st.session_state['df'] = df
-    
-    # Update sidebar with record count
+    # Update sidebar with data info
     with st.sidebar:
         st.info(f"Total Records: {len(df)}")
         if 'SOURCE_SHEET' in df.columns:
-            st.write("**Data Sources:**")
             for source in df['SOURCE_SHEET'].unique():
                 count = len(df[df['SOURCE_SHEET'] == source])
-                st.write(f"• {source}: {count} records")
+                st.write(f"• {source}: {count}")
 
-
-
-
-
-    # --- Dashboard Header ---
+    # Header
     st.title("Pepe's Power Dashboard")
-    st.markdown(f"**Total Records:** {len(df)} | **Data Sources:** {', '.join(df['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df.columns else 'N/A'}")
+    st.markdown(f"**Total Records:** {len(df)} | **Sources:** {', '.join(df['SOURCE_SHEET'].unique()) if 'SOURCE_SHEET' in df.columns else 'N/A'}")
 
-    # --- Metrics Summary ---
-    display_metrics(df, COLORS)
-
-    # --- Tab Navigation ---
-    tabs = st.tabs([
-        "Home", "Weekly Analysis", "Monthly Analysis", "Performance", "Data Explorer", "Commission"
-    ])
+    # Tabs
+    tabs = st.tabs(["Overview", "Agents", "Commission", "Data Explorer"])
     
-    # Home/Landing Page Tab
     with tabs[0]:
-        try:
-            render_landing_page(df, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Landing Page: {e}")
-            fallback_landing_page(df, COLORS)
+        render_overview(df, COLORS)
     
-    # Weekly Analysis Tab
     with tabs[1]:
-        try:
-            from modules.tabs.weekly_analysis import render_weekly_analysis_tab
-            render_weekly_analysis_tab(df, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Weekly Analysis tab: {e}")
-            st.info("The Weekly Analysis tab provides week-over-week performance comparisons.")
+        render_agents(df, COLORS)
     
-    # Monthly Analysis Tab
     with tabs[2]:
-        try:
-            render_monthly_analysis_tab(df, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Monthly Analysis tab: {e}")
-            fallback_monthly_analysis(df, COLORS)
+        render_commission(df, COLORS)
     
-    # Performance Tab
     with tabs[3]:
-        try:
-            render_performance_tab(df, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Performance tab: {e}")
-            fallback_performance(df, COLORS)
-        
-    # Data Explorer Tab
-    with tabs[4]:
-        try:
-            render_data_explorer(df, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Data Explorer tab: {e}")
-            fallback_data_explorer(df)
-            
-    # Commission Tab
-    with tabs[5]:
-        try:
-            render_commission_tab(df, COLORS)
-        except Exception as e:
-            st.error(f"Error rendering Commission tab: {e}")
-            st.info("The Commission tab displays agent performance metrics and payment trends.")
+        render_data_explorer(df, COLORS)
 
-def fallback_landing_page(df, COLORS):
-    st.subheader("Data Overview")
-    if not df.empty:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Records", len(df))
-        with col2:
-            if 'SOURCE_SHEET' in df.columns:
-                st.metric("Data Sources", df['SOURCE_SHEET'].nunique())
-        with col3:
-            if 'CATEGORY' in df.columns:
-                active_count = len(df[df['CATEGORY'] == 'ACTIVE'])
-                st.metric("Active Records", active_count)
-    else:
-        st.warning("No data available")
+def render_overview(df, COLORS):
+    st.header("Overview")
+    
+    # Metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Records", len(df))
+    
+    with col2:
+        if 'CATEGORY' in df.columns:
+            active_count = len(df[df['CATEGORY'] == 'ACTIVE'])
+            st.metric("Active", active_count)
+    
+    with col3:
+        if 'CATEGORY' in df.columns:
+            cancelled_count = len(df[df['CATEGORY'] == 'CANCELLED'])
+            st.metric("Cancelled", cancelled_count)
+    
+    with col4:
+        if 'SOURCE_SHEET' in df.columns:
+            st.metric("Data Sources", df['SOURCE_SHEET'].nunique())
 
-def fallback_performance(df, COLORS):
-    st.subheader("Performance Overview")
-    if 'SOURCE_SHEET' in df.columns:
-        source_counts = df['SOURCE_SHEET'].value_counts()
-        st.bar_chart(source_counts)
+    # Charts
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if 'SOURCE_SHEET' in df.columns:
+            source_counts = df['SOURCE_SHEET'].value_counts()
+            fig = px.pie(values=source_counts.values, names=source_counts.index, 
+                        title="Records by Source", color_discrete_sequence=px.colors.qualitative.Set3)
+            st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        if 'CATEGORY' in df.columns:
+            category_counts = df['CATEGORY'].value_counts()
+            fig = px.bar(x=category_counts.index, y=category_counts.values,
+                        title="Records by Category", color=category_counts.index,
+                        color_discrete_map={'ACTIVE': COLORS['success'], 'CANCELLED': COLORS['danger'], 'NSF': COLORS['warning']})
+            st.plotly_chart(fig, use_container_width=True)
 
-def fallback_data_explorer(df):
-    st.subheader("Data Explorer")
-    st.dataframe(df.head(100), use_container_width=True)
-
-def fallback_monthly_analysis(df, COLORS):
-    st.subheader("Monthly Analysis")
+    # Monthly trend
     if 'ENROLLED_DATE' in df.columns:
-        monthly_data = df.groupby(df['ENROLLED_DATE'].dt.strftime('%Y-%m')).size().reset_index()
-        monthly_data.columns = ['Month', 'Count']
-        st.bar_chart(monthly_data.set_index('Month'))
+        st.subheader("Monthly Enrollment Trend")
+        df_with_date = df[df['ENROLLED_DATE'].notna()].copy()
+        if not df_with_date.empty:
+            df_with_date['Month'] = df_with_date['ENROLLED_DATE'].dt.strftime('%Y-%m')
+            monthly_counts = df_with_date.groupby('Month').size().reset_index()
+            monthly_counts.columns = ['Month', 'Count']
+            
+            fig = px.line(monthly_counts, x='Month', y='Count', markers=True,
+                         title="Monthly Enrollments", color_discrete_sequence=[COLORS['primary']])
+            st.plotly_chart(fig, use_container_width=True)
+
+def render_agents(df, COLORS):
+    st.header("Agent Performance")
+    
+    if 'AGENT' not in df.columns:
+        st.warning("No agent data available")
+        return
+    
+    # Agent selector
+    agents = df['AGENT'].dropna().unique()
+    selected_agent = st.selectbox("Select Agent", ['All Agents'] + list(agents))
+    
+    if selected_agent == 'All Agents':
+        agent_df = df
+        st.subheader("All Agents Performance")
     else:
-        st.info("No date data available for monthly analysis")
+        agent_df = df[df['AGENT'] == selected_agent]
+        st.subheader(f"{selected_agent} Performance")
+    
+    # Metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Records", len(agent_df))
+    
+    with col2:
+        if 'CATEGORY' in agent_df.columns:
+            active_count = len(agent_df[agent_df['CATEGORY'] == 'ACTIVE'])
+            active_rate = (active_count / len(agent_df) * 100) if len(agent_df) > 0 else 0
+            st.metric("Active", f"{active_count} ({active_rate:.1f}%)")
+    
+    with col3:
+        if 'CATEGORY' in agent_df.columns:
+            cancelled_count = len(agent_df[agent_df['CATEGORY'] == 'CANCELLED'])
+            cancel_rate = (cancelled_count / len(agent_df) * 100) if len(agent_df) > 0 else 0
+            st.metric("Cancelled", f"{cancelled_count} ({cancel_rate:.1f}%)")
+    
+    with col4:
+        if 'CATEGORY' in agent_df.columns:
+            nsf_count = len(agent_df[agent_df['CATEGORY'] == 'NSF'])
+            nsf_rate = (nsf_count / len(agent_df) * 100) if len(agent_df) > 0 else 0
+            st.metric("NSF", f"{nsf_count} ({nsf_rate:.1f}%)")
+
+    # Agent comparison chart
+    if selected_agent == 'All Agents' and 'CATEGORY' in df.columns:
+        st.subheader("Agent Comparison")
+        
+        agent_stats = df.groupby('AGENT').agg({
+            'AGENT': 'count',
+            'CATEGORY': lambda x: (x == 'ACTIVE').sum()
+        }).rename(columns={'AGENT': 'Total', 'CATEGORY': 'Active'})
+        
+        agent_stats['Active_Rate'] = (agent_stats['Active'] / agent_stats['Total'] * 100).round(1)
+        agent_stats = agent_stats.sort_values('Active_Rate', ascending=False).head(10)
+        
+        fig = px.bar(agent_stats, x=agent_stats.index, y='Active_Rate',
+                    title="Top 10 Agents by Active Rate", color='Active_Rate',
+                    color_continuous_scale='Viridis')
+        st.plotly_chart(fig, use_container_width=True)
+
+def render_commission(df, COLORS):
+    st.header("Commission Dashboard")
+    
+    # Check for commission data
+    if 'SOURCE_SHEET' not in df.columns or 'Comission' not in df['SOURCE_SHEET'].values:
+        st.warning("No commission data found")
+        return
+    
+    commission_df = df[df['SOURCE_SHEET'] == 'Comission'].copy()
+    
+    if commission_df.empty:
+        st.warning("Commission data is empty")
+        return
+    
+    st.success(f"Commission data loaded: {len(commission_df)} records")
+    
+    # Show available columns
+    with st.expander("Available Columns"):
+        st.write(commission_df.columns.tolist())
+        st.dataframe(commission_df.head(3))
+    
+    # Basic metrics
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("Total Payments", len(commission_df))
+    
+    with col2:
+        if 'STATUS' in commission_df.columns:
+            cleared_count = len(commission_df[commission_df['STATUS'].str.contains('Cleared', na=False)])
+            st.metric("Cleared Payments", cleared_count)
+    
+    with col3:
+        if 'AGENT' in commission_df.columns:
+            unique_agents = commission_df['AGENT'].nunique()
+            st.metric("Unique Agents", unique_agents)
+    
+    # Status distribution
+    if 'STATUS' in commission_df.columns:
+        st.subheader("Payment Status Distribution")
+        status_counts = commission_df['STATUS'].value_counts()
+        fig = px.pie(values=status_counts.values, names=status_counts.index,
+                    title="Payment Status", color_discrete_sequence=px.colors.qualitative.Set3)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Agent performance
+    if 'AGENT' in commission_df.columns and 'STATUS' in commission_df.columns:
+        st.subheader("Agent Payment Performance")
+        
+        agent_stats = commission_df.groupby('AGENT').agg({
+            'AGENT': 'count',
+            'STATUS': lambda x: x.str.contains('Cleared', na=False).sum()
+        }).rename(columns={'AGENT': 'Total', 'STATUS': 'Cleared'})
+        
+        agent_stats['Clear_Rate'] = (agent_stats['Cleared'] / agent_stats['Total'] * 100).round(1)
+        agent_stats = agent_stats.sort_values('Clear_Rate', ascending=False)
+        
+        fig = px.bar(agent_stats.head(10), x=agent_stats.head(10).index, y='Clear_Rate',
+                    title="Top 10 Agents by Clear Rate", color='Clear_Rate',
+                    color_continuous_scale='Viridis')
+        st.plotly_chart(fig, use_container_width=True)
+
+def render_data_explorer(df, COLORS):
+    st.header("Data Explorer")
+    
+    # Filters
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if 'SOURCE_SHEET' in df.columns:
+            sources = st.multiselect("Filter by Source", df['SOURCE_SHEET'].unique(), default=df['SOURCE_SHEET'].unique())
+        else:
+            sources = []
+    
+    with col2:
+        if 'CATEGORY' in df.columns:
+            categories = st.multiselect("Filter by Category", df['CATEGORY'].unique(), default=df['CATEGORY'].unique())
+        else:
+            categories = []
+    
+    # Apply filters
+    filtered_df = df.copy()
+    if sources and 'SOURCE_SHEET' in df.columns:
+        filtered_df = filtered_df[filtered_df['SOURCE_SHEET'].isin(sources)]
+    if categories and 'CATEGORY' in df.columns:
+        filtered_df = filtered_df[filtered_df['CATEGORY'].isin(categories)]
+    
+    st.write(f"Showing {len(filtered_df)} of {len(df)} records")
+    
+    # Display data
+    st.dataframe(filtered_df, use_container_width=True)
+    
+    # Download button
+    csv = filtered_df.to_csv(index=False)
+    st.download_button("Download CSV", csv, "data.csv", "text/csv")
 
 if __name__ == "__main__":
     main()

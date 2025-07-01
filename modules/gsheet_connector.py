@@ -1,34 +1,27 @@
 """
-Streamlined Google Sheets connector for Streamlit Cloud deployment
+Google Sheets connector
 """
 import streamlit as st
 import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime
 import os
 import json
 
-# Configuration constants
 SPREADSHEET_TITLE = "Forth Py"
 CREDENTIALS_FILE = 'credentials.json'
 RAW_SHEET_NAMES = ["PAC", "MLG", "ELP", "Cordoba", "Comission"]
 
 def get_credentials():
-    """Get credentials from local file or Streamlit secrets"""
-    # First try Streamlit secrets
     try:
         creds = dict(st.secrets["gcp_service_account"])
-        # Add universe_domain if missing (required by newer versions)
         if "universe_domain" not in creds:
             creds["universe_domain"] = "googleapis.com"
         return creds
     except Exception:
-        # Fall back to local credentials file
         try:
             with open(CREDENTIALS_FILE, 'r') as f:
                 creds = json.load(f)
-                # Add universe_domain if missing (required by newer versions)
                 if "universe_domain" not in creds:
                     creds["universe_domain"] = "googleapis.com"
                 return creds
@@ -36,28 +29,19 @@ def get_credentials():
             st.error(f"Error loading credentials: {e}")
             return None
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=300)
 def get_gspread_client():
-    """Get an authorized Google Sheets client"""
     try:
         scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
-        
-        # Get credentials from appropriate source
         creds_dict = get_credentials()
         
         if not creds_dict:
             return None, "Failed to load credentials"
             
-        # Create credentials from dict
         try:
-            # Try using google-auth (preferred for Streamlit Cloud)
             from google.oauth2 import service_account
-            creds = service_account.Credentials.from_service_account_info(
-                creds_dict,
-                scopes=scope
-            )
+            creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=scope)
         except ImportError:
-            # Fall back to oauth2client
             import tempfile
             with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False) as temp:
                 json.dump(creds_dict, temp)
@@ -74,9 +58,8 @@ def get_gspread_client():
     except Exception as e:
         return None, str(e)
 
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=300)
 def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_SHEET_NAMES):
-    """Fetch and process data from Google Sheets"""
     client, error = get_gspread_client()
     
     if error:
@@ -91,11 +74,10 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
                 worksheet = sheet.worksheet(sheet_name)
                 data = worksheet.get_all_values()
                 
-                if len(data) > 1:  # Skip empty worksheets
+                if len(data) > 1:
                     headers = data[0]
                     rows = data[1:]
                     
-                    # Fix duplicate/empty headers
                     fixed_headers = []
                     header_counts = {}
                     
@@ -111,44 +93,33 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
                             
                         fixed_headers.append(header)
                     
-                    # Create DataFrame
                     df = pd.DataFrame(rows, columns=fixed_headers)
-                    
-                    # Standardize column names
                     df.columns = [str(col).strip().upper() for col in df.columns]
-                    
-                    # Add source column
                     df['SOURCE_SHEET'] = sheet_name
-                    
                     all_dfs.append(df)
                 else:
                     st.warning(f"Worksheet '{sheet_name}' is empty or has no data rows")
             except Exception as e:
                 st.warning(f"Error fetching data from worksheet '{sheet_name}': {e}")
-                # Continue with other sheets even if one fails
         
         if not all_dfs:
             return pd.DataFrame(), "No data found in any worksheet"
         
-        # Combine all data
         combined_df = pd.concat(all_dfs, ignore_index=True)
         
         # Process date columns
         if 'ENROLLED DATE' in combined_df.columns:
             combined_df['ENROLLED DATE'] = pd.to_datetime(combined_df['ENROLLED DATE'], errors='coerce')
-            # Rename to match app's expected column name
             combined_df.rename(columns={'ENROLLED DATE': 'ENROLLED_DATE'}, inplace=True)
         
-        # Handle commission dates
         if 'PROCESSED DATE' in combined_df.columns:
             combined_df['PROCESSED DATE'] = pd.to_datetime(combined_df['PROCESSED DATE'], errors='coerce')
             
         if 'CLEARED DATE' in combined_df.columns:
             combined_df['CLEARED DATE'] = pd.to_datetime(combined_df['CLEARED DATE'], errors='coerce')
         
-        # Add category column if status exists
+        # Add category column
         if 'STATUS' in combined_df.columns:
-            # Create CATEGORY column using efficient vectorized operations
             combined_df['CATEGORY'] = 'OTHER'
             combined_df.loc[combined_df['STATUS'].str.contains('ACTIVE|ENROLLED', case=False, na=False), 'CATEGORY'] = 'ACTIVE'
             combined_df.loc[combined_df['STATUS'].str.contains('NSF', case=False, na=False), 'CATEGORY'] = 'NSF'
