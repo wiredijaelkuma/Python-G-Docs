@@ -439,8 +439,8 @@ def render_commission(df, COLORS, HEAT_COLORS):
     
     with col3:
         if 'CATEGORY' in commission_df.columns:
-            processing_count = len(commission_df[commission_df['CATEGORY'] == 'PROCESSING'])
-            st.metric("Processing Payments", processing_count)
+            pending_count = len(commission_df[commission_df['CATEGORY'] == 'PENDING'])
+            st.metric("Pending Payments", pending_count)
     
     with col4:
         if 'AGENT' in commission_df.columns:
@@ -457,7 +457,8 @@ def render_commission(df, COLORS, HEAT_COLORS):
             title="Commission Payment Status",
             color_discrete_map={
                 'CLEARED': COLORS['success'],
-                'PROCESSING': COLORS['warning'],
+                'PENDING': COLORS['warning'],
+                'NSF': COLORS['danger'],
                 'OTHER': COLORS['info']
             }
         )

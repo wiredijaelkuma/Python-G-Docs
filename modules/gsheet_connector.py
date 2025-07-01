@@ -127,9 +127,12 @@ def fetch_data_from_sheet(spreadsheet_title=SPREADSHEET_TITLE, sheet_names=RAW_S
             # For commission data, use cleared date for successful payments
             if 'CLEARED_DATE' in combined_df.columns:
                 combined_df.loc[commission_mask & combined_df['CLEARED_DATE'].notna(), 'CATEGORY'] = 'CLEARED'
-            # Use processed date for pending/failed payments
+            # Check for NSF/Returned payments first
+            if 'STATUS' in combined_df.columns:
+                combined_df.loc[commission_mask & combined_df['STATUS'].str.contains('NSF|RETURN', case=False, na=False), 'CATEGORY'] = 'NSF'
+            # Use processed date for pending payments (not cleared, not NSF)
             if 'PROCESSED_DATE' in combined_df.columns:
-                combined_df.loc[commission_mask & combined_df['CLEARED_DATE'].isna() & combined_df['PROCESSED_DATE'].notna(), 'CATEGORY'] = 'PROCESSING'
+                combined_df.loc[commission_mask & combined_df['CLEARED_DATE'].isna() & combined_df['PROCESSED_DATE'].notna() & (combined_df['CATEGORY'] != 'NSF'), 'CATEGORY'] = 'PENDING'
         
         # Add category column for sales data
         if 'STATUS' in combined_df.columns:
