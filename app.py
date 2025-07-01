@@ -110,7 +110,7 @@ def main():
         render_agent_hybrid_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[2]:
-        from modules.commission_payout import render_commission_analysis
+        from modules.commission_fixed import render_commission_analysis
         render_commission_analysis(df, COLORS, HEAT_COLORS)
     
     with tabs[3]:
